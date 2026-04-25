@@ -1,0 +1,39 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# Node
+node_modules/
+
+# Playwright / browser automation
+.playwright-mcp/
+
+# Workbuddy / AI agent temp files
+.workbuddy/
+
+# Large data files (if added later)
+*.db
+*.sqlite
+*.sqlite3
+data/raw/
+data/cache/
