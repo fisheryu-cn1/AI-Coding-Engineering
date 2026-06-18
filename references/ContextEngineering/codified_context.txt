@@ -1,0 +1,590 @@
+
+
+--- Page 1 ---
+
+Codified Context: Infrastructure for AI Agents in a Complex
+Codebase
+AristidisVasilopoulos
+IndependentResearcher
+USA
+arisvas4@gmail.com
+Abstract Component System library). Both application code and context
+LLM-basedagenticcodingassistantslackpersistentmemory:they infrastructureweregeneratedusingClaudeCodeasthesolecode-
+lose coherence across sessions, forget project conventions, and generationtool,directedbyhumanpromptingandagentorchestra-
+repeatknownmistakes.Recentstudiescharacterizehowdevelop- tion.Theauthor’sprimarybackgroundisinchemistryratherthan
+ersconfigureagentsthroughmanifestfiles,butanopenchallenge softwareengineering,makingthisprojectatestcaseforaspecific
+remainshowtoscale suchconfigurationsforlarge,multi-agent emergingusepattern:domainexpertsbuildingsoftwarebeyond
+projects.Thispaperpresentsathree-componentcodifiedcontext theirprimaryexpertisewithAIagents.
+infrastructuredevelopedduringconstructionofa108,000-lineC#
+1.1 Contributions
+distributedsystem:(1)ahot-memoryconstitutionencodingconven-
+tions,retrievalhooks,andorchestrationprotocols;(2)19specialized (1) Atieredarchitecturefororganizingprojectknowl-
+domain-expertagents;and(3)acold-memoryknowledgebaseof edgetosupportmulti-agentAI-assisteddevelopment.
+34on-demandspecificationdocuments.Quantitativemetricson Thisarchitectureextendsthesingle-filemanifestpattern
+infrastructuregrowthandinteractionpatternsacross283devel- withdomain-expertagentsembeddingproject-specificknowl-
+opmentsessionsarereportedalongsidefourobservationalcase edge,triggertablesforautomatictaskrouting,andahot/-
+studiesillustratinghowcodifiedcontextpropagatesacrosssessions coldmemoryseparationthatdistinguishesalways-loaded
+topreventfailuresandmaintainconsistency.Theframeworkis conventionsfromon-demandspecifications.
+publishedasanopen-sourcecompanionrepository. (2) Quantitativeevaluationacross283developmentses-
+sions,includinginfrastructuregrowthmetrics,interaction
+Keywords patterns(2,801humanprompts,1,197agentinvocations,
+AI-assistedsoftwaredevelopment,multi-agentsystems,context 16,522agentturns),andfourobservationalcasestudies.
+infrastructure,softwarearchitecture,agenticsoftwareengineering, (3) Anopen-sourceframeworkwithrepresentativeagent
+contextengineering specifications,anMCPretrievalserver,exampledocuments,
+factoryagentsforbootstrapping,andallanalysisscripts.
+1 Introduction
+2 RelatedWork
+AI coding agents such as GitHub Copilot, Cursor, and Claude
+2.1 AgenticCodingManifests
+Code[2]havereachedmillionsofdevelopers,andrecentworkdoc-
+umentsfullyagenticsystemscapableofplanning,executing,and Developershavebeguncreatingconfigurationfiles—variouslycalled
+iteratingoncomplexdevelopmenttasks[7,20].Thesetoolspossess CLAUDE.md,.cursorrules,orAGENTS.md—toprovideAIcoding
+broadprogrammingknowledge,buttheylackprojectmemory:each agentswithproject-specificinstructionsatthestartofeachses-
+sessionbeginswithoutawarenessofpriorsessions,establishedcon- sion.Severalempiricalstudiesnowcharacterizethesefiles.Among
+ventions,orpastmistakes.Consistentoutputforaspecificproject ClaudeCodeprojects,72.6%specifyapplicationarchitecture[22],
+requiresknowledgethatpersistsacrosssessions,yetsingle-fileman- andthepatterngeneralizesacross2,303filesspanningClaudeCode,
+ifests(.cursorrules,CLAUDE.md,AGENTS.md)donotscalebeyond Codex,andGitHubCopilot[4,5].Aclassificationofthetypesof
+modestcodebases[4,5,13,22]:a1,000-lineprototypecanbefully instructionsdevelopersincludehasbeendevelopedfrom401Cur-
+describedinasingleprompt,buta100,000-linesystemcannot.The sor repositories [13]. Adoption across the broader open-source
+AImustbetold—repeatedly,reliably,andinaformatitcanacton— ecosystemremainsearly—only∼5%of466surveyedrepositories
+howtheprojectworks,whatpatternstofollow,andwhatmistakes hadadoptedanycontextfileformat[18]—butamongprojectsthat
+toavoid.Structuredknowledgetransfertoagentsremainsalargely dousemanifests,quantitativeevidenceofeffectivenessisemerg-
+openinteractiondesignproblem[12].Thispaperaddressesthegap ing:thepresenceofAGENTS.mdfileswasassociatedwitha29%
+withacodifiedcontextinfrastructurethattreatsdocumentationas reductioninmedianruntimeand17%reductioninoutputtoken
+infrastructure—load-bearingartifactsthatAIagentsdependonto consumption[15].
+producecorrectoutput.Machine-readablespecificationdocuments, Thesestudiescharacterizewhatdeveloperswriteinmanifest
+availableondemand,allowagentstosimulatepersistentmemory files.Thepresentworkaddressesadifferentquestion:whathap-
+eveninacomplexcodebase. penswhenaproject’sknowledgeneedsoutgrowasinglefile?The
+Thearchitecturewasdevelopediterativelyduringconstruction projectdescribedherebeganwithamanifestsimilartothoseana-
+ofa108,000-lineC#distributedsystem(areal-timemultiplayer lyzedin[5,22]butevolvedintoatieredarchitecturetotalingap-
+simulationbuiltontheMonoGameframeworkandtheArchEntity proximately26,000lines—morethananorderofmagnitudebeyond
+6202
+beF
+42
+]ES.sc[
+1v87402.2062:viXra
+
+--- Page 2 ---
+
+AristidisVasilopoulos
+thetypicalmanifestscharacterizedinpriorstudies.Therecentlyre- Table1:RepresentativeOrchestrationTriggers
+leasedGoogleConductor[8]fortheGeminiCLIaddressesasimilar
+problemthroughpersistentMarkdownandastructuredspec-plan-
+Trigger Signal Agent
+implementworkflow.Thepresentwork,developedindependently
+Pre-change Network,sync network-protocol-designer
+andconcurrently,focusesonatieredknowledgeorganizationde-
+Pre-change Coordinates,camera coordinate-wizard
+signedtobeportableacrossagenticcodingtoolsratherthancoupled
+Pre-change Abilitiesend-to-end ability-designer
+toaspecificplatform.
+Post-change Architecture,design systems-designer
+Post-change ECSornetworkfiles code-reviewer-game-dev
+2.2 ContextEngineering,Multi-Agent
+Frameworks,andLLM-AssistedSoftware
+Engineering
+Integratedmulti-toolworkflowsforcontextengineeringinmulti-
+filecodegenerationhaveshownhighersuccessratesthansingle-
+agentsystems[9].AugmentingLLMswithcodifiedhumanexpert updatefrequency:hotmemory(theconstitution,alwaysloaded),
+domainknowledgeimprovesoutputqualityaswell[24].Theap- domainspecialists(agents,invokedpertask),andcoldmemory(the
+proachtakenherealignswiththeprinciplethatcodifieddomain knowledgebase,retrievedondemand).Recentworkhasproposed
+knowledgeimprovesagentoutput[24]butoperatesatprojectscale: treatingpromptsasengineeredsoftwareartifacts[6].Thearchitec-
+theknowledgebasetypicallycapturesproject-specificconventions, turepresentedheretakesthatideafurther:ratherthanengineering
+architecturaldecisions,andknownfailuremodesratherthangen- individualprompts,itengineersprojectknowledge.
+eraldomainexpertise.Contextengineeringhasbeenformalizedas Thetiersarenothermeticallysealed.Specializedagents(Tier2)
+adisciplinewithataxonomyoffoundationalcomponentsdrawn embedsubstantialproject-specificdomainknowledgedirectlyinto
+fromover1,400papers[17].AgenticContextEngineering(ACE) theirspecifications—oftenconstitutingoverhalfofagentcontent—
+treatscontextsas“evolvingplaybooks”refinedthroughagenerate- ratherthanrelyingsolelyonretrievalfromTier3.Thisintentional
+reflect-curatecycle[28].Thatworkalsoidentifiesabrevitybias—a overlapemergedfromtheobservationthatagentsoperatingin
+tendencyforiterativeoptimizationtocollapsetowardshort,generic complex,bug-pronedomainsproducedsignificantlymoreerrors
+prompts—whichisconsistentwiththefindingherethatspecialized withoutpre-loadedcontext,consistentwiththebrevitybiasphe-
+agentsrequiresubstantialembeddeddomainknowledgetoperform nomenon[28].Figure1illustratestherelationshipsbetweentiers.
+reliably(Section3.2).
+Multi-agent coordination frameworks such as AutoGen [26],
+3.1 Tier1:ProjectConstitution(HotMemory)
+ChatDev[19],andMetaGPT[11]addresshowagentscommunicate,
+howtasksaredividedintostages,andhowstandardproceduresare TheconstitutionisasingleMarkdownfile(∼660lines)loadedau-
+embeddedintoworkflows,respectively.Thecontributionhereis tomaticallyintoeveryAIsession.Itdefinescodequalitystandards,
+complementary:whilethoseframeworksdefinehowagentscoor- namingconventions,buildcommands,architecturalpatternsum-
+dinate,thefocushereisonstructuringtheknowledgethatagents marieswithreferencestodetailedspecificationsinTier3,checklists
+dependon.Arelatedbutdistinctapproachisembedding-based forcommonoperations,knownfailuremodes,andorchestration
+retrievaloverthecodebaseitself[23],asimplementedintoolslike protocolsthatroutetaskstospecializedagents.
+Cursor’scodebaseindexing.Thesesystemsindexcode;thecodified Thegoverningdesignconstraintisconciseness:theconstitution
+contextinfrastructureindexesknowledgeaboutcode—designintent, mustfitentirelyineverysessionwithoutexcessivecontextwindow
+constraints,andfailuremodesnotpresentinanysinglesourcefile. consumption.DetailedsubsystemdocumentationbelongsinTier3,
+BenchmarkeffortssuchasSWE-bench[14]andSWE-agent[27] referencedbylink.Theconstitutionanswers“whatrulesmustyou
+evaluateautonomousissueresolutiononisolatedtasks,whilethe alwaysfollow?”;Tier3answers“howdoessubsystemXworkin
+Confucius Code Agent [25] addresses cross-session persistence detail?”
+throughauto-generatednotesthatcaptureexecutiontraces.The
+presentworktargetssustained,human-directeddevelopment,where
+3.1.1 OrchestrationProtocols. Theconstitutionembedstriggerta-
+specifications especially encode architectural intent and design
+blesthatroutetaskstotheappropriatespecializedagent(Tier2)
+constraints.ThebroadertransitionfromcodecompletiontoLLM-
+basedonobservablesignals—primarilywhichfilesarebeingmodi-
+assistedsoftwareengineeringhaspromptedcallsforformalscaf-
+fied.
+folding,grounding,andtrustmechanisms[10,21];thetieredar-
+Automaticroutingremovestheburdenofthedeveloperremem-
+chitecturepresentedhereoffersoneconcreterealizationofthese
+beringwhichagenttoinvoke.Thetriggertableencodesinstitu-
+principles.
+tionalknowledgeaboutwhichdomainexpertiseeachfileareare-
+quires,addressingtheinter-agentmisalignmentandplanner-coder
+3 Architecture
+gapidentifiedinpriorwork[3,16].Routingcomplianceisrein-
+Codifiedcontextinfrastructureisdefinedhereasstructuredartifacts forcedbyredundantencoding:theconstitutionrequirestheor-
+writtenexplicitlyformachineconsumption—documentswhosepri- chestratortoconsultthetriggertablebeforechanges,andrequires
+maryaudienceisanAIagent,notadeveloper.Thearchitecture useofsuggest_agent(task_description)viatheMCPretrieval
+consistsofthreetiers,eachwithadistinctloadingstrategyand serverwhenexploringunfamiliarcode.
+
+--- Page 3 ---
+
+CodifiedContext:InfrastructureforAIAgentsinaComplexCodebase
+HumanPrompt Session Result
+queriedbasedoncontext MCPRetrieval find_relevant_context(task)
+keywordsearchoverspecs
+alwaysloaded suggest_agent(task)
+Tier1:Constitution Tier2:SpecialistAgent Tier3:KnowledgeBase
+hotmemory domainexperts coldmemory
+∼660lines 19agents·∼9,300lines 34docs·∼16,250lines
+consultsbeforechanges
+TriggerTable
+filepattern→agent
+Figure1:Three-tiercodifiedcontextinfrastructure.Ahumanpromptentersthesession,whichalwaysloadstheconstitution
+(Tier1,hotmemory).Specialistagents(Tier2)areinvokedpertaskviathetriggertable;theknowledgebase(Tier3,cold
+memory)isqueriedondemandthroughtheMCPretrievalservice.Decreasingfillintensityreflectsdecreasingloadfrequency.
+3.2 Tier2:SpecializedAgents Table2:RepresentativeAgentSpecificationsandCreation
+Triggers
+Nineteenagentspecificationfiles(Markdown,115–1,233lineseach,
+∼9,300linestotal)definedomain-expertpersonasforspecificar-
+easofthecodebase.Theagentssplitintotwocapabilityclasses:8 Agent Domain CreationTrigger
+higher-capabilityagents(∼5,700lines,averaging∼711lines/agent)
+network-protocol- Sync,determinism Recurringdesyncbugsneedingfull
+handlingcomplexdomainssuchasnetworking,architecture,and designer determinismre-explanation
+debugging,and11standard-capabilityagents(∼3,600lines,aver- coordinate-wizard Isometric,camera Persistent transform errors from
+aging∼327lines/agent)formorefocusedtasks.Eachspecification mixedcoordinatespaces
+declaresadomainscope,availabletoolsandpermissions(some code-reviewer- Post-changereview RegressionsinECSandnetworking
+game-dev afterunreviewedchanges
+agentsareread-onlyforsafety),relevantTier3documents,output
+level-designer Dungeonconfig,tiles Brainstorming partner for proce-
+formatexpectations,andcommondomainmistakes.
+duralleveldesign
+Agents function as domain-priming mechanisms: rich, struc- sprite-2d-artist Atlases,placeholders Complexpackingworkflowsacross
+turedcontextproducesmorereliableagentbehavior[11].Anet- heterogeneousspriteformats
+workingagentreviewingdamagesynchronizationcodecatches
+issues(missingclientprediction,incorrectauthoritychecks)that
+ageneral-purposesessionwouldmissbecausethespecification agentscreatedwerethenetwork-protocol-designerandcoordinate-
+primesitwithdomain-specificfailuremodes. wizard—thetwodomainswiththehighestdebugging-sessionfail-
+Knowledgeembedding.Intheagentsdevelopedforthisproject, urerates.Whenacategoryoftaskrepeatedlyrequiredre-explaining
+overhalfofeachspecification’scontentisproject-domainknowl- thesamedomainknowledge,thatknowledgewascodifiedintoan
+edge(codebasefacts,formulas,codepatterns,knownfailuremodes) agentspecification.Thepracticalheuristic:ifdebuggingapartic-
+ratherthanbehavioralinstructions(tools,permissions,outputfor- ulardomainconsumedanextendedsessionwithoutresolution,it
+mat).ThiscreatesintentionaloverlapwithTier3,drivenbythree wasfastertocreateaspecializedagentandrestartthetaskthanto
+factors.Complexdomainsrequirecompletementalmodels—the continuetheunguidedsession.Anabbreviatedagentspecification
+networkingagent(915lines,∼65%domainknowledge)embedsthe isprovidedinAppendixB.
+fulldeterminismtheorybecausepartialknowledgerisksdesynchro-
+nizationbugs.Agentsalsoaccumulatesymptom-cause-fixtables 3.3 Tier3:CodifiedContextBase(ColdMemory)
+distilledfromdebuggingsessions,codifyingknowledgetoprevent Theknowledgebasecomprises34Markdownfiles(∼16,250lines
+recurrence.Finally,somedomainsrequireapre-synthesizedview includingthe∼1,600-lineretrievalservice),eachdocumentingone
+spanningmultipleTier3documentsthatwouldotherwiserequire subsystem.Threedesigndecisionsgovernspecificationauthorship:
+4–5separateretrievals. documentsarewrittenforAIconsumption(explicitcodepatterns
+Emergencepattern.Agentcreationwastypicallydrivenby withfilepaths,parameternames,andexpectedbehavior);specifi-
+observed failure patterns rather than upfront design. The first cationsarelivingdocumentsgeneratedandupdatedbytheAIat
+thedeveloper’sdirection;andeachdocumentisscopedtoasingle
+subsystemtoenabletargetedretrieval.
+
+--- Page 4 ---
+
+AristidisVasilopoulos
+Specificationformat.Thefollowingabbreviatedexampleillus- Table3:ProjectandInfrastructureScale
+tratesthestructureofaknowledgebasedocument:
+Metric Value
+# Deterministic RNG Synchronization
+Developmentperiod 70days(part-time)
+## Core Mechanism
+Totalcommits 148
+CombatRng uses a deterministic hash:
+hash(seed, playerId, shotCounter) -> float [0,1) C#sourcefiles 405
+C#linesofcode 108,256
+## Correctness Pillars ECSsystems 45+
+| Pillar | Requirement |
+ECScomponents 55+
+|--------------|-----------------------------------|
+| Same seed | Distributed at game start | Networkmessagetypes 35+
+| Same counter | Incremented per shot, synced | Humanprompts 2,801
+| Same time | Use GetSyncedTime(), NOT local | Agentinvocations 1,197
+Agentturns 16,522
+## Known Failure Modes
+| Symptom | Cause | Fix | Developmentsessions 283
+|-----------------|----------------------|-----------------|
+ContextInfrastructure Files/Lines/%ofCode
+| Desync on crits | Using local time | GetSyncedTime() |
+| Inconsistent | Counter not synced | Sync shot count | T1:Constitution 1/∼660/0.6%
+T2:SpecializedAgents 19/∼9,300/8.6%
+Full-lengthexamplesareavailableinthecompanionrepository.
+T3:KnowledgeBase 34/∼16,250/15.0%
+3.3.1 KnowledgeRetrievalService. Theknowledgebaseisserved Totalcontext 54/∼26,200/24.2%
+throughaModelContextProtocol(MCP)[1]server(∼1,600lines
+Python)thatindexesspecificationsandprovidesfivesearchtools:
+120K Phase1 Phase2 Phase3
+• list_subsystems()
+• get_files_for_subsystem(key) 100K (a)
+• find_relevant_context(task) 80K
+• search_context_documents(query) 60K
+• suggest_agent(task) 40K
+The current implementation uses keyword substring matching;
+20K
+semanticretrievalisdiscussedinSection5.3.
+0
+4 Evaluation
+4.1 MethodologyandScope
+Thisisasystemspaperandexperiencereport,wheretheprimary
+contribution is the architecture rather than statistical evidence
+of effectiveness. The architectural description is complemented
+with:(a)quantitativemetricsoninfrastructurescaleandgrowth
+from the project’s Git history; (b) interaction metrics extracted
+fromconversationhistory;(c)fourobservationalcasestudies;and
+(d)qualitativeobservationsonmaintenancecostsandfailuremodes.
+Thecasestudiesdocumentinstanceswherecodifiedcontextwas
+retrievedandappliedacrosssessionswithobservableeffects.No
+causal relationships are claimed; confounding factors including
+developerexperiencegrowthcannotbeisolated.
+4.2 ScaleandGrowth
+Thearchitecturewasdevelopedinthecontextofareal-timedis-
+tributedsystembuiltacross283sessionsspanning70daysofpart-
+timedevelopment.
+Theknowledge-to-coderatioof24.2%reflectsthisproject’scom-
+plexityanddomain,notatargetorfinding.Amoreactionablesignal
+isagentbehavior:whenanagentproducesinconsistentoutputor
+seemsuncertainaboutadomain,therelevantspecificationislikely
+missingorstale.
+Thisfinal-statesnapshotdoesnotconveyhowtheinfrastruc-
+tureevolved.Figure2reconstructsthetrajectoryfromGithistory
+acrossthreephases:Phase1(days1–10)usedonlya∼100-linecon-
+stitution;Phase2(days11–30)sawtheemergenceofspecifications
+seniL C#LOC
+Knowledgeinfra.
+60 54
+(b) 50
+40
+30
+20
+10
+0
+1 10 20 30 40 50 57 70
+DevelopmentDay
+seliFtxetnoC T1:Const. T2:Agents T3:Docs
+Figure2:Infrastructuregrowthacrosseightmilestonesrecon-
+structedfromGithistory.(a)C#code(solid)andknowledge
+infrastructure(dashed)linesovertime,withthreedevelop-
+mentphasesasalternatingbackgroundbands.(b)Context
+filecountsbytier:constitution(T1,darkest),specialistagents
+(T2,medium),andknowledgebasedocuments(T3,lightest).
+andinitialagentsforhigh-failure-ratedomains;Phase3(days31–
+57)integratedtheMCPretrievalserviceandexpandedtheagent
+poolasnewdomainsrequiredspecialization.Rawmilestonedata
+isavailableinthecompanionrepository.
+4.3 InteractionMetrics
+Asessionisdefinedasasingleconversationinstancewiththeagen-
+ticcodingtool;the283sessionsspan70daysandconsistprimarily
+ofdevelopmentwork,withasmallerproportiondevotedtobrain-
+storming,debugging,andothermiscellaneoustasks.Interaction
+datawasextractedfrom1,457JSONLconversationhistoryfiles(a
+representativesnapshot;someearlyfileswerelostduringacache
+
+--- Page 5 ---
+
+CodifiedContext:InfrastructureforAIAgentsinaComplexCodebase
+cleanup,andagentchaindataisavailableonlyfora31-daywin- forUIstatemachines.Shopopen/closeeventsweresilentlydropped
+dowwithinthemeasurementperiod).Theextractionmethodology, underpacketloss,leavingclientswithphantomoverlays.Switching
+scripts,anddatasetschemaaredescribedinthecompanionreposi- toreliabledeliveryforallmessagesfixedthedropsbutintroduced
+tory. excessive bandwidth for cursor position updates sent at 60 Hz.
+Theinteractiondatasetcomprises2,801humanprompts,1,197 Thedevelopermanuallydiagnosedandcorrecteddeliverymode
+agentinvocations,and16,522autonomousagentturnsacrossthese assignmentsthroughmultipleiterations.
+sessions(19,323totalinteractions;∼9.9humanpromptsperses- Aftertheshopimplementationstabilized,thelessonswerecap-
+sion).Figure3illustratesthetypicalsessionworkflowsandretrieval tured in ui-sync-patterns.md (126 lines), documenting three
+patterns. routingtopologies,adeliverymodedecisiontree,andadualde-
+Theorchestrationprotocolssupportedtwomodes:structured liverypattern.Thespecificationwassubsequentlyreferencedin
+sessions (∼13%) following a plan-execute-review workflow (Fig- approximately10sessionsand25+agentconversations.Thenext
+ure3),andad-hocsessions(∼87%)involvingdirectimplementation networked UI feature (a radial selection dial) correctly applied
+ordebugging.Eachhumanpromptproducedapproximately6au- thedualdeliverypatternonthefirstimplementationattempt,fol-
+tonomousagentturnsthroughagent-to-agentchaining—comprising lowingthespecification’sdecisiontreedirectly.Thespecification
+fileexploration,toolcalls,planreview,andsubject-matteragent preventedtheAIfromre-derivingthroughtrial-and-errorwhatthe
+consultations.Of757classifiableagentinvocations,432(57%)were shopimplementationhadalreadyestablished.
+project-specificspecialistsdefinedinthecontextinfrastructureand
+4.4.3 CaseStudy3:DropSystem—KnowledgeGapDetection. When
+325werebuilt-intoolagents.Themostfrequentlyinvokedspe-
+refactoringtheequipmentsystemfromasingleitemtypetomulti-
+cialistswerethecodereviewer(154invocations)andthenetwork-
+plecomposabletypes,asearchfordropsystemdocumentationvia
+protocol-designer(85invocations),indicatingthattheprimaryuses
+theretrievalservicereturnedzeroresults—nospecificationexisted.
+oforchestrationwerequalitygatingandnetworkingcorrectness.
+Thenullresultwasitselfinformative:anentiresubsystemhadbeen
+Over80%ofhumanpromptswere100wordsorfewer,consistent
+builtwithouteverbeingdocumented,andthespecificationneeded
+withthehypothesisthatpre-loadedcontextreducestheneedfor
+tobecreatedbeforetherefactorcouldproceedsafely.
+in-promptexplanation.Meta-infrastructureprompts—buildingthe
+Ratherthanproceedingtocodechanges,thesessionfirstcre-
+knowledgearchitectureitself—accountedfor4.3%ofsubstantive
+ateddrop-system.mdbyreadingapproximatelytensourcefiles
+prompts,representingthedirectoverheadoftheapproach.
+todocumenttheexistingarchitecture,revealinglegacycodethat
+wouldneedtobeaddressedduringtherefactor.Thedeveloperthen
+4.4 CaseStudies
+usedthespecificationasadesigndocument,proposingchanges
+Thefollowingfourcasestudiesillustratedistinctrolesthatcodi- againstthenow-documentedcurrentstateandhavingtwospecial-
+fiedcontextplaysindevelopmentoutcomes.Caseswereselected istagentsreviewtheproposal.Therefactortouched14sourcefiles,
+for qualitative diversity, each illustrating a distinct mechanism afterwhichthespecificationwasupdatedandsubsequentlyrefer-
+(coordination,experiencecapture,gapdetection,domain-expert encedindozensoflatersessions.Theupfrontcostofdocumenting
+diagnosis).Theknowledgebasewasactivelyusedthroughoutde- thesubsystem—asinglesession—wasrepaidbythevelocityofev-
+velopment:1,478MCPretrievalcallsacross218sessions,with194 erysubsequentinteraction:agentsworkingonloot,equipment,or
+agentconversationsexplicitlyreadingknowledgebasedocuments. inventoryfeaturescouldretrievethedropsystem’sarchitecture
+ondemandratherthanre-readingsourcefilesorreceivingman-
+4.4.1 CaseStudy1:SaveSystem—CodifiedContextasCoordination ualexplanation.Maintainingarobustknowledgebaseconvertsa
+Document. Theproject’ssavesystemusesatwo-tierarchitecture:a one-timedocumentationeffortintoapersistentaccelerationofall
+disktierforpermanentplayerdataandamemorytierfortemporary downstreamwork.
+state during level transitions. Writing to the wrong tier causes
+subtledatacorruption—temporarybuffspersistingpermanently, 4.4.4 CaseStudy4:DeterministicRNG—AgentDomainKnowledge
+orgoldrewardslostonrestart.Thesave-system.mdspecification inCollaborativeDebugging. Theprojectusesadeterministicran-
+(283lines,Tier3)documentsthetwo-tierarchitecture,autosave
+domnumbergenerator(CombatRng)toensurethathostandclient
+triggerpoints,thegoldcheckpoint/rollbackmechanism,anddata computeidenticaloutcomesforthesamegameevent.Ifanyinput
+flowbetweengamestates. tothehashfunctiondivergesbetweenmachines,playersseediffer-
+Thiswasthemost-referencedspecificationintheproject,ap- entresults—adesynchronizationbugthatisdifficulttodiagnose
+pearingin74sessionsand12agentconversations.Fivesubsequent becauseeachmachine’soutputappearslocallycorrect.
+featurestouchingpersistence—includinganitemsystemoverhaul,a Atimesynchronizationrefactor,replacinglocaltimestampswith
+tokenupgradesystem,andshoprefactoring—wereimplementedby network-reconciledtimeacross12sourcefiles,introducedade-
+agentswithaccesstothisspecification,andthetwo-tierpatternwas terminism failure. The debugging session spanned five context
+consistentlyappliedcorrectly.Coordinationacross74independent windowexhaustionsand84codeedits,withthebugpeelingback
+sessionsoverfourweeksproducednosave-relatedbugs.
+instages.Thenetwork-protocol-designeragentwasinvoked
+atinflectionpointsafterthedeveloperhadnarrowedtheproblem
+4.4.2 CaseStudy2:UISyncRouting—CodifiedContextasCaptured spacethroughdebugloganalysis.Theagent’sspecification(∼915
+Experience. Theshopsynchronizationsystem,implementedbefore lines)embedstheproject’sdeterminismtheory:correctnesspillars,
+anynetworkingUIspecificationexisted,appliedunreliabledelivery hashfunctionconstraints,andknownnumericaledgecases.Draw-
+uniformly—reasonableforhigh-frequencygamestate,butincorrect ingonthisembeddedknowledge,theagentidentifiedthreeissues
+
+--- Page 6 ---
+
+AristidisVasilopoulos
+HumanPrompt
+Session+T1Constitution
+alwaysloaded:conventions,triggertables
+ad-hoc(∼87%) structured(∼13%)
+T2:Specialist PlanAgent
+optional surfacesspecs
+feedback
+T2:Specialist query T3:KnowledgeBase
+implementstask MCPretrieval
+Result Result
+ReviewAgent ReviewedResult
+optional
+Figure3:Typicalsessionworkflowsfordevelopmenttasks.Apromptentersthesessionwiththealways-loadedconstitution
+(Tier1).Ad-hocsessions(∼87%)producearesultdirectlyoroptionallyinvokeaspecialistagent;structuredsessions(∼13%)
+followamodifiedplan-execute-reviewcyclewithspecialistagents(Tier2)andknowledgebaseretrieval(Tier3).Knowledge
+baseretrievalisavailableinbothmodesbutshownonlyonthestructuredpath.Dashedarrowsindicateoptionalsteps.
+thathadeludedfivepriorattempts:aguardclausethatsilently subsystemacceleratesnotonlyitsownfuturemodificationsbut
+failedundernormalconditions,twointernalclocksupdatingat everyadjacentfeaturethatdependsonit.
+differentrates,andasignerrorintheclockcorrectionformula.The
+agentconcludedthatusingtimeasaninputtothecombatRNG 5.1 GuidelinesforPractitioners
+hashwasfundamentallycounterproductive—smalltimingdiscrep-
+Figure4summarizeskeypracticalguidelinesdistilledfromthis
+anciesbetweenhostandclientwouldalwaysriskdivergenthash
+project.Forexample:starttheconstitutionearly—evenaminimal
+outputs.Replacingthetime-bucketparameterwithasynchronized
+file stating project objectives, tech stack, and core conventions
+shotcounterresolvedthebug,arecommendationthatrequired
+preventsanentireclassofAImistakesfromdayone;andwrite
+understandingofhashsensitivitytotiminggranularitypre-loaded
+specificationsfortheagent,notforhumans,withfilepaths,func-
+inthespecificationratherthanderivedduringthesession.
+tionnames,andexplicit“dothis/don’tdothis”instructions.Two
+furtherguidelinesaddressmaintenance:treatspecificationsasload-
+bearing,becauseagentstrustdocumentationabsolutelyandout-
+5 Discussion of-datespecscausesilentfailures;andmonitoragentconfusion
+asadiagnosticsignalthattherelevantspecificationismissingor
+Acrossthedevelopmentperiod,AIautomationconsistentlyelimi-
+stale.Factoryagentsforbootstrappingeachtierareprovidedinthe
+natedtedium(implementation,rendering,wiring)butnotjudgment
+companionrepository.
+(design decisions, aesthetic evaluation, architecture). Single-file
+manifestssupportthisdivisionoflaborearlyon,butasaproject
+5.2 MaintenanceCost
+growsincomplexity,agentslosecoherenceandthedeveloperis
+increasingly pulled back into resolving routine implementation Inpractice,specificationupdateswereperformedinthesameses-
+errorsthattheagentshouldbehandling.Thecontextinfrastruc- sionascodechanges—typicallyoneortwopromptsdirectingthe
+turepreservesthisdivisionatscale:persistent,machine-readable AI to update the relevant document, adding roughly 5 minutes
+specificationskeepagentsproducingcorrect,convention-adherent per session when a specification was affected. This per-session
+codeevenasthecodebasegrows,freeingthedevelopertoremain overheadwassupplementedbyabiweeklyreviewpassacrossall
+focusedondesignandjudgment.Experienceddeveloperswould contextdocuments,eachtakingapproximately30–45minutes.To-
+likelyderivedifferentvaluefromthearchitecture:lessinprevent- talmaintenanceoverheadaveragedapproximately1–2hoursper
+ingbasicmistakes,moreinmaintainingconsistencyacrossacode- week.
+basetoolargeforanysinglepersontoholdinworkingmemory. Specification staleness was the primary failure mode. When
+Well-maintainedprojectknowledgecompounds:eachdocumented asubsystem’simplementationchanges,itsspecificationmustbe
+
+--- Page 7 ---
+
+CodifiedContext:InfrastructureforAIAgentsinaComplexCodebase
+G1 Abasicconstitutiondoesheavy G2 Lettheplannergathercontext G3 Routeautomaticallyorforget
+lifting constantly
+Statingprojectobjectives,techstack,and Runningaplanningagentbeforeimple- Humanmemorydoesn’tscale.Triggertables
+coreconventionsissufficienttodramatically mentationautomaticallysurfaceswhich andsearchconventionsencodewhichexper-
+improveagentoutputfromdayone. specificationsandspecialistsataskrequires. tiseeachfilearearequires.
+G4 Ifyouexplainedittwice,write G5 Whenindoubt,createanagent G6 Stalespecsmisleadefforts
+itdown andrestart
+Repeatedexplanationofdomainknowledge Buildingaspecialistwithembeddeddomain Agentstrustdocumentation,andout-of-
+acrosssessionsisasignaltocodifyitasa knowledgecanresolveproblemsthatstall datespecscanmisleadsessionsandleadto
+specification. unguidedsessions. silentfailures.
+Figure4:Practitionerguidelinesforusingacodifiedcontextinfrastructure.
+updatedortheAIwillgeneratecodebasedonstaleinformation.On Futuredirections.Controlledbenchmarking—measuringtask
+atleasttwooccasions,outdatedcontextdocumentscausedagentsto completionratesanderrorrateswithandwithouteacharchitecture
+generatecodethatconflictedwithrecentrefactors.Inoneinstance, tier—isthemostimmediatepriority.Thedriftdetectorcouldbe
+acombatspecificationreferencedlegacystatfieldsthathadbeen extendedwithsemanticdiffanalysistodetectwhenspecification
+migratedtoacomputedstatssystem,causingtheagenttowire contentcontradictschangedcode.Replacingkeywordmatching
+damagecalculationsthroughadeprecatedpath.Bothissueswere withembedding-basedretrieval[23]wouldimproveprecisionat
+caughtduringthesamesessionbutrequiredmanualdiagnosis—the scale.Multi-projectandteam-scaleevaluationswouldassesstrans-
+agent’soutputappearedsyntacticallycorrect,andtheerrorsonly ferabilityandwhethersharedcontextinfrastructurereduceson-
+surfacedduringtesting. boardingtime.Longitudinalstudyofhowtheknowledge-to-code
+Acontextdriftdetector(Python,session-starthook),included ratioevolveswouldclarifywhetheritstabilizes,grows,orrequires
+inthecompanionrepository,partiallyautomatesthisprocessby periodicpruning.Factoryagentsforbootstrappingthearchitecture
+parsingrecentGitcommitsagainsttheretrievalservice’ssubsystem- onnewprojectsareincludedinthecompanionrepository.
+to-filemappingandinjectingawarningintosessioncontextwhen
+sourcefileschangewithoutcorrespondingspecificationupdates.
+6 Conclusion
+Thecoreinsightofthisworkisthatstructuredaccesstoproject-
+5.3 ThreatstoValidityandFutureWork
+specificknowledgecansubstantiallyimprovetheconsistencyof
+Single-developer,single-projectevaluation.Thearchitecture AI-generatedcode,andthatthisknowledgecanbeorganizedinto
+wasdevelopedbyasingledeveloperonasingleproject;itseffective- distincttierswithdifferentloadingstrategiesandupdatefrequen-
+nessinteamsettings,otherprojecttypes,orlargerscaleshasnot cies.Thetieredarchitecturepresentedhere—ahot-memorycon-
+beenevaluated.Thearchitecturemaybenefitteamenvironments: stitution,specializeddomain-expertagents,andacold-memory
+agents and orchestrators informed by up-to-date specifications knowledgebase—treatsprojectdocumentationasinfrastructure
+wouldbeawareofrecentchangesacrossthecodebasewithoutre- ratherthanartifact:livingspecificationsthatAIagentsdependon
+quiringexplicitcommunicationbetweenteammembers.Itisworth toproducecorrect,convention-adherentcode.Thisarchitecture
+notingthattheprojectdomain(real-timedistributedsimulation) supported a single developer in constructing a 108,000-line dis-
+demandsmoreextensivedocumentationthanmanyapplication tributedsysteminunder70daysofpart-timedevelopmentusing
+types,whichmaylimitgeneralizabilitytosimplerprojects. AIagentsasthesolecode-generationtool.
+Observationalmethodology.Theevaluationreliesonobserva- Thecasestudiesillustratefourdistinctmechanismsbywhich
+tionalcasestudies,notcontrolledexperiments.Itisnotpossibleto codifiedcontextimprovesdevelopmentoutcomes:specifications
+quantifywithstatisticalrigorhowmuchthearchitectureimproved asinter-sessioncoordinationdocumentsenabling74sessionsof
+developmentspeedorcodequality.Thebefore/aftercomparisons consistentpersistencebehavior(CaseStudy1),capturedexperience
+inCaseStudies2and3reflectobservedchangesovertime,not preventingrepeatedtrial-and-erroracross10+subsequentsessions
+randomizedtrials. (CaseStudy2),documentationasaninvestmentthatconvertsone-
+Tool-specificimplementation.TheimplementationusesClaude timeeffortintopersistentdevelopmentvelocity(CaseStudy3),and
+CodewithMCPsupport.Thearchitecturalprinciples(tieredknowl- embeddeddomainknowledgeenablingcollaborativedebuggingof
+edgeorganization,hot/coldseparation,domain-specialistrouting) subtlecross-cuttingbugs(CaseStudy4).
+applytoanyagenticcodingtoolthatsupportssession-startconfig- ThecontextinfrastructureitselfcanbeAI-generatedunderhu-
+urationandon-demandretrieval,butthespecificimplementationis man architectural direction—the human’s role is designing the
+tiedtoonetool’secosystem.Transferabilityhasnotbeenevaluated. knowledgestructureanddecidingwhattocapture.AsAIcoding
+
+--- Page 8 ---
+
+AristidisVasilopoulos
+agentsbecomemorecapable,thisarchitectureisparticularlyrel- [17] L.Mei,J.Yao,Y.Ge,Y.Wang,B.Bi,Y.Cai,J.Liu,M.Li,Z.-Z.Li,D.Zhang,C.
+evanttodomainexpertsbuildingsoftwarebeyondtheirprimary Zhou,J.Mao,T.Xia,J.Guo,andS.Liu.2025.ASurveyofContextEngineering
+forLargeLanguageModels.arXivpreprintarXiv:2507.13334(2025).
+expertise,wherecodifiedcontextcompensatesforgapsinengineer-
+[18] S.Mohsenimofidi,M.Galster,C.Treude,andS.Baltes.2025.ContextEngineering
+ingexperience.Theauthoriscurrentlyapplyingtheframeworkto forAIAgentsinOpen-SourceSoftware.arXivpreprintarXiv:2510.21413(2025).
+adrugdiscoveryprojectasaninitialtestofcross-domaintransfer- [19] C.Qian,W.Liu,H.Liu,N.Chen,Y.Dang,J.Li,C.Yang,W.Chen,Y.Su,X.Cong,
+J.Xu,D.Li,Z.Liu,andM.Sun.2023. ChatDev:CommunicativeAgentsfor
+ability. SoftwareDevelopment.arXivpreprintarXiv:2307.07924(2023).
+The companion framework repository is available at https:// [20] R.Robbes,T.Matricon,T.Degueule,A.Hora,andS.Zacchiroli.2026.Agentic
+Much?AdoptionofCodingAgentsonGitHub.arXivpreprintarXiv:2601.18341
+github.com/arisvas4/codified-context-infrastructure,includingrep-
+(2026).
+resentativeagentspecifications,theMCPretrievalserver,example [21] A.Roychoudhury,C.Pasareanu,M.Pradel,andB.Ray.2025.AgenticAISoftware
+constitutionandknowledgebasedocuments,threefactoryagents Engineers:ProgrammingwithTrust.arXivpreprintarXiv:2502.13767(2025).
+[22] H.V.F.Santos,V.Costa,J.E.Montandon,andM.T.Valente.2025.Decodingthe
+forbootstrappingthearchitectureinnewprojects,andallprompt
+ConfigurationofAICodingAgents:InsightsfromClaudeCodeProjects.arXiv
+classificationscriptsreferencedinthispaper. preprintarXiv:2511.09268(2025).
+[23] Y.Tao,Y.Qin,andY.Liu.2025.Retrieval-AugmentedCodeGeneration:ASurvey
+withFocusonRepository-LevelApproaches.arXivpreprintarXiv:2510.04905
+Acknowledgments (2025).
+[24] C.Ulanuulu,M.Kulyabin,I.Fuhrmann,J.Joosten,N.M.M.Pacheco,F.Petridis,R.
+Thisworkwasconductedindependentlywithnoexternalfunding. Johnson,J.Bosch,andH.H.Olsson.2026.HowtoBuildAIAgentsbyAugmenting
+AninitialdraftwaspreparedwithAIassistanceandsubsequently LLMswithCodifiedHumanExpertDomainKnowledge?ASoftwareEngineering
+Framework.arXivpreprintarXiv:2601.15153(2026).
+revised,restructured,andverifiedbytheauthor.
+[25] S.Wong,Z.Qi,Z.Wang,N.Hu,S.Lin,J.Ge,E.Gao,W.Chen,Y.Du,M.Yu,andY.
+Zhang.2025.ConfuciusCodeAgent:ScalableAgentScaffoldingforReal-World
+References Codebases.arXivpreprintarXiv:2512.10398(2025).
+[26] Q.Wu,G.Bansal,J.Zhang,Y.Wu,B.Li,E.Zhu,L.Jiang,X.Zhang,S.Zhang,
+[1] Anthropic.2025.ModelContextProtocol(MCP).https://modelcontextprotocol. J.Liu,A.H.Awadallah,R.W.White,D.Burger,andC.Wang.2023.AutoGen:
+io/. AccessedFebruary2026. EnablingNext-GenLLMApplicationsviaMulti-AgentConversation. arXiv
+[2] Anthropic.2026.ClaudeCode.https://docs.anthropic.com/en/docs/claude-code. preprintarXiv:2308.08155(2023).
+AccessedFebruary2026. [27] J.Yang,C.E.Jimenez,A.Wettig,K.Lieret,S.Yao,K.Narasimhan,andO.Press.
+[3] M.Cemri,M.Z.Pan,S.Yang,L.A.Agrawal,B.Chopra,R.Tiwari,K.Keutzer,A. 2024.SWE-agent:Agent-ComputerInterfacesEnableAutomatedSoftwareEngi-
+Parameswaran,D.Klein,K.Ramchandran,M.Zaharia,J.E.Gonzalez,andI.Stoica. neering.arXivpreprintarXiv:2405.15793(2024).
+2025.WhyDoMulti-AgentLLMSystemsFail?arXivpreprintarXiv:2503.13657 [28] Q.Zhang,C.Hu,S.Upasani,B.Ma,F.Hong,V.Kamanuru,J.Rainton,C.Wu,M.
+(2025). Ji,H.Li,U.Thakker,J.Zou,andK.Olukotun.2026.AgenticContextEngineering:
+[4] W.Chatlatanagulchai,H.Li,Y.Kashiwa,B.Reid,K.Thonglek,P.Leelaprute, EvolvingContextsforSelf-ImprovingLanguageModels.InProceedingsofICLR.
+A.Rungsawang,B.Manaskasemsak,B.Adams,A.E.Hassan,andH.Iida.2025. arXiv:2510.04618.
+AgentREADMEs:AnEmpiricalStudyofContextFilesforAgenticCoding.arXiv
+preprintarXiv:2511.12884(2025).
+A TierStatistics
+[5] W.Chatlatanagulchai,K.Thonglek,B.Reid,Y.Kashiwa,P.Leelaprute,A.Rung-
+sawang,B.Manaskasemsak,andH.Iida.2025.OntheUseofAgenticCoding TheagentspecializationtableisprovidedinSection3.2.Thefollow-
+Manifests:AnEmpiricalStudyofClaudeCode.arXivpreprintarXiv:2509.14744
+(2025). ingtablesummarizesthefivelargestknowledgebasedocuments
+[6] Z.Chen,C.Wang,W.Sun,X.Liu,J.M.Zhang,andY.Liu.2025.Promptware (Tier3).
+Engineering:SoftwareEngineeringforPrompt-EnabledSystems.arXivpreprint
+arXiv:2503.02400(2025).
+Table4:KnowledgeBaseDocuments(Tier3)—Top5bySize
+[7] Y.Dong,X.Jiang,J.Qian,T.Wang,K.Zhang,Z.Jin,andG.Li.2025.ASurvey
+onCodeGenerationwithLLM-basedAgents.arXivpreprintarXiv:2508.00083
+(2025).
+[8] Google.2026.Conductor:IntroducingContext-DrivenDevelopmentforGemini Document Subsystem Lines
+CLI.GoogleDevelopersBlog. https://developers.googleblog.com/conductor-
+introducing-context-driven-development-for-gemini-cli/.AccessedFebruary dungeon-generation.md Proceduralgeneration ∼1,286
+2026. hud-blueprint.md HUDlayout ∼1,134
+[9] M. Haseeb. 2025. Context Engineering for Multi-Agent LLM Code Assis- enemy-combat-system.md Enemyattacks ∼779
+tantsUsingElicit,NotebookLM,ChatGPT,andClaudeCode. arXivpreprint
+boss-fight-framework.md Bossencounters ∼722
+arXiv:2508.08322(2025).
+[10] A.E.Hassan,H.Li,D.Lin,B.Adams,T.-H.Chen,Y.Kashiwa,andD.Qiu.2025. architecture.md Corearchitecture ∼690
+AgenticSoftwareEngineering:FoundationalPillarsandaResearchRoadmap.
+arXivpreprintarXiv:2509.06216(2025).
+[11] S.Hong,M.Zhuge,J.Chen,X.Zheng,Y.Cheng,C.Zhang,J.Wang,Z.Wang,
+S.K.S.Yau,Z.Lin,L.Zhou,C.Ran,L.Xiao,C.Wu,andJ.Schmidhuber.2023. B ExampleAgentSpecification
+MetaGPT:MetaProgrammingforaMulti-AgentCollaborativeFramework.arXiv
+preprintarXiv:2308.00352(2023). Thefollowingisanabbreviatedspecificationforthecoordinate-
+[12] R.Huang,A.Reyna,S.Lerner,H.Xia,andB.Hempel.2025.ProfessionalSoftware wizardagent,aread-onlydiagnosticagentforcoordinatetransform
+DevelopersDon’tVibe,TheyControl:AIAgentUseforCodingin2025.arXiv
+debugging.
+preprintarXiv:2512.14012(2025).
+[13] S.JiangandD.Nam.2025.BeyondthePrompt:AnEmpiricalStudyofCursor
+Rules.arXivpreprintarXiv:2512.18925(2025). ---
+[14] C.E.Jimenez,J.Yang,A.Wettig,S.Yao,K.Pei,O.Press,andK.Narasimhan. name: coordinate-wizard
+2024.SWE-bench:CanLanguageModelsResolveReal-WorldGitHubIssues?.In description: Isometric coordinate and camera
+ProceedingsofICLR. arXiv:2310.06770.
+transform specialist.
+[15] J.L.Lulla,S.Mohsenimofidi,M.Galster,J.M.Zhang,S.Baltes,andC.Treude.
+2026.OntheImpactofAGENTS.mdFilesontheEfficiencyofAICodingAgents. tools: Read, Grep, Glob, Bash,
+arXivpreprintarXiv:2601.20404(2026). mcp__context7__get_files_for_subsystem,
+[16] Z.Lyu,S.Chen,Z.Ji,L.Wang,S.Wang,D.Wu,W.Wang,andS.-C.Cheung. mcp__context7__search_context_documents
+2025.UnderstandingandBridgingthePlanner-CoderGap:ASystematicStudy
+model: higher-capability
+ontheRobustnessofMulti-AgentSystemsforCodeGeneration.arXivpreprint
+arXiv:2510.10460(2025). ---
+
+--- Page 9 ---
+
+CodifiedContext:InfrastructureforAIAgentsinaComplexCodebase
+## COMMON BUG PATTERNS
+**This agent is READ-ONLY for diagnostics.**
+Symptom Cause Fix
+# COORDINATE SPACES ——————–----------------------—————-
+Wrong position No IsoCorrection Add correction
+Space Description Use Wrong click target No inverse transform Use ScreenTo..
+————--------------------------—————- Resolution offset Physical screen ctr VirtualToPhys
+World Rect grid (0,0=top-left) Positions
+Grid Integer tile indices Tilemap Abbreviatedfromthefull328-linespecification.Thecompletever-
+Isometric 2:1 dimetric projection Rendering sionincludesrenderingpatterns,conversionformulas,mousepicking
+Virtual 1920x1080 fixed Camera, UI chains,depthsorting,anddebuggingworkflows.Seethecompanion
+Physical Actual display pixels Final render
+repositoryforotherfullexamples.

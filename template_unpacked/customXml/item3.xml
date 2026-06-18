@@ -1,0 +1,145 @@
+<?xml version="1.0"?><ct:contentTypeSchema xmlns:ct="http://schemas.microsoft.com/office/2006/metadata/contentType" xmlns:ma="http://schemas.microsoft.com/office/2006/metadata/properties/metaAttributes" ma:contentTypeID="0x010100C161C50E44759E4297EA05F0A491F1EC" ma:contentTypeScope="" ma:versionID="fef064a8201841615783b557acebeb12" ct:_="" ma:contentTypeVersion="2" ma:_="" ma:contentTypeDescription="新建文档。" ma:contentTypeName="文档">
+ <xsd:schema xmlns:ns2="6b9039f9-e4bd-49da-8f15-513216916e51" ns2:_="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:p="http://schemas.microsoft.com/office/2006/metadata/properties" ma:root="true" targetNamespace="http://schemas.microsoft.com/office/2006/metadata/properties" ma:fieldsID="851d7b4f8f9531f821e2c3978f19bebb">
+  <xsd:import namespace="6b9039f9-e4bd-49da-8f15-513216916e51"/>
+  <xsd:element name="properties">
+   <xsd:complexType>
+    <xsd:sequence>
+     <xsd:element name="documentManagement">
+      <xsd:complexType>
+       <xsd:all>
+        <xsd:element ref="ns2:SharedWithUsers" minOccurs="0"/>
+        <xsd:element ref="ns2:SharedWithDetails" minOccurs="0"/>
+       </xsd:all>
+      </xsd:complexType>
+     </xsd:element>
+    </xsd:sequence>
+   </xsd:complexType>
+  </xsd:element>
+ </xsd:schema>
+ <xsd:schema elementFormDefault="qualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="6b9039f9-e4bd-49da-8f15-513216916e51" xmlns:dms="http://schemas.microsoft.com/office/2006/documentManagement/types" xmlns:pc="http://schemas.microsoft.com/office/infopath/2007/PartnerControls">
+  <xsd:import namespace="http://schemas.microsoft.com/office/2006/documentManagement/types"/>
+  <xsd:import namespace="http://schemas.microsoft.com/office/infopath/2007/PartnerControls"/>
+  <xsd:element ma:displayName="共享对象:" ma:internalName="SharedWithUsers" name="SharedWithUsers" nillable="true" ma:index="8" ma:readOnly="true">
+   <xsd:complexType>
+    <xsd:complexContent>
+     <xsd:extension base="dms:UserMulti">
+      <xsd:sequence>
+       <xsd:element maxOccurs="unbounded" minOccurs="0" name="UserInfo">
+        <xsd:complexType>
+         <xsd:sequence>
+          <xsd:element type="xsd:string" minOccurs="0" name="DisplayName"/>
+          <xsd:element type="dms:UserId" minOccurs="0" name="AccountId" nillable="true"/>
+          <xsd:element type="xsd:string" minOccurs="0" name="AccountType"/>
+         </xsd:sequence>
+        </xsd:complexType>
+       </xsd:element>
+      </xsd:sequence>
+     </xsd:extension>
+    </xsd:complexContent>
+   </xsd:complexType>
+  </xsd:element>
+  <xsd:element ma:displayName="共享对象详细信息" ma:internalName="SharedWithDetails" name="SharedWithDetails" nillable="true" ma:index="9" ma:readOnly="true">
+   <xsd:simpleType>
+    <xsd:restriction base="dms:Note">
+     <xsd:maxLength value="255"/>
+    </xsd:restriction>
+   </xsd:simpleType>
+  </xsd:element>
+ </xsd:schema>
+ <xsd:schema elementFormDefault="qualified" xmlns="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" targetNamespace="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" attributeFormDefault="unqualified" xmlns:odoc="http://schemas.microsoft.com/internal/obd" blockDefault="#all" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/">
+  <xsd:import schemaLocation="http://dublincore.org/schemas/xmls/qdc/2003/04/02/dc.xsd" namespace="http://purl.org/dc/elements/1.1/"/>
+  <xsd:import schemaLocation="http://dublincore.org/schemas/xmls/qdc/2003/04/02/dcterms.xsd" namespace="http://purl.org/dc/terms/"/>
+  <xsd:element type="CT_coreProperties" name="coreProperties"/>
+  <xsd:complexType name="CT_coreProperties">
+   <xsd:all>
+    <xsd:element ref="dc:creator" maxOccurs="1" minOccurs="0"/>
+    <xsd:element ref="dcterms:created" maxOccurs="1" minOccurs="0"/>
+    <xsd:element ref="dc:identifier" maxOccurs="1" minOccurs="0"/>
+    <xsd:element type="xsd:string" ma:displayName="内容类型" maxOccurs="1" minOccurs="0" name="contentType" ma:index="0"/>
+    <xsd:element ref="dc:title" ma:displayName="标题" maxOccurs="1" minOccurs="0" ma:index="4"/>
+    <xsd:element ref="dc:subject" maxOccurs="1" minOccurs="0"/>
+    <xsd:element ref="dc:description" maxOccurs="1" minOccurs="0"/>
+    <xsd:element type="xsd:string" maxOccurs="1" minOccurs="0" name="keywords"/>
+    <xsd:element ref="dc:language" maxOccurs="1" minOccurs="0"/>
+    <xsd:element type="xsd:string" maxOccurs="1" minOccurs="0" name="category"/>
+    <xsd:element type="xsd:string" maxOccurs="1" minOccurs="0" name="version"/>
+    <xsd:element type="xsd:string" maxOccurs="1" minOccurs="0" name="revision">
+     <xsd:annotation>
+      <xsd:documentation>
+                        This value indicates the number of saves or revisions. The application is responsible for updating this value after each revision.
+                    </xsd:documentation>
+     </xsd:annotation>
+    </xsd:element>
+    <xsd:element type="xsd:string" maxOccurs="1" minOccurs="0" name="lastModifiedBy"/>
+    <xsd:element ref="dcterms:modified" maxOccurs="1" minOccurs="0"/>
+    <xsd:element type="xsd:string" maxOccurs="1" minOccurs="0" name="contentStatus"/>
+   </xsd:all>
+  </xsd:complexType>
+ </xsd:schema>
+ <xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://schemas.microsoft.com/office/infopath/2007/PartnerControls" attributeFormDefault="unqualified" xmlns:pc="http://schemas.microsoft.com/office/infopath/2007/PartnerControls">
+  <xs:element name="Person">
+   <xs:complexType>
+    <xs:sequence>
+     <xs:element ref="pc:DisplayName" minOccurs="0"/>
+     <xs:element ref="pc:AccountId" minOccurs="0"/>
+     <xs:element ref="pc:AccountType" minOccurs="0"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+  <xs:element type="xs:string" name="DisplayName"/>
+  <xs:element type="xs:string" name="AccountId"/>
+  <xs:element type="xs:string" name="AccountType"/>
+  <xs:element name="BDCAssociatedEntity">
+   <xs:complexType>
+    <xs:sequence>
+     <xs:element ref="pc:BDCEntity" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute ref="pc:EntityNamespace"/>
+    <xs:attribute ref="pc:EntityName"/>
+    <xs:attribute ref="pc:SystemInstanceName"/>
+    <xs:attribute ref="pc:AssociationName"/>
+   </xs:complexType>
+  </xs:element>
+  <xs:attribute type="xs:string" name="EntityNamespace"/>
+  <xs:attribute type="xs:string" name="EntityName"/>
+  <xs:attribute type="xs:string" name="SystemInstanceName"/>
+  <xs:attribute type="xs:string" name="AssociationName"/>
+  <xs:element name="BDCEntity">
+   <xs:complexType>
+    <xs:sequence>
+     <xs:element ref="pc:EntityDisplayName" minOccurs="0"/>
+     <xs:element ref="pc:EntityInstanceReference" minOccurs="0"/>
+     <xs:element ref="pc:EntityId1" minOccurs="0"/>
+     <xs:element ref="pc:EntityId2" minOccurs="0"/>
+     <xs:element ref="pc:EntityId3" minOccurs="0"/>
+     <xs:element ref="pc:EntityId4" minOccurs="0"/>
+     <xs:element ref="pc:EntityId5" minOccurs="0"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+  <xs:element type="xs:string" name="EntityDisplayName"/>
+  <xs:element type="xs:string" name="EntityInstanceReference"/>
+  <xs:element type="xs:string" name="EntityId1"/>
+  <xs:element type="xs:string" name="EntityId2"/>
+  <xs:element type="xs:string" name="EntityId3"/>
+  <xs:element type="xs:string" name="EntityId4"/>
+  <xs:element type="xs:string" name="EntityId5"/>
+  <xs:element name="Terms">
+   <xs:complexType>
+    <xs:sequence>
+     <xs:element ref="pc:TermInfo" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+  <xs:element name="TermInfo">
+   <xs:complexType>
+    <xs:sequence>
+     <xs:element ref="pc:TermName" minOccurs="0"/>
+     <xs:element ref="pc:TermId" minOccurs="0"/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:element>
+  <xs:element type="xs:string" name="TermName"/>
+  <xs:element type="xs:string" name="TermId"/>
+ </xs:schema>
+</ct:contentTypeSchema>

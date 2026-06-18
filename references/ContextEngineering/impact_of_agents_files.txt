@@ -1,0 +1,354 @@
+
+
+--- Page 1 ---
+
+On the Impact of AGENTS.md Files on the Efficiency of
+AI Coding Agents
+JaiLalLulla SeyedmoeinMohsenimofidi MatthiasGalster
+SingaporeManagementUniversity HeidelbergUniversity UniversityofBamberg
+Singapore,Singapore Heidelberg,Germany Bamberg,Germany
+jailal.l.2025@phdcs.smu.edu.sg s.mohsenimofidi@uni-heidelberg.de mgalster@ieee.org
+JieM.Zhang SebastianBaltes ChristophTreude
+King’sCollegeLondon HeidelbergUniversity SingaporeManagementUniversity
+London,UnitedKingdom Heidelberg,Germany Singapore,Singapore
+jie.zhang@kcl.ac.uk sebastian.baltes@uni-heidelberg.de ctreude@smu.edu.sg
+Abstract 1 Introduction
+AIcodingagentssuchasCodexandClaudeCodeareincreasingly AI-assistedsoftwaredevelopmenthasevolvedrapidlyfromtools
+usedtoautonomouslycontributetosoftwarerepositories.However, thatsupportindividualprogrammingactionstosystemsthatcan
+littleisknownabouthowrepository-levelconfigurationartifacts autonomouslycarryoutmulti-stepdevelopmenttasks.Largelan-
+affectoperationalefficiencyoftheagents.Inthispaper,westudy guagemodelsarenowroutinelyusedforcodegeneration,testing,
+theimpactofAGENTS.mdfilesontheruntimeandtokenconsump- repair,review,anddocumentation,coveringsubstantialportions
+tionofAIcodingagentsoperatingonGitHubpullrequests.We ofthesoftwaredevelopmentlifecycle[6,10,11].Buildingonthese
+analyze 10 repositories and 124 pull requests, executing agents capabilities,recentAIcodingagents,suchasOpenAICodexand
+under two conditions: with and without an AGENTS.md file. We ClaudeCode,cannavigaterepositories,reasonovermultiplefiles,
+measurewall-clockexecutiontimeandtokenusageduringagent executecommands,andsubmitpullrequestswithlimitedhuman
+execution.OurresultsshowthatthepresenceofAGENTS.mdisasso- intervention,effectivelyactingasautonomouscontributorsrather
+ciatedwithalowermedianruntime(Δ28.64%)andreducedoutput thanpassiveassistants[17,20].
+tokenconsumption(Δ16.58%),whilemaintainingacomparabletask Astheseagentsoperatewithincreasingautonomy,theirbehav-
+completionbehavior.Basedontheseresults,wediscussimmediate iordependsnotonlyonmodelcapabilitiesbutalsoonthecontex-
+implicationsfortheconfigurationanddeploymentofAIcoding tualinformationprovidedbytherepository.Previousresearchhas
+agentsinpractice,andoutlineabroaderresearchagendaonthe largelyfocusedoninteraction-levelpromptengineeringandagent
+roleofrepository-levelinstructionsinshapingthebehavior,effi- planningstrategies[18],whilelessattentionhasbeenpaidtopersis-
+ciency,andintegrationofAIcodingagentsinsoftwaredevelopment tent,repository-levelartifactsthatencodeproject-specificknowl-
+workflows. edge.Inpractice,developershavebeguntointroduceagentcontext
+filessuchasAGENTS.mdorCLAUDE.mdthatserveas“READMEs
+CCSConcepts foragents,”specifyingarchitecture,buildcommands,codingcon-
+• Software and its engineering → Software configuration
+ventions,andoperationalconstraints[15].TheAGENTS.mdformat,
+forexample,hasbeenadoptedbymorethan60,000repositoriesto
+managementandversioncontrolsystems.
+date[1].Thesefilesshiftagentguidancefromephemeralprompts
+towardversion-controlled,inspectable,andcollaborativelymain-
+Keywords
+tainedconfigurationartifacts.
+AIcodingagents,AGENTS.md,pullrequests,efficiency
+Recent empirical studies have established agent context files
+asawidespreadandevolvingphenomenoninopen-sourcesoft-
+ACMReferenceFormat:
+JaiLalLulla,SeyedmoeinMohsenimofidi,MatthiasGalster,JieM.Zhang, ware. Chatlatanagulchai et al. show that such files are actively
+SebastianBaltes,andChristophTreude.2026.OntheImpactofAGENTS.md maintained,structurallyconsistent,andheavilyfocusedonfunc-
+FilesontheEfficiencyofAICodingAgents.InProceedingsofJournalAhead tionalinstructionssuchasbuild,testing,andimplementationde-
+Workshop(JAWs)2026(ICSEJAWs2026).ACM,NewYork,NY,USA,5pages. tails,whilenon-functionalconcernssuchasperformanceandse-
+https://doi.org/XXXXXXX.XXXXXXX curityarecomparativelyrare[5].Similarly,Mohsenimofidietal.
+documenttheemergenceofagentcontextfilesasamechanismfor
+Permissiontomakedigitalorhardcopiesofallorpartofthisworkforpersonalor contextengineeringinagenticcodingworkflows,highlightingtheir
+classroomuseisgrantedwithoutfeeprovidedthatcopiesarenotmadeordistributed
+roleinshapingagentbehavioracrossrepositories[15].Together,
+forprofitorcommercialadvantageandthatcopiesbearthisnoticeandthefullcitation
+onthefirstpage.Copyrightsforcomponentsofthisworkownedbyothersthanthe thesestudiesestablishagentcontextfilesasanewclassofsoftware
+author(s)mustbehonored.Abstractingwithcreditispermitted.Tocopyotherwise,or artifactsthatplayacentralroleinagenticdevelopment.
+republish,topostonserversortoredistributetolists,requirespriorspecificpermission
+Althoughpriorworkcharacterizesthestructure,content,and
+and/orafee.Requestpermissionsfrompermissions@acm.org.
+ICSEJAWs2026,RiodeJaneiro,Brazil evolutionofagentcontextfiles,theirconcreteimpactonthebehav-
+©2026Copyrightheldbytheowner/author(s).PublicationrightslicensedtoACM. iorofAIcodingagentsremainslargelyunexplored.Inparticular,
+ACMISBN978-1-4503-XXXX-X/2018/06
+https://doi.org/XXXXXXX.XXXXXXX
+6202
+naJ
+82
+]ES.sc[
+1v40402.1062:viXra
+
+--- Page 2 ---
+
+ICSEJAWs2026,April12–18,2026,RiodeJaneiro,Brazil Lullaetal.
+thereislittleempiricalevidenceonhowrepository-levelinstruc- Recentworkhasalsobeguntocharacterizedeveloper-provided,
+tionsinfluencethebehaviorofAIcodingagentsoncetheyarede- persistentcontextartifactsforAIcodingagents,includingfilessuch
+ployedinrealdevelopmentsettings.Asagentsbecomemoredeeply as copilot-instructions.md and CLAUDE.md [5, 12, 15]. How-
+integratedintocontinuousdevelopmentworkflows,understanding ever,wearenotawareofstudiesthatisolatetheeffectofintroducing
+theirbehavioralandoperationalimplicationsbecomesincreasingly anAGENTS.mdfileonagentefficiency,holdingtasks,repositories,
+important,withpotentialconsequencesforcost,scalability,and andagentarchitectureconstant.
+workflowintegration.
+In this paper, we take a first step toward understanding the 3 StudyDesign
+impactof AGENTS.mdfilesonAIcodingagentsbyconductingan
+This study investigates how the presence of an AGENTS.md file
+empiricalstudyonrealGitHubpullrequests.Inspiredbyrecent
+affectstheperformanceofautonomousAIcodingagentswhen
+work on cost-efficient software engineering agents [8] and sus-
+executingdevelopmenttasks.Wemodelastandarddeveloperwork-
+tainablesoftwareengineering[19],wecompareagentexecutions
+flow:anagentreceivesataskdescriptionakintoaGitHubissue
+withandwithoutanAGENTS.mdfile,focusingontheoperational
+(“ticket”),performsrepository-localactions(e.g.,bugfixes,feature
+efficiencyofagentsasaconcreteandmeasurableaspectofagentbe-
+additions,refactors),andproducesacodechangeintendedtomatch
+havior.Specifically,weanalyzewall-clockexecutiontimeandtoken
+anexpectedoutcome.
+consumption,whichdirectlyrelatetoagentlatencyandcomputa-
+WefocusontheefficiencyofAIcodingagents,definedasthe
+tionalcostinpractice.Beyondthisfocusedinvestigation,weoutline
+computationalresourcesrequiredtocompleteadevelopmenttask.
+abroaderresearchroadmapthatsituatesagentefficiencyasone
+Thisleadstothefollowingresearchquestion:
+dimensionwithinamorecomprehensivestudyofhowAGENTS.md
+filesinfluencethebehaviorandintegrationofAIcodingagentsin RQ: DoesthepresenceofanAGENTS.mdfileintherepositoryroot
+reducetheresourcesrequiredbyanautonomousAIcoding
+softwaredevelopmentworkflows.
+agenttocompleteadevelopmenttask?
+Weoperationalize“resources”using(i)tokenusageand(ii)wall-
+2 BackgroundandRelatedWork clocktime-to-completionmeasuredduringeachtaskrun.Wecom-
+Repository-maintained instruction files are increasingly being parethesemetricsbetweenpairedrunsperformedwithandwith-
+adoptedasamechanismtoalignAIcodingagentswithproject- outanAGENTS.mdfileintherepositoryroot,keepingthetaskand
+specific norms and expectations. In particular, the use of a repositorysnapshotconstant.
+repository-level AGENTS.md file has emerged in multiple agent
+toolingecosystems.OpenAICodexdocumentslayeredinstruction 3.1 DataCollectionandAnalysis
+discoverythatincorporatesrepository-levelAGENTS.mdfiles[16],
+3.1.1 AgentSelection. TheagentusedinthisstudyisOpenAICodex.
+whileGitLabDuosimilarlydescribesproject-levelAGENTS.mdfiles
+Atthetimeofexperimentation,thelatestavailableCodexmodel
+toscopeandguideagentbehavior[7].Together,theseeffortssug-
+wasgpt-5.2-codex[2],whichweuseconsistentlyacrossallex-
+gestthatpersistent,developer-curatedinstructionartifactsarebe-
+periments.WeselectedCodexbecauseitisspecificallydesigned
+comingapracticalandsharedinterfaceforshapingagentbehavior
+forsoftwareengineeringtasks,supportsrepository-scalecontext
+inrealsoftwarerepositories.
+andtooluse,andisrepresentativeofproduction-gradeAIcoding
+Despitethisemergingadoption,wearenotawareofempirical
+agentsusedinpractice.Moreover,AGENTS.mdwasfirstusedwith
+studiesthatisolatetheimpactofaddinganAGENTS.mdfileonAI
+Codexbeforebecominganopenformat.Evaluatingtheeffectof
+codingagentbehaviororefficiency.Inparticular,nopriorwork
+AGENTS.mdacrossdifferentagentsystemsandmodelfamiliesis
+hasevaluatedhowsuchinstructionfilesaffecttokenusageorwall-
+animportantdirectionforfutureworkandpartofourongoing
+clockcompletiontimeunderapaired,same-task/same-repository
+researchagenda(Section5).
+evaluationdesign.Thisgapmotivatesthepresentstudy.
+WeimplementedalightweightPythonwrappertointerfacewith
+Previousworkhasexaminedtheperformanceandefficiencyof
+theCodexCLIandtoautomatetasksetupandmetriccollection,
+LLM-basedautonomouscodingagentsinrepository-leveltasks.
+availableinouronlineappendix[14].Inthefollowing,theterm
+BenchmarkssuchasSWE-benchoperationalizethissettingusing
+agentreferstothisCodex-basedagentconfiguration.
+realGitHubissuespairedwithexecutablerepositorysnapshots,en-
+ablingcontrolledcomparisonsofautonomousagentsbasedonissue 3.1.2 RepositorySamplingandInclusionCriteria. Webeginfroma
+resolutionsuccessandtestpassrates[13].Buildingonthisbench- corpusofrepositoriessampledinpreviouswork[15]thatanalyzed
+mark,recentagenticsystemsdemonstratethatagent–repository theadoptionofagentinstructionfiles,suchasAGENTS.md.Inthat
+andagent–toolinterfacedesigncansignificantlyaffectbothper- corpus,repositoriesmaycontain(i)multipleinstructionfilesofdif-
+formance and resource usage. For example, SWE-agent empha- ferentnames,(ii)multiplecopiesindifferentsubdirectories,or(iii)
+sizesagent–computerinterfacedesignandcontextmanagement onlyonefileattheroot.Inthisstudy,wefocusonthesimplestcon-
+forrepositorynavigation,editing,andcommandexecution[20]. figuration:repositoriesthatcontainoneAGENTS.mdfileonlyatthe
+AutoCodeRoversimilarlycombinesLLMreasoningwithstructured repositoryroot.Thisconfigurationminimizesconfoundingeffects
+searchanddebuggingsignalstoreducecostandimproveeffective- fromoverlappingorconflictinginstructionfilesandenablesclearer
+nessonSWE-benchvariants[21].Theseworksmotivatemeasuring attributionofobservedagentbehaviortoasingle,well-defined
+notonlytasksuccess,butalsopracticaldeploymentcostssuchas sourceofrepository-levelguidance.Applyingthisconstraintyields
+wall-clockcompletiontimeandtokenusage. 89repositories(from132total).
+
+--- Page 3 ---
+
+OntheImpactofAGENTS.mdFilesontheEfficiencyofAICodingAgents ICSEJAWs2026,April12–18,2026,RiodeJaneiro,Brazil
+ToensurethatourevaluationfocusesonAGENTS.mdfilesthat body,“fixbug”titles,missinglinkedissues).Toprovideconsistent
+plausiblyprovideactionableprojectcontexttoanAIcodingagent, andinformativetaskinput,wegenerateaGitHub-issue-styletask
+wefurtherrestrictthedatasetbasedonthecontentoftheinstruction statement for each PR using a local LLM (gpt-oss-120b). The
+files.Concretely,wefiltertherootAGENTS.mdfilesusingcontent modelispromptedwith:(1)thePRdiff(patch)and(2)therepository
+categoriesderivedfromthetaxonomydevelopedin[15].Thistax- structureatpre-mergestate(e.g.,filetree).
+onomycharacterizesAGENTS.mdcontentalongdimensionssuch The output is a structured task description that resembles a
+ascodingconventionsandbestpractices,architectureandproject GitHubissue(problemstatement,expectedbehavior,constraints,
+structure,projectdescription,testinginstructions,andsecurity.We andacceptancecriteria).Thisstepstandardizestheagent’sinput
+retainonlythosefilesthatcontaininformationrelatedto(i)con- formatacrossPRsandreducesvarianceintroducedbyincomplete
+ventionsandbestpractices,(ii)architectureandprojectstructure, PR metadata [4]. The generated task descriptions are available
+and(iii)projectdescription.Thesecategorieswereselectedbecause online[14].
+theyarethemostcommonones[15]andtheycapturecoreproject
+knowledgethatdeveloperstypicallyneedinordertounderstand 3.1.6 Experimental Conditions. We run the agent on each task
+instanceundertwoconditions:
+andcontributetoacodebase[9].
+Theclassificationof AGENTS.mdfileswasperformedusingan • WithAGENTS.md:Therepositorysnapshotincludestheex-
+LLM(gpt-oss-120b)accordingtotheabovecriteria.Themodel
+tractedrootAGENTS.mdfromthepre-mergecommit.
+wasrunusingOllama[3],followedbymanualverificationofthe • WithoutAGENTS.md:Thesamesnapshotisused,butthe
+filteredresults.Afterapplyingthisfilteringstep,weretain26repos-
+AGENTS.mdfileisremoved(allotherfilesunchanged).
+Inbothconditions,theagentisprovidedwiththesametask
+itories,eachcontainingaqualifyingrootAGENTS.mdfile.
+input,namelytheGitHub-likeissuegeneratedearlierforeachpull
+3.1.3 PullRequestSelectionandTaskConstruction. Fromthe26 request.Theagentthenproducescodechangescorrespondingto
+repositories,werandomlysample10andselectupto15merged theoriginalPR.Theresultingsetupconstitutesapairedwithin-
+pullrequests(PRs)fromeach.Thecapreflectsresourceconstraints taskdesignthatcontrolsforrepository,task,andcodebasestate,
+whilestillenablingcoverageacrossrepositories.Toobtaintask whilevaryingonlythepresenceof AGENTS.md.
+instancesthatcanbeexecutedrepeatedlyandcomparableacross
+repositories,werestrictPRstosmall-scope,code-changingcon- 3.1.7 RunningtheExperiments. Tominimizeconfoundingfactors
+andensurerepeatability,experimentswereconductedinisolated
+tributionsandensurethateachPRpost-datestheintroductionof
+Dockerenvironmentsattherepositorylevel.Foreachrepository,
+AGENTS.mdintherepository.EachPRsatisfiesthefollowingcriteria:
+weinstantiatedafreshcontainerandclonedthetargetrepository
+(1)Sizeconstraint:totaladditions+deletions≤100LoC;(2)Scope
+intoatemporaryworkingdirectory.Eachtaskinstancewasexe-
+constraint:≤5modifiedfiles;(3)Status:mergedPRsonly;(4)Tem-
+cutedbycheckingoutthecorrespondingpre-mergecommitwithin
+poralconstraint:PRcreatedandmergedaftertheintroductionof
+thecontainer.Aftertaskcompletion,therepositorywasresettoa
+AGENTS.mdinthatrepository;(5)Changetypeconstraint:PRmod-
+cleanstate(discardingalllocalchanges),andtheworkspacewas
+ifiescodefilesonly(excludingdocumentationandconfiguration
+cleanedbeforecheckingoutthecommitassociatedwiththenext
+changes).
+task.Thecodeusedtoruntheexperiments,includingDockerfiles,
+Thesizeandscopeconstraintsreducethevariancefromlarge
+isprovidedaspartofthesupplementarymaterial[14].
+refactorings and keep agent runs tractable and repeatable. The
+Theagentwasgrantedaccessonlytothissandboxedenviron-
+change-typeconstraintavoidsskewfromPRsthatdonotreflect
+mentandcouldmodifyfilesexclusivelywithinthecontainer.No
+codechanges(e.g.,documentation-onlyupdatesorversionbumps).
+state(e.g.,caches,artifacts,orintermediatefiles)wasreusedacross
+Together,theserestrictionshelpisolatetheeffectof AGENTS.md
+tasksbeyondtheversion-controlledrepositorycontents,ensuring
+inthisinitialstudy.Relaxingthemtoincludelargerchangesand
+thateverytaskbeganfromanidenticalrepositorysnapshot.
+abroaderrangeofPRtypesispartofourlonger-termresearch
+agenda(Section5).
+3.1.8 Metrics. Wecollectedthefollowingoperationalperformance
+metricsduringeachrun:
+3.1.4 ReconstructingPre-PRRepositoryState. Torecreaterealistic
+developmentconditions,wereconstructeachrepositorytothestate • Token usage: Total tokens consumed, comprising input
+tokens,cachedinputtokens,andoutputtokens.
+immediatelybeforetheselectedPRwasmerged.Theagentisthen
+taskedwithrecreatingthePR’schangesfromthispre-mergestate. • Time-to-completion:Wall-clocktimefortheagenttopro-
+duceitsfinaloutput(inseconds).
+Concretely,foreachPRwe:
+Acomprehensiveevaluationoftheoutputquality,e.g.,these-
+(1) Checkouttherepositoryatthepre-mergecommit.
+manticcorrectnessorthefunctionalequivalencetothemergedPR,
+(2) ExtracttheAGENTS.mdversionthatexistedatthatcommit.
+isbeyondthescopeofthispaper.However,itispartofourresearch
+(3) Runtheagentonthepre-mergerepositorysnapshot.
+roadmapdescribedinSection5.Nevertheless,toensurethattheob-
+Thisproducesanevaluationsetupgroundedinanactual,histori-
+servedefficiencydifferencesarenotsimplyduetoagentsproducing
+callymergedchange,wheretherepositorycontentsandinstruction
+degenerateortriviallyincompleteoutput,weperformedamanual
+file(whenpresent)exactlymatchwhatadeveloperoragentwould
+haveobservedatthatpointintime.
+sanitycheck.Specifically,werandomlysampled50PRtasksandin-
+spectedthecorrespondingagentoutputs,comparingthemagainst
+3.1.5 IssueGenerationforPRsLackingUsableDescriptions. Many thehuman-writtenmergedpullrequests,toconfirmthattheyre-
+PRsdonotcontainsufficientnatural-languagecontext(e.g.,empty sultedinnon-empty,non-trivialcodechangesconsistentwiththe
+
+--- Page 4 ---
+
+ICSEJAWs2026,April12–18,2026,RiodeJaneiro,Brazil Lullaetal.
+Table1:ResourceUsageWithandWithoutAGENTS.md
+Metric Without With Diff Δ%
+Wall-ClockTime(s)∗
+Mean 162.94 129.91 33.03 20.27%
+Median 98.57 70.34 28.23 28.64%
+StdDev 182.24 136.84 45.40 24.91%
+InputTokens
+Mean 353,010.01 318,651.51 34,358.50 9.73%
+Median 116,609.00 120,587.00 -3,978.00 -3.41%
+StdDev 654,603.95 510,776.51 143,827.43 21.97%
+CachedInputTokens
+Mean 328,877.31 296,078.73 32,798.58 9.97%
+Median 103,424.00 104,448.00 -1,024.00 -0.99%
+StdDev 632,622.27 494,157.89 138,464.38 21.89%
+OutputTokens∗
+Mean 5,744.81 4,591.46 1,153.35 20.08% Figure 1: Wall-clock time-to-completion distributions for
+Median 2,925.00 2,440.00 485.00 16.58% agentrunswithandwithoutAGENTS.md
+StdDev 6,987.74 5,161.67 1,826.06 26.13% Afirstdirectionforfutureworkistoexpandtheempiricalscope
+∗Statisticallysignificantdifference,Wilcoxonsigned-ranktest(𝑝<0.05).
+ofthestudy.Althoughwecontrolfortask,repositorystate,and
+intendedtask,ratherthanabortedrunsorrandomedits.Although agentconfigurationthroughapaireddesign,observedeffectsmay
+thissanitycheckdoesnotconstituteafullcorrectnessevaluation, stilldependonagentstochasticity,thespecificagentframework
+itprovidesconfidencethattheefficiencymeasurementsreported andmodelused,andthecharacteristicsoftheselectedtasks.Repli-
+inthispaperarenotdrivenbyobviousfailuresorreductionsin catingthestudyacrossadditionalrepositories,largerandmore
+taskexecution. diversepullrequests,andmultipleagentsystemsandmodelfami-
+lieswillhelpassesstherobustnessandgeneralityoftheobserved
+4 Results efficiencyeffects.Similarly,relaxingcurrentconstraintsontask
+Tokenusage. ProvidinganAGENTS.mdfilereducesgeneration sizeandscopewillallowustoexaminewhethertheinfluenceof
+cost.Meanoutputtokenusagedecreasesfrom5,744.81tokens(with- AGENTS.mdextendstolargerrefactorings,multi-modulechanges,
+outAGENTS.md)to4,591.46tokens(withAGENTS.md),areduction andmorecomplexdevelopmentscenarios.
+of1,153.35tokens(≈20.08%).Medianoutputtokensdecreasemore Aseconddirectionistoinvestigatedimensionsofagentbehav-
+modestly,from2,925.00to2,440.00(485tokens,≈16.58%).Mean iorbeyondefficiency.Inthisstudy,wefocusontokenusageand
+inputandcachedinputtokensalsodeclineslightly(353,010.01to wall-clocktimeasmeasurableindicatorsofcost.However,these
+318,651.51;9.73%and328,877.31to296,078.73;9.97%,respectively), metricsdonotcapturewhetheragent-producedchangesarecorrect,
+withmediansessentiallyunchangedorslightlyhigher.Thelarger maintainable,oralignedwithdeveloperintent.Futureworkwill
+reductioninmeanoutputtokenscomparedtothemediansuggests thereforeincorporatecorrectnessandalignmentevaluations,for
+thatAGENTS.mdprimarilyreducestokenusageinasmallnumber example,bycomparingagent-generatedchangesagainsttheorig-
+ofveryhigh-costruns,ratherthanuniformlyloweringtokencon- inalmergedpullrequestsusingautomatedchecksandstructural
+sumptionacrossalltaskinstances. similarityanalyzes.Beyondabinarytreatmentof AGENTS.mdas
+presentorabsent,wealsoplantoexaminehowpropertiesofthese
+Wall-clock time-to-completion. Agents provided with an files,suchasspecificity,organization,andtheinclusionofworkflow
+AGENTS.mdfilecompletetasksfasterthanagentsoperatingwithout guidance,relatetoagentoutcomes.Forexample,wespeculatethat
+it. Mean wall-clock time-to-completion decreases from 162.94s someoftheefficiencygainsreportedinthispaperarisebecause
+(withoutAGENTS.md,stddev182.24s)to129.91s(withAGENTS.md, AGENTS.mdfilesdescriberepositorystructureandconventionsup-
+stddev136.84s),anabsolutereductionof33.03s(≈20.27%).Median front,reducingtheneedforagentstoinferprojectorganization
+completiontimeshowsasimilarreduction,decreasingfrom98.57s throughexploratorynavigation.Analyzingagentexecutiontraces
+to70.34s(28.23s,≈ 28.64%).Theclosealignmentbetweenmean willhelpexplainwhyAGENTS.mdfilesleadtomoreefficientgenera-
+and median improvements indicates that the reduction is not tion,forexample,byfewerplanningiterations,reducedexploratory
+drivensolelybyasmallnumberofextremeruns,butreflectsa navigation,andfewerrepeatedrequeststotheunderlyingmodel.
+generalshifttowardfastertaskcompletion. Insummary,ourresultsprovideinitialempiricalevidencethat
+repository-levelinstructionfilescanhavemeasurableoperational
+5 ResearchRoadmap effectsonautonomousAIcodingagents.Inparticular,weshowthat
+Thisstudyrepresentsaninitialsteptowardsunderstandinghow thepresenceofarootAGENTS.mdfileisassociatedwithreduced
+AGENTS.mdfilesinfluencethebehaviorofautonomousAIcoding tokenusageandfastertaskcompletiononrealpullrequests.These
+agents.Ourresultsprovideearlyevidencethatsuchfilescanaffect findingspositionAGENTS.mdasapracticalrepository-levelmecha-
+agentefficiencyinrealisticdevelopmenttasks.Atthesametime, nismforshapingagentbehaviorandmotivatefurtherinvestigation
+thestudyfocusesonasampledsubsetofrepositories,pullrequests, ofitsroleinagentefficiency,alignment,andintegrationwithin
+andagentconfigurations,whichnaturallymotivatesthenextsteps. softwaredevelopmentworkflows.
+
+--- Page 5 ---
+
+OntheImpactofAGENTS.mdFilesontheEfficiencyofAICodingAgents ICSEJAWs2026,April12–18,2026,RiodeJaneiro,Brazil
+References SoftwareEngineeringandMethodology(2025).
+[1] [n.d.].AGENTS.md.https://agents.md/. [Accessed23-01-2026]. [12] ShaokangJiangandDayeNam.2025.AnEmpiricalStudyofDeveloper-Provided
+[2] [n.d.].CodexModels—developers.openai.com.https://developers.openai.com/ ContextforAICodingAssistantsinOpen-SourceProjects.doi:10.48550/arXiv.
+codex/models/. [Accessed23-01-2026]. 2512.18925arXiv:2512.18925.
+[3] [n.d.].Ollama.https://ollama.com/. [Accessed23-01-2026]. [13] CarlosE.Jimenez,JohnYang,AlexanderWettig,ShunyuYao,KexinPei,OfirPress,
+[4] OscarChaparro,CarlosBernal-Cárdenas,JingLu,KevinMoran,AndrianMarcus, andKarthikNarasimhan.2024.SWE-bench:CanLanguageModelsResolveReal-
+MassimilianoDiPenta,DenysPoshyvanyk,andVincentNg.2019.Assessingthe WorldGitHubIssues?arXiv:2310.06770[cs.CL]doi:10.48550/arXiv.2310.06770
+qualityofthestepstoreproduceinbugreports.InProceedingsofthe201927th arXiv:2310.06770v3.
+[14] JaiLalLulla,SeyedmoeinMohsenimofidi,MatthiasGalster,JieM.Zhang,Sebas-
+ACMJointMeetingonEuropeanSoftwareEngineeringConferenceandSymposium
+ontheFoundationsofSoftwareEngineering(Tallinn,Estonia)(ESEC/FSE2019). tianBaltes,andChristophTreude.2026.OntheImpactofAGENTS.mdFilesonthe
+AssociationforComputingMachinery,NewYork,NY,USA,86–96. doi:10.1145/ EfficiencyofAICodingAgents(OnlineAppendix).doi:10.5281/zenodo.18348507
+3338906.3338947 [15] SeyedmoeinMohsenimofidi,MatthiasGalster,ChristophTreude,andSebastian
+[5] WorawalanChatlatanagulchai,HaoLi,YutaroKashiwa,BrittanyReid,Kundjana- Baltes.2026.ContextEngineeringforAIAgentsinOpen-SourceSoftware.In
+sithThonglek,PattaraLeelaprute,ArnonRungsawang,BunditManaskasemsak, Proceedingsofthe23rdIEEE/ACMInternationalConferenceonMiningSoftware
+BramAdams,AhmedE.Hassan,andHajimuIida.2025.AgentREADMEs:AnEm- Repositories(MSR2026).
+piricalStudyofContextFilesforAgenticCoding.arXivpreprintarXiv:2511.12884 [16] OpenAI.2025.CustominstructionswithAGENTS.md.OpenAIDevelopersDoc-
+(2025). umentation. https://developers.openai.com/codex/guides/agents-md/Accessed
+[6] AngelaFan,BelizGokkaya,MarkHarman,MityaLyubarskiy,ShubhoSengupta, 2026-01-18.
+ShinYoo,andJieMZhang.2023.Largelanguagemodelsforsoftwareengineering: [17] AbhikRoychoudhury.2025.AgenticAIforSoftware:thoughtsfromSoftware
+Surveyandopenproblems.In2023IEEE/ACMInternationalConferenceonSoftware Engineeringcommunity.arXivpreprintarXiv:2508.17343(2025).
+Engineering:FutureofSoftwareEngineering(ICSE-FoSE).IEEE,31–53. [18] PranabSahoo,AyushKumarSingh,SriparnaSaha,VinijaJain,SamratMondal,
+[7] GitLab.2025.AGENTS.mdcustomizationfiles.GitLabDocumentation. https: andAmanChadha.2024.Asystematicsurveyofpromptengineeringinlarge
+//docs.gitlab.com/user/gitlab_duo/customize_duo/agents_md/Accessed2026-01- languagemodels:Techniquesandapplications.arXivpreprintarXiv:2402.07927
+18. (2024).
+[8] YaoqiGuo,YingXiao,JieMZhang,MarkHarman,YilingLou,YangLiu,and [19] ColinCVenters,RafaelCapilla,ElisaYumiNakagawa,StefanieBetz,Birgit
+ZhenpengChen.2026. EET:Experience-DrivenEarlyTerminationforCost- Penzenstadler,TomCrick,andIanBrooks.2023.Sustainablesoftwareengineering:
+EfficientSoftwareEngineeringAgents.arXivpreprintarXiv:2601.05777(2026). Reflectionsonadvancesinresearchandpractice. InformationandSoftware
+[9] JundaHe,JiekeShi,TerryYueZhuo,ChristophTreude,JiamouSun,Zhenchang Technology164(2023),107316.
+Xing,XiaoningDu,andDavidLo.2025.LLM-as-a-JudgeforSoftwareEngineering: [20] JohnYang,CarlosEJimenez,AlexanderWettig,KilianLieret,ShunyuYao,Karthik
+LiteratureReview,Vision,andtheRoadAhead.arXiv:2510.24367[cs.SE] https: Narasimhan,andOfirPress.2024.Swe-agent:Agent-computerinterfacesenable
+//arxiv.org/abs/2510.24367 automatedsoftwareengineering. AdvancesinNeuralInformationProcessing
+[10] XinyiHou,YanjieZhao,YueLiu,ZhouYang,KailongWang,LiLi,XiapuLuo, Systems37(2024),50528–50652.
+DavidLo,JohnGrundy,andHaoyuWang.2024. Largelanguagemodelsfor [21] YuntongZhang,HaifengRuan,ZhiyuFan,andAbhikRoychoudhury.2024.Au-
+softwareengineering:Asystematicliteraturereview. ACMTransactionson toCodeRover:AutonomousProgramImprovement.InProceedingsofthe33rd
+SoftwareEngineeringandMethodology33,8(2024),1–79. ACMSIGSOFTInternationalSymposiumonSoftwareTestingandAnalysis(ISSTA
+[11] JuyongJiang,FanWang,JiasiShen,SungjuKim,andSunghunKim.2025. A ’24).doi:10.1145/3650212.3680384AlsoavailableasarXiv:2404.05427.
+SurveyonLargeLanguageModelsforCodeGeneration.ACMTransactionson
+Received23January2026

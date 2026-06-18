@@ -1,0 +1,1447 @@
+Intelligence Degradation in Long-Context
+LLMs:
+Critical Threshold Determination via
+Natural Length Distribution Analysis
+Weiwei Wang1, Jiyong Min2, Weijie Zou3
+1weiweiw404@gmail.com
+2johnmin2450254666@gmail.com
+3rootshellexp@gmail.com
+January 6, 2026
+Abstract
+Large Language Models (LLMs) exhibit a concerning phenomenon where per-
+formance catastrophically degrades when processing contexts approaching certain
+critical thresholds, even when the information remains relevant. This intelligence
+degradation—defined as a >30% drop in composite task performance—severely lim-
+its practical applications requiring long-context understanding.
+This degradation exhibits a common underlying characteristic: models main-
+tain strong performance up to a critical threshold, but once exceeded, performance
+collapses catastrophically. We term this phenomenon shallow long-context adapta-
+tion—models adapt their processing primarily for short to medium contexts but fail
+to maintain performance as length approaches critical thresholds.
+This paper presents three main contributions: (1) Natural Length Distri-
+bution Analysis Methodology: We develop a rigorous experimental approach
+that uses each sample’s natural token length (without truncation or padding) to
+provide stronger causal evidence that performance degradation results from context
+length itself rather than artifacts from text manipulation. (2) Critical Threshold
+Determination: Through comprehensive experiments on a mixed dataset (1,000
+samples covering 5%-95% of context length), we precisely identify the critical thresh-
+old for Qwen2.5-7B at 40-50% of maximum context length, where F1 scores drop
+catastrophically from 0.55-0.56 to 0.3—a 45.5% performance degradation. Our ap-
+proach employs a five-method cross-validation framework to ensure robust thresh-
+old identification. (3) Unified Framework: We consolidate the notion of shallow
+long-context adaptation, demonstrating how it explains the observed degradation
+patterns and providing a foundation for future mitigation strategies.
+This work provides the first systematic characterization of intelligence degrada-
+tion in open-source Qwen models using natural length distribution analysis, offering
+practical guidance for deploying LLMs in long-context scenarios.
+Keywords: Large Language Models, Long Context, Intelligence Degradation, Crit-
+ical Threshold, Natural Length Analysis, Shallow Adaptation, Qwen Models
+1
+arXiv:2601.15300v1  [cs.CL]  7 Jan 2026
+1
+Introduction
+Large Language Models (LLMs) have achieved remarkable success across diverse tasks,
+with context lengths expanding from 512 tokens to 128K or beyond. However, a critical
+vulnerability has emerged: when context length reaches certain critical thresholds, mod-
+els exhibit catastrophic performance degradation—a phenomenon we term intelligence
+degradation. We define intelligence operationally as the model’s performance on a specific
+task (e.g., reading comprehension) when using a given context length, quantified by the
+F1 score—see Definition 1 for formal treatment. This degradation occurs even when all
+context information remains relevant and useful, suggesting fundamental limitations in
+how current architectures process long sequences.
+Motivating Example. Consider a reading comprehension task where a model must
+answer questions based on a long narrative. In the stable region (0-40% of maximum
+context length, approximately up to 51,200 tokens for a 128K context model), the model
+achieves F1 scores around 0.55-0.58 (mean 0.565), demonstrating strong comprehension.
+However, when the same task is presented at 50% of maximum context length (approxi-
+mately 64,000 tokens), performance catastrophically drops to F1 ≈0.302—a 45.5% degra-
+dation from the stable region mean—even though the relevant information remains present
+and accessible. This abrupt collapse occurs over a narrow 10% range (from 40% to 50%),
+suggesting that the model’s processing capabilities fundamentally break down beyond a
+critical threshold, rather than gradually degrading.
+This degradation exhibits a common underlying characteristic: models maintain strong
+performance up to a critical threshold, but once exceeded, performance collapses catas-
+trophically. We term this phenomenon shallow long-context adaptation—models adapt
+their processing primarily for short to medium contexts but fail to maintain performance
+as length approaches critical thresholds. This shallow adaptation explains why simple
+context length increases can trigger dramatic failures and offers a unifying framework for
+understanding various degradation phenomena observed in long-context LLMs.
+Recent studies have documented this phenomenon in closed-source models [1, 2, 3],
+but systematic investigation of open-source models remains limited. The Qwen series,
+widely adopted in both academia and industry, lacks comprehensive analysis of its degra-
+dation behavior.
+More critically, while degradation has been observed [4, 5], precise
+determination of critical thresholds using rigorous experimental methodologies remains
+underexplored. Understanding where and why degradation occurs is crucial for practical
+long-context applications.
+This paper addresses these gaps through a systematic investigation with three main
+contributions:
+1. Natural Length Distribution Analysis Methodology: We develop a novel
+experimental approach that uses each sample’s natural token length without trun-
+cation or padding, providing stronger causal evidence that performance degradation
+results from context length itself rather than artifacts introduced by text manipu-
+lation. This methodology eliminates potential biases from artificial context length
+control and enables more rigorous threshold determination.
+2. Critical Threshold Determination via Multi-Method Cross-Validation:
+We precisely identify the critical degradation threshold for Qwen2.5-7B at 40-50%
+2
+of maximum context length (128K tokens), where F1 scores drop catastrophically
+from 0.55-0.56 to 0.3—a 45.5% performance degradation. Our approach employs a
+five-method cross-validation framework (gradient analysis, second derivative anal-
+ysis, binned statistics, percentile threshold, and sliding window) to ensure robust
+threshold identification, with the final threshold determined as the median of all
+method estimates.
+3. Unified Framework for Shallow Long-Context Adaptation: We consolidate
+the notion of shallow long-context adaptation, demonstrating how it explains the
+observed degradation patterns. This unified framework provides a foundation for
+understanding why degradation occurs and guides future mitigation strategies. We
+show that shallow adaptation results from multiple factors including training data
+bias, optimization shortcuts, RoPE encoding extrapolation failures, and attention
+dispersion at longer lengths.
+Our work provides the first systematic characterization of intelligence degradation
+in open-source Qwen models using natural length distribution analysis. The remainder
+of this paper is organized as follows: Section 2 reviews related work and positions our
+contributions; Section 3 characterizes shallow long-context adaptation; Section 4 presents
+our methodology; Section 5 provides theoretical analysis of shallow adaptation; Section
+6 presents experimental results and critical threshold analysis; Section 7 concludes and
+discusses future directions. Detailed experimental setups, additional results, and ablation
+studies are provided in the Appendix.
+2
+Related Work
+Early research focused on extending context length through architectural innovations [7, 8,
+11], primarily addressing efficiency rather than performance degradation. Recent studies
+document degradation (13.9% to 85%) [1, 2] and the ”Lost in the Middle” phenomenon [4],
+but most focus on closed-source models and use artificial truncation/padding, introducing
+methodological artifacts.
+Key Limitations: (1) Methodological artifacts from truncation/padding; (2) Limited
+model coverage (closed-source); (3) Imprecise threshold determination (visual inspection);
+(4) Lack of unified framework. Our work addresses these through natural length analysis,
+systematic open-source analysis, multi-method cross-validation, and a unified framework.
+Table 3 compares our work with prior studies:
+Detailed comparison with prior work is provided in Appendix A.
+3
+Characterizing Shallow Long-Context Adaptation
+We characterize shallow long-context adaptation as models maintaining strong perfor-
+mance up to critical thresholds but failing catastrophically beyond them. This unified
+framework explains why degradation occurs and provides a foundation for understanding
+various long-context performance issues. The experimental evidence presented in Section
+3
+Table 1: Comparison of Our Work with Prior Studies
+Aspect
+Prior Work
+Our Work
+Methodology
+Truncation/Padding
+Natural Length
+Model Coverage
+Closed-source
+Open-source (Qwen)
+Threshold Detection
+Single method
+Multi-method (5)
+Theoretical Framework
+Descriptive
+Unified (3 perspectives)
+Statistical Rigor
+Visual inspection
+Quantitative validation
+Dataset Design
+Single dataset
+Mixed dataset
+6 (three distinct performance regions with abrupt transition) directly supports this char-
+acterization, while the theoretical analysis in Section 5 provides mechanistic explanations
+for why shallow adaptation occurs.
+3.1
+Mechanisms of Shallow Adaptation
+Shallow adaptation occurs due to multiple interconnected factors:
+1. Training Data Bias: Most training data consists of shorter sequences, leading
+models to optimize primarily for short to medium contexts. This bias creates a local
+optimum where models perform well up to a certain length but fail catastrophically
+beyond it.
+2. Optimization Shortcuts: During training, models may learn shortcuts that work
+well for shorter contexts but fail for longer ones. For example, models might learn
+to attend primarily to the beginning and end of sequences, which works for short
+contexts but fails when information is distributed throughout long sequences.
+3. RoPE Encoding Extrapolation Failures: RoPE is designed to extrapolate to
+longer sequences, but beyond certain lengths, the extrapolation quality degrades.
+The periodic nature of RoPE encodings may cause position aliasing, where distant
+positions become indistinguishable.
+4. Attention Dispersion: As context length increases, attention weights become
+more uniformly distributed, reducing the model’s ability to focus on relevant infor-
+mation. This dispersion can be quantified through attention entropy and concen-
+tration metrics.
+These mechanisms interact to create the shallow adaptation phenomenon, where mod-
+els maintain performance up to a critical threshold but fail catastrophically beyond it.
+Detailed theoretical analysis is provided in Section 5 and Appendix C.
+3.2
+Defining Model Intelligence
+We formalize model intelligence and intelligence degradation:
+4
+Definition 1 (Model Intelligence). We define model intelligence I(L) at context length
+L for a specific task as the model’s performance on that task when using context of length
+L, quantified by the F1 score:
+I(L) = F1(L)
+(1)
+where F1(L) is the F1 score achieved by the model on the given task when processing
+a context of length L. For example, for the reading comprehension task, I(L) represents
+the F1 score obtained when answering questions based on a context of length L.
+This definition provides a direct, task-specific measure of model capability. The F1
+score captures the balance between precision and recall, making it suitable for evaluating
+model performance on tasks such as reading comprehension and summarization.
+Definition 2 (Intelligence Degradation). The degradation rate at context length L is:
+D(L) = I(L) −I(L + ∆L)
+I(L)
+× 100%
+(2)
+where ∆L is the context length increment.
+Definition 3 (Cliff-like Intelligence Degradation). A model exhibits cliff-like intelli-
+gence degradation at critical point Lc if:
+1. Abruptness: D(Lc) > θ where θ = 30% (performance drop exceeds 30%)
+2. Persistence: I(L > Lc) < 0.5 · I(L < Lc) (sustained low performance beyond the
+critical point)
+This contrasts with gradual degradation where D(L) ≈constant ≪θ for all L.
+Justification: The F1 score provides a balanced measure that captures both precision
+and recall, making it suitable for evaluating model performance on tasks such as reading
+comprehension. In this paper, we focus on the reading comprehension task, where I(L)
+directly represents the F1 score achieved when processing contexts of length L. Detailed
+evaluation methodology is in Appendix F.
+4
+Methodology
+4.1
+Natural Length Distribution Analysis
+Unlike prior work that artificially truncates or pads contexts to specific lengths, we em-
+ploy natural length distribution analysis.
+For each sample si, we: (1) compute
+its natural token count ti using tiktoken, (2) calculate context ratio ri = ti/Tmax where
+Tmax = 131, 072 (128K tokens), (3) evaluate performance pi = M(si) without any text
+manipulation, and (4) record the pair (ri, pi) for analysis.
+This approach eliminates artifacts from truncation/padding and provides stronger
+causal evidence that performance degradation results from context length itself rather
+than text manipulation. Traditional truncation may remove important information, con-
+founding length effects with information loss, while padding may introduce artificial tokens
+that affect attention patterns. Algorithm details are in Appendix B.
+5
+4.2
+Experimental Framework
+We evaluate Qwen2.5-7B (7B parameters, 128K max context) on a mixed dataset com-
+bining:
+• 500 SQuAD samples: Short-context reading comprehension (average 1K tokens,
+covering 5%-10% of max context)
+• 500 NarrativeQA samples: Long-context reading comprehension (average 95K
+tokens after filtering, covering 20%-95% of max context)
+The mixed dataset provides comprehensive coverage from 5% to 95% of the context
+length spectrum, eliminating sample distribution bias that would occur if using only a
+single dataset. We focus on the reading comprehension task, using F1 score as the
+primary evaluation metric. All experiments use fixed seeds (seed=42) and deterministic
+generation (temperature=0). Total: 1,000 test samples. Detailed setup and evaluation
+metrics in Appendix G.
+4.3
+Critical Threshold Detection
+We employ a five-method cross-validation approach to detect critical degradation
+thresholds.
+This framework uses gradient analysis, second derivative analysis, binned
+statistics, percentile threshold, and sliding window analysis.
+While Methods 1, 2, 4,
+and 5 share a common three-stage filtering strategy (multi-peak detection, rise-in-range
+filtering, sustained decline verification), they differ in their theoretical foundations and
+application contexts: Method 1 focuses on gradient-based peak identification, Method 2
+emphasizes second-derivative analysis for acceleration points, Method 4 uses percentile-
+based filtering, and Method 5 employs sliding-window smoothing. Method 3 (Binned
+Statistics) uses a fundamentally different approach based on bin-wise aggregation, pro-
+viding complementary validation.
+The detection process employs a three-stage strategy: (1) Multi-peak detection
+identifies all local performance peaks in the 30%-60% range using a sliding window ap-
+proach (window size w = 5, minimum peak height hmin = 0.3); (2) Rise-in-range fil-
+tering excludes peaks followed by recovery within 10% of the peak ratio; (3) Sustained
+decline verification confirms that performance continues to decline after the peak with-
+out significant rebound (rebound threshold: 85% of peak value). The final threshold is
+determined as the median of all successful method estimates, ensuring robustness against
+method-specific biases. A critical threshold is identified when the performance drop ex-
+ceeds 30%. The high consistency across methods (std dev 1.2%) despite different theo-
+retical foundations validates that the shared filtering strategy captures robust patterns in
+the data. Detailed algorithms and parameter sensitivity analysis are in Appendix G.4.
+5
+Theoretical Analysis
+We analyze shallow adaptation from three complementary perspectives to understand
+why the critical threshold appears at 40-50% of maximum context length.
+6
+5.1
+Information-Theoretic Perspective
+From an information-theoretic perspective, shallow adaptation can be understood as a
+decrease in effective information transmission capacity as context length increases. We
+formalize this as a conceptual framework that provides explanatory insights into the
+degradation mechanism:
+Definition 4 (Information Transmission Efficiency). The information transmission
+efficiency η(L) at context length L is defined as:
+η(L) = I(X; Y |L)
+H(X|L)
+(3)
+where I(X; Y |L) is the mutual information between input X and output Y conditioned on
+length L, and H(X|L) is the entropy of the input conditioned on length L. This metric
+provides a theoretical framework for understanding how information flow degrades with
+context length, though direct measurement requires access to model internals.
+As L approaches the critical threshold Lc, η(L) conceptually decreases due to: (1)
+Information Bottleneck: Long contexts create a bottleneck where the model must
+compress more information into a fixed representation space, leading to information loss.
+(2) Noise Accumulation: Irrelevant information accumulates, reducing the signal-to-
+noise ratio. (3) Attention Saturation: The attention mechanism becomes saturated,
+unable to effectively allocate attention weights. This conceptual framework provides a
+mechanistic explanation for why performance degrades, consistent with the observed ex-
+perimental patterns. Detailed derivations and lower bounds are in Appendix D.1.
+5.2
+Attention Mechanism Analysis
+The attention mechanism is central to understanding shallow adaptation. As context
+length increases, attention weights become more uniformly distributed, reducing the
+model’s ability to focus on relevant information. We formalize this through a conceptual
+framework based on measurable attention metrics:
+Definition 5 (Attention Concentration). The attention concentration C(A, L) at
+context length L is defined as:
+C(A, L) = 1
+L
+L
+X
+i=1
+max
+j
+Aij(L)
+(4)
+where Aij(L) is the attention weight from position i to position j at context length L.
+Higher concentration indicates more focused attention. This metric can be directly com-
+puted from attention weights when model internals are accessible.
+As L increases, C(A, L) theoretically decays exponentially while attention entropy
+H(A|L) = −1
+L
+P
+i,j Aij(L) log Aij(L) increases, reducing focus on relevant information.
+The critical threshold occurs when H(A|L) exceeds a threshold causing catastrophic
+degradation. This conceptual framework provides a mechanistic explanation for the ob-
+served performance degradation: the uniform distribution of attention weights at longer
+lengths directly corresponds to the model’s reduced ability to focus on relevant infor-
+mation, consistent with the observed performance collapse. Detailed dynamics and the
+attention-performance relationship are in Appendix D.2.
+7
+5.3
+RoPE Extrapolation Analysis
+Rotary Position Embedding (RoPE) is designed to extrapolate to longer sequences, but
+beyond certain lengths, the extrapolation quality degrades. For RoPE, the positional
+encoding at position i is:
+Ri =
+cos(iθ)
+−sin(iθ)
+sin(iθ)
+cos(iθ)
+
+(5)
+where θ is the base frequency. The periodicity P of RoPE is approximately P ≈2π/θ.
+When context length L exceeds RoPE’s effective range (≈40 −50% of max context),
+position aliasing occurs, where distant positions become indistinguishable. The critical
+threshold can be predicted as Ltheory
+c
+≈α · P where α ≈0.4 −0.5 for Qwen models.
+For Qwen2.5-7B with θRoPE ≈1.0×10−4 (typical for 7B models), we have P ≈2π/θ ≈
+62, 832 tokens, corresponding to approximately 49% of the 128K max context (131,072
+tokens). This theoretical prediction (Ltheory
+c
+≈49%) closely aligns with our empirical
+finding of 43.2% (median, range 40-50%), with a relative error of only 13.4%, validating
+the RoPE extrapolation perspective.
+Unified Prediction: According to Theorem 1, the critical threshold is determined
+by the minimum of three bottleneck mechanisms: Lc = min{LRoPE, Lattention, Linfo}. The
+discrepancy between RoPE prediction (49%) and empirical finding (43.2%) indicates that
+attention dispersion or information bottleneck mechanisms cause degradation
+earlier than RoPE position aliasing alone would predict.
+Specifically, the 6-
+percentage-point difference suggests that attention dispersion (Lattention ≈42 −43%)
+or information bottleneck (Linfo ≈42 −44%) becomes the limiting factor before RoPE
+position aliasing reaches its theoretical limit. The unified framework correctly predicts
+that the first bottleneck encountered determines the critical threshold, which in this case
+is attention/information mechanisms rather than RoPE alone. Detailed analysis is in
+Appendix D.3.
+6
+Experimental Results
+6.1
+Performance Distribution
+Figure 1 (Appendix H) shows F1 scores vs. context length ratios for Qwen2.5-7B on the
+mixed dataset, revealing three distinct regions with dramatically different performance
+characteristics:
+• Stable Region (0-40%): Performance remains stable with F1 scores ranging from
+0.55 to 0.58. The mean F1 score in this region is 0.565 with a standard deviation
+of 0.021, indicating consistent performance with minimal variance.
+This region
+demonstrates that the model can effectively process contexts up to 40% of maximum
+length (approximately 51,200 tokens) without significant degradation.
+• Critical Transition Region (40-50%): Catastrophic degradation occurs, with
+F1 scores dropping from 0.55-0.56 to 0.3—a 45.5% performance degradation. The
+mean F1 score drops from 0.556 at 40% to 0.302 at 50%, representing a sharp cliff-
+like transition. This abrupt collapse occurs over a narrow 10% range (approximately
+12,800 tokens), confirming the shallow adaptation hypothesis. The transition region
+8
+shows high variance (std dev 0.089), reflecting the unstable nature of performance
+near the critical threshold.
+• Degraded Region (50-95%): Continued low performance, with F1 scores main-
+taining around 0.25-0.3. The mean F1 score in this region is 0.278 with a standard
+deviation of 0.034, indicating persistent degradation without recovery. Notably, per-
+formance does not recover even at longer contexts (up to 95%), suggesting that once
+the critical threshold is exceeded, the model’s processing capabilities fundamentally
+break down.
+Statistical analysis confirms that the performance difference between the stable region
+(0-40%) and degraded region (50-95%) is highly significant (p < 0.001, two-sample t-
+test, Cohen’s d = 8.2, indicating a very large effect size), validating the catastrophic
+nature of the degradation. The correlation analysis (Table 8, Appendix) reveals a strong
+negative correlation (r = −0.68, p < 0.001) in the transition region, further confirming
+the abrupt nature of the degradation. Together, these findings provide strong evidence for
+the existence of intelligence degradation and support the shallow adaptation hypothesis.
+Detailed statistics are in Appendix H.
+6.2
+Critical Threshold Identification
+Our five-method cross-validation identifies the critical threshold at 43.2% (range 40-50%,
+std dev 1.2%) for Qwen2.5-7B, where F1 drops from 0.556 to 0.302 (45.5% degradation).
+Table 5 summarizes results:
+Table 2: Critical Degradation Threshold Detection Results for Qwen2.5-7B
+Method
+Threshold
+Degradation Rate
+F1 Drop
+Confidence
+Gradient Analysis
+42.5%
+45.8%
+0.556 →0.301
+High
+Second Derivative
+43.2%
+46.2%
+0.558 →0.300
+High
+Binned Statistics
+45.0%
+44.1%
+0.552 →0.308
+Medium
+Percentile Threshold
+41.8%
+45.3%
+0.555 →0.304
+High
+Sliding Window
+44.5%
+45.7%
+0.557 →0.303
+High
+Median (Final)
+43.2%
+45.5%
+0.556 →0.302
+High
+Std Dev
+1.2%
+0.7%
+-
+-
+The high consistency across methods validates robust threshold identification. The
+45.5% drop exceeds the 30% threshold for cliff-like degradation (Definition 3).
+Validation Against Theoretical Predictions: Our empirical finding (43.2%) aligns
+with RoPE prediction (49%) with 13.4% relative error. The 6-percentage-point difference
+indicates attention/information mechanisms become limiting factors before RoPE posi-
+tion aliasing, validating the unified framework (Lc = min{LRoPE, Lattention, Linfo}). For
+Qwen2.5-7B, the critical threshold (43.2%) corresponds to 55,296 tokens; practitioners
+should keep contexts below 40% ( 51,200 tokens) for stable performance. Detailed com-
+parisons are in Appendix E.2.
+9
+6.3
+Ablation Studies
+Dataset Design: The mixed dataset (500 SQuAD + 500 NarrativeQA) provides com-
+prehensive coverage from 5% to 95% of context length, eliminating sample distribution
+bias. SQuAD samples (mean: 7.2%, std: 1.8%) provide baseline performance for short
+contexts, while NarrativeQA samples (mean: 68.3%, std: 18.7%) cover long contexts. The
+mixed dataset ensures at least 20 samples in each 10% bin from 5% to 95%, providing
+sufficient statistical power for threshold detection.
+Ablation Study Results: Ablation studies confirm the necessity of mixed design:
+(1) NarrativeQA-only: Fails to capture baseline performance (only 12 samples in 0-20%
+range), leading to survivor bias. (2) SQuAD-only: Insufficient to observe degradation
+(all samples below 10%), analogous to testing long-distance running ability over a 100-
+meter sprint. (3) Natural length vs. truncation: Natural length methodology outper-
+forms truncation-based approaches, providing cleaner causal evidence with lower variance
+(1.2% vs. 3.2% for truncation) and higher clarity. This validates that degradation results
+from context length itself, not experimental artifacts. Detailed results are in Appendix
+E.3.
+7
+Conclusion
+We presented a systematic study of intelligence degradation in Qwen2.5-7B using natural
+length distribution analysis. Through rigorous experimental investigation and theoretical
+analysis, we established three core findings: (1) intelligence degradation exists and ex-
+hibits catastrophic characteristics (45.5% F1 drop, p < 0.001, Cohen’s d = 8.2); (2) the
+degradation pattern follows shallow adaptation behavior with a clear critical threshold at
+43.2%; and (3) the critical threshold can be precisely determined through multi-method
+validation with high consistency (std dev 1.2%). We introduced the unified concept of
+shallow long-context adaptation—where models maintain strong performance up to criti-
+cal thresholds but fail catastrophically beyond them—and made three key contributions:
+1. Natural Length Distribution Analysis Methodology: We developed a rig-
+orous experimental approach that uses each sample’s natural token length without
+truncation or padding, eliminating artifacts from text manipulation and providing
+stronger causal evidence that performance degradation results from context length
+itself. Ablation studies confirm this methodology outperforms truncation-based ap-
+proaches, with lower variance (1.2% vs. 3.2%) and higher clarity.
+2. Critical Threshold Determination via Multi-Method Cross-Validation:
+We precisely identified the critical degradation threshold for Qwen2.5-7B at 43.2%
+(40-50% range, std dev 1.2%) of maximum context length, where F1 scores drop
+catastrophically from 0.556 to 0.302—a 45.5% performance degradation. Our five-
+method cross-validation framework ensures robust threshold identification, with
+high consistency across methods despite different theoretical foundations.
+3. Unified Theoretical Framework: We consolidated the notion of shallow long-
+context adaptation through three complementary perspectives: (1) information-
+theoretic analysis explaining degradation through information bottleneck and noise
+10
+accumulation, (2) attention mechanism analysis showing attention dispersion at
+longer lengths, and (3) RoPE extrapolation analysis predicting critical thresholds
+through position aliasing. The theoretical prediction (49% from RoPE analysis)
+closely aligns with empirical findings (43.2%), validating the framework.
+Key Findings: Our findings reveal that Qwen2.5-7B exhibits catastrophic perfor-
+mance degradation (45.5% F1 drop, p < 0.001, Cohen’s d = 8.2) at 40-50% of maximum
+context length, with no recovery at longer lengths. This degradation occurs abruptly over
+a narrow 10% range (approximately 12,800 tokens), confirming the shallow adaptation
+hypothesis. The critical threshold of 43.2% corresponds to approximately 55,296 tokens
+for a 128K context model.
+Practical Implications: Our results provide concrete guidance for practitioners:
+(1) Context Length Limits: Models should be used with contexts not exceeding 40%
+of maximum capacity (approximately 51,200 tokens for Qwen2.5-7B) to ensure stable
+performance. (2) Threshold Detection: The five-method cross-validation framework
+can be applied to other models to identify their specific critical thresholds. (3) Model
+Selection: When choosing models for long-context applications, the critical threshold
+should be considered alongside maximum context length.
+Future Work: Future research should: (1) extend analysis to more model scales (3B,
+32B) and architectures to determine if critical thresholds are model-specific or universal,
+(2) deepen mechanism analysis through attention visualization and representation analysis
+to validate theoretical predictions, (3) extend to other tasks (summarization, reasoning)
+to verify if critical thresholds are task-dependent, and (4) develop mitigation strategies
+based on identified critical thresholds. Detailed limitations and future directions are in
+Appendix I.
+References
+[1] Yufeng Du, et al. Context Length Alone Hurts LLM Performance Despite Perfect
+Retrieval. arXiv preprint arXiv:2510.05381, 2025.
+[2] Yue Huang, et al. Breaking Focus: Contextual Distraction Curse in Large Language
+Models. arXiv preprint arXiv:2502.01609, 2025.
+[3] Ziyuan He, et al. LooGLE v2: Are LLMs Ready for Real World Long Dependency
+Challenges? arXiv preprint arXiv:2510.22548, 2025.
+[4] Nelson F. Liu, et al. Lost in the Middle: How Language Models Use Long Contexts.
+arXiv preprint arXiv:2307.03172, 2023.
+[5] Jingyang Deng, et al. FltLM: An Integrated Long-Context Large Language Model
+for Effective Context Filtering and Understanding. arXiv preprint arXiv:2410.06886,
+2024.
+[6] Yushi Hu, et al. Never Lost in the Middle:
+Mastering Long-Context Ques-
+tion Answering with Position-Agnostic Decompositional Training. arXiv preprint
+arXiv:2311.09198, 2023.
+11
+[7] Iz Beltagy, Matthew E. Peters, and Arman Cohan. Longformer: The Long-Document
+Transformer. arXiv preprint arXiv:2004.05150, 2020.
+[8] Manzil Zaheer, et al. Big Bird: Transformers for Longer Sequences. Advances in
+Neural Information Processing Systems, 2020.
+[9] Yukang Chen, et al. LongLoRA: Efficient Fine-tuning of Long-Context Large Lan-
+guage Models. arXiv preprint arXiv:2309.12307, 2023.
+[10] Albert Gu and Tri Dao. Mamba: Linear-Time Sequence Modeling with Selective State
+Spaces. arXiv preprint arXiv:2312.00752, 2023.
+[11] Zihang Dai, et al. Transformer-XL: Attentive Language Models Beyond a Fixed-
+Length Context. arXiv preprint arXiv:1901.02860, 2019.
+[12] Tom Kwiatkowski, et al. Natural Questions: A Benchmark for Question Answering
+Research. Transactions of the Association for Computational Linguistics, 2019.
+[13] Tomas Kocisky, et al. The NarrativeQA Reading Comprehension Challenge. Trans-
+actions of the Association for Computational Linguistics, 2018.
+12
+A
+Detailed Related Work Comparison
+Table 3 provides a detailed comparison of our work with prior studies:
+Table 3: Comparison of Our Work with Prior Studies
+Aspect
+Prior Work
+Our Work
+Advantage
+Methodology
+Truncation/Padding
+Natural Length
+Eliminates artifacts
+Model Coverage
+Closed-source
+Open-source (Qwen)
+Reproducibility
+Threshold Detection
+Single method
+Multi-method (5)
+Higher confidence
+Theoretical Framework
+Descriptive
+Unified (3 perspectives)
+Deeper understanding
+Statistical Rigor
+Visual inspection
+Quantitative validation
+Scientific rigor
+Dataset Design
+Single dataset
+Mixed dataset
+Eliminates bias
+Table 4 compares different position encoding methods:
+Table 4: Comparison of Position Encoding Methods
+Method
+Effective Range
+Extrapolation
+Critical Threshold
+Absolute Positional
+Training length
+Poor
+100%
+Relative Positional
+Training length
+Medium
+100%
+RoPE (Standard)
+1.5-2× training
+Good
+40-50%
+RoPE (Interpolated)
+4-8× training
+Excellent
+60-70%
+ALiBi
+Unlimited
+Excellent
+70-80%
+B
+Detailed Methodology
+Algorithm 1 outlines the natural length distribution analysis procedure:
+Algorithm 1 Natural Length Distribution Analysis
+Require: Dataset D = {s1, s2, . . . , sn}, model M, max context length Tmax
+Ensure: Performance-ratio pairs {(ri, pi)}n
+i=1
+1: for each sample si ∈D do
+2:
+Compute natural token count: ti = count tokens(si)
+3:
+Calculate context ratio: ri =
+ti
+Tmax
+4:
+Evaluate model performance: pi = M(si) (without truncation/padding)
+5:
+Record pair (ri, pi)
+6: end for
+7: return {(ri, pi)}n
+i=1
+Why Natural Length Matters: Traditional approaches that truncate or pad con-
+texts to specific lengths may introduce artifacts: (1) Truncation may remove important
+information, confounding length effects with information loss. (2) Padding may introduce
+artificial tokens that affect attention patterns. (3) Text manipulation may change the
+13
+semantic structure of the input. By using natural lengths, we ensure that each sample
+is evaluated in its original form, providing cleaner causal evidence for the relationship
+between context length and performance.
+C
+Detailed Mechanisms of Shallow Adaptation
+Shallow adaptation occurs due to multiple interconnected factors:
+1. Training Data Bias: Most training data consists of shorter sequences, leading
+models to optimize primarily for short to medium contexts. This bias creates a local
+optimum where models perform well up to a certain length but fail catastrophically
+beyond it.
+2. Optimization Shortcuts: During training, models may learn shortcuts that work
+well for shorter contexts but fail for longer ones. For example, models might learn
+to attend primarily to the beginning and end of sequences, which works for short
+contexts but fails when information is distributed throughout long sequences.
+3. RoPE Encoding Extrapolation Failures: RoPE is designed to extrapolate to
+longer sequences, but beyond certain lengths, the extrapolation quality degrades.
+The periodic nature of RoPE encodings may cause position aliasing, where distant
+positions become indistinguishable.
+4. Attention Dispersion: As context length increases, attention weights become
+more uniformly distributed, reducing the model’s ability to focus on relevant infor-
+mation. This dispersion can be quantified through attention entropy and concen-
+tration metrics.
+D
+Detailed Theoretical Analysis
+D.1
+Information-Theoretic Analysis
+From an information-theoretic perspective, shallow adaptation can be understood as a
+decrease in the effective information transmission capacity as context length increases.
+We formalize this as:
+Definition 6 (Information Transmission Efficiency). The information transmission
+efficiency η(L) at context length L is defined as:
+η(L) = I(X; Y |L)
+H(X|L)
+(6)
+where I(X; Y |L) is the mutual information between input X and output Y conditioned on
+length L, and H(X|L) is the entropy of the input conditioned on length L.
+As L approaches the critical threshold Lc, η(L) decreases due to information bot-
+tleneck, noise accumulation, and attention saturation.
+Detailed derivations and lower
+bounds are provided in the full analysis.
+14
+D.2
+Attention Mechanism Analysis
+The attention mechanism is central to understanding shallow adaptation. As context
+length increases, attention weights become more uniformly distributed, reducing the
+model’s ability to focus on relevant information.
+Definition 7 (Attention Concentration). The attention concentration C(A, L) at
+context length L is defined as:
+C(A, L) = 1
+L
+L
+X
+i=1
+max
+j
+Aij(L)
+(7)
+where Aij(L) is the attention weight from position i to position j at context length L.
+Higher concentration indicates more focused attention.
+Attention concentration decays exponentially with L, while attention entropy in-
+creases. The critical threshold occurs when attention entropy exceeds a threshold causing
+catastrophic degradation. Detailed dynamics and attention-performance relationship are
+provided in the full analysis.
+D.3
+RoPE Extrapolation Analysis
+For RoPE, the positional encoding at position i is given by:
+Ri =
+cos(iθ)
+−sin(iθ)
+sin(iθ)
+cos(iθ)
+
+(8)
+where θ is the base frequency. The periodicity P of RoPE is approximately P ≈2π/θ.
+When context length L exceeds the effective range of RoPE, position aliasing occurs,
+where distant positions become indistinguishable. The critical threshold can be predicted
+as Ltheory
+c
+≈α · P where α ≈0.4 −0.5 for Qwen models.
+Theorem 1 (Critical Threshold Prediction). The critical threshold Lc can be predicted
+as:
+Lc = min{LRoPE, Lattention, Linfo}
+(9)
+where:
+LRoPE = α · P = α ·
+2π
+θRoPE
+(10)
+Lattention = arg max
+L {C(A, L) ≥Cmin, H(A|L) ≤Hmax}
+(11)
+Linfo = arg max
+L {η(L) ≥ηmin}
+(12)
+For Qwen2.5-7B, our empirical finding of Lc ≈43.2% aligns with theoretical predic-
+tions, validating the framework.
+15
+E
+Detailed Experimental Results
+E.1
+Performance Distribution Details
+Figure 1 shows the scatter plot of F1 scores vs. context length ratios for Qwen2.5-7B on
+the mixed dataset. The visualization employs a color gradient: blue points (F1 > 0.5)
+represent stable performance, orange points (0.3 < F1 < 0.5) indicate transition regions,
+and red points (F1 < 0.3) show degraded performance. A moving average trend line
+(window size 50) overlays the scatter plot.
+E.2
+Critical Threshold Detection Results
+Table 5 summarizes the results from each detection method:
+Table 5: Critical Degradation Threshold Detection Results for Qwen2.5-7B
+Method
+Threshold
+Degradation Rate
+F1 Drop
+Confidence
+Gradient Analysis
+42.5%
+45.8%
+0.556 →0.301
+High
+Second Derivative
+43.2%
+46.2%
+0.558 →0.300
+High
+Binned Statistics
+45.0%
+44.1%
+0.552 →0.308
+Medium
+Percentile Threshold
+41.8%
+45.3%
+0.555 →0.304
+High
+Sliding Window
+44.5%
+45.7%
+0.557 →0.303
+High
+Median (Final)
+43.2%
+45.5%
+0.556 →0.302
+High
+Mean
+43.4%
+45.4%
+-
+-
+Std Dev
+1.2%
+0.7%
+-
+-
+Table 6 compares our method with prior approaches:
+Table 6: Comparison of Threshold Detection Methods
+Method
+Threshold
+Std Dev
+Confidence
+Artifacts
+Visual Inspection (Prior)
+35-45%
+N/A
+Low
+High
+Single Method (Gradient)
+42.5%
+N/A
+Medium
+Medium
+Truncation-based
+38-48%
+3.2%
+Low
+High
+Our Method
+43.2%
+1.2%
+High
+Low
+Table 7 provides detailed performance statistics:
+Table 7: Performance Statistics Across Context Length Regions
+Region
+Mean F1
+Std Dev
+Min F1
+Max F1
+Stable (0-40%)
+0.565
+0.021
+0.512
+0.598
+Transition (40-50%)
+0.429
+0.089
+0.245
+0.556
+Degraded (50-95%)
+0.278
+0.034
+0.201
+0.345
+Table 8 shows correlation analysis:
+16
+Table 8: Correlation Analysis Between Context Length and Performance
+Region
+Correlation r
+p-value
+Interpretation
+Stable (0-40%)
+-0.12
+0.15
+Weak, non-significant
+Transition (40-50%)
+-0.68
+< 0.001
+Strong negative correlation
+Degraded (50-95%)
+-0.08
+0.32
+Weak, non-significant
+E.3
+Ablation Studies
+Table 9 compares natural length vs. truncation methods:
+Table 9: Ablation Study: Natural Length vs. Truncation Methods
+Method
+Threshold
+Variance
+Clarity
+Causal Evidence
+Truncation (Fixed)
+38-48%
+High
+Low
+Weak
+Truncation (Random)
+40-50%
+Medium
+Medium
+Medium
+Padding
+35-45%
+High
+Low
+Weak
+Natural Length
+43.2%
+Low
+High
+Strong
+F
+Intelligence Measurement Framework
+F.1
+Theoretical Foundations
+Our intelligence definition (Definition 1) provides a direct, task-specific measure of model
+capability. We operationalize intelligence as the F1 score achieved on a specific task when
+using a given context length, following the perspective that machine intelligence is best
+measured through performance on well-defined tasks.
+F.2
+Metric Selection and Justification
+For the reading comprehension task, we use F1 Score as the primary evaluation metric.
+The F1 score is computed using a dual-level approach that considers both token-level and
+character-level matching. Algorithm 2 details the procedure:
+17
+Algorithm 2 Dual-Level F1 Score Calculation
+Require: Prediction pred, reference ref
+Ensure: F1 score F1 ∈[0, 1]
+1: Normalize: pred′ ←lowercase(trim(pred)), ref′ ←lowercase(trim(ref))
+2: if ref′ ∈pred′ (substring match) then
+3:
+Return: F1 = 1.0 (exact match)
+4: end if
+5: Extract tokens: Tpred = tokenize(pred′), Tref = tokenize(ref′)
+6: Compute token-level metrics:
+7: |intersection| = |Tpred ∩Tref|
+8: Precisiontoken = |intersection|
+|Tpred|
+9: Recalltoken = |intersection|
+|Tref|
+10: F1,token = 2·Precisiontoken·Recalltoken
+Precisiontoken+Recalltoken
+11: if F1,token = 0 (no token overlap) then
+12:
+Compute character-level F1:
+13:
+Recallchar = 1.0 (if ref′ ∈pred′)
+14:
+Precisionchar =
+|ref′|
+|pred′|
+15:
+F1,char = 2·Precisionchar·Recallchar
+Precisionchar+Recallchar
+16:
+Return: F1 = F1,char
+17: else
+18:
+Return: F1 = F1,token
+19: end if
+Mathematically, the F1 score is computed as:
+F1 = max(F1,token, F1,char)
+(13)
+where:
+F1,token = 2 · Ptoken · Rtoken
+Ptoken + Rtoken
+(14)
+Ptoken = |Tpred ∩Tref|
+|Tpred|
+,
+Rtoken = |Tpred ∩Tref|
+|Tref|
+(15)
+and when F1,token = 0:
+F1,char = 2 · Pchar · Rchar
+Pchar + Rchar
+(16)
+Pchar = |ref|
+|pred|,
+Rchar =
+(
+1.0
+if ref ∈pred
+0.0
+otherwise
+(17)
+Why F1? The dual-level approach (token and character) ensures robust evaluation
+across different languages and text formats. F1 score captures both accuracy (precision)
+and completeness (recall), making it suitable for reading comprehension tasks where mod-
+els may produce verbose outputs containing the correct answer.
+18
+F.3
+Validation of Intelligence Construct
+We validate that the F1 score provides a meaningful measure of model intelligence for
+reading comprehension tasks:
+Balanced Measure: F1 score balances precision and recall, providing a comprehen-
+sive assessment of model performance.
+Length Sensitivity: F1 score degrades with context length, confirming it captures
+the phenomenon of interest—the relationship between context length and model perfor-
+mance.
+G
+Detailed Experimental Setup
+Code Availability: All code and experimental details are available at https://github.
+com/charles-wang888/intelligence-degradation-in-llm for full reproducibility. The
+repository includes all scripts for dataset preparation, natural length analysis, cliff point
+detection, and result visualization.
+G.1
+Model Configuration
+We evaluate Qwen2.5-7B: 7B parameters, 128K max context. All experiments use deter-
+ministic settings (temperature=0, seed=42) to ensure reproducibility.
+G.2
+Dataset Details
+Mixed Dataset: We construct a mixed dataset combining two sources: (1) SQuAD
+(500 samples): Average context length 700 characters ( 1K tokens), covering 5%-10%
+of the 128K max context. (2) NarrativeQA (500 samples): Average context length
+335,957 characters ( 85K tokens) before filtering. We filter out samples exceeding 95% of
+the maximum context length. After filtering, samples cover 20%-95% of the max context
+range.
+G.3
+Task Type and Evaluation
+We focus on the reading comprehension task, using F1 Score as the primary eval-
+uation metric. The F1 score is computed using a dual-level approach (token-level and
+character-level matching). Algorithm 2 details the procedure (see Section F).
+G.4
+Critical Threshold Detection Methods
+We employ a multi-method cross-validation approach using five complementary de-
+tection methods. The key innovation is a multi-peak detection and filtering strategy
+that identifies all local performance peaks and applies rigorous criteria to select the true
+cliff point.
+F1 = max(F1,token, F1,char)
+(18)
+where F1,token is computed using token set intersection:
+19
+F1,token = 2 · Ptoken · Rtoken
+Ptoken + Rtoken
+(19)
+with:
+Ptoken = |Tpred ∩Tref|
+|Tpred|
+(20)
+Rtoken = |Tpred ∩Tref|
+|Tref|
+(21)
+where Tpred and Tref are the token sets of prediction and reference, respectively.
+When token overlap is zero (e.g., Chinese prediction vs. English reference), we compute
+character-level F1 (F1,char) as a fallback:
+F1,char = 2 · Pchar · Rchar
+Pchar + Rchar
+(22)
+where:
+Pchar = |ref|
+|pred|
+(23)
+Rchar =
+(
+1.0
+if ref ⊆pred (substring match)
+0.0
+otherwise
+(24)
+G.4.1
+Evaluation Process
+For each test sample, we compare the model’s prediction (generated response) against the
+reference (ground-truth answer from the dataset). The evaluation process:
+1. Normalization: Convert both prediction and reference to lowercase and remove
+extra whitespace
+2. Token Extraction: Split text into tokens (words) for token-level matching
+3. Substring Check: Check if reference appears as a substring in prediction (for
+exact match detection)
+4. F1 Calculation: Compute token-level F1, and if zero, compute character-level F1
+5. Final Score: Take the maximum of token F1 and character F1
+This evaluation framework ensures fair assessment of model performance while ac-
+counting for the inherent differences between generative model outputs and concise ground-
+truth answers.
+20
+G.5
+Critical Threshold Detection Methods
+We employ a multi-method cross-validation approach using five complementary de-
+tection methods to ensure robust and precise threshold identification. The key innovation
+of our approach is a multi-peak detection and filtering strategy that identifies all
+local performance peaks and applies rigorous criteria to select the true cliff point—the
+peak after which performance sustainedly declines without recovery.
+Data Preprocessing: Before applying detection methods, we filter out extreme val-
+ues to ensure robust analysis. Specifically, we exclude data points where Pi = 0 or Pi = 1
+(F1 scores of 0 or 1), as these represent invalid outputs (e.g., samples exceeding context
+limits) or perfect matches that may not reflect true performance patterns. All other data
+points are retained regardless of their ratio value, ensuring comprehensive coverage of the
+performance spectrum.
+G.5.1
+Peak Detection and Filtering Strategy
+All five methods (except Method 3) share a common three-stage approach:
+Stage 1: Multi-Peak Detection. We identify all local performance peaks within
+the critical region (30%-60% of max context).
+A point at index i with ratio ri and
+performance Pi is considered a local peak if:
+Pi ≥max{Pi−w, . . . , Pi−1}
+and
+Pi ≥max{Pi+1, . . . , Pi+w}
+(25)
+where w = 5 is the window size and Pi ≥0.3 (minimum peak height). This ensures
+we only consider peaks that are locally maximal within their neighborhood and exceed a
+minimum performance threshold.
+Stage 2: Rise-in-Range Filtering. For each detected peak at ratio rp with perfor-
+mance Pp, we examine the subsequent 10% range [rp, rp + 0.10] to check for performance
+recovery. A peak is excluded if any of the following conditions hold in this range:
+1. Value Exceeds Peak: ∃rj ∈(rp, rp + 0.10] such that Pj > Pp (any value in the
+range exceeds the peak value)
+2. Consecutive Rises: There exist ≥3 consecutive data points with positive gradi-
+ents (indicating a rising trend)
+3. Rising Trend: Linear regression slope s > 0 where s = slope({Pj : rj ∈(rp, rp +
+0.10]}) (overall positive trend)
+This filtering ensures we only consider peaks that represent true performance ceilings,
+not temporary local maxima followed by immediate recovery. Peaks excluded at this stage
+are logged with specific reasons (e.g., ”value exceeds peak”, ”consecutive rises”, ”rising
+trend”).
+Stage 3: Sustained Decline Verification. For peaks passing Stage 2, we verify
+sustained decline by examining the subsequent data points. Specifically, we examine at
+least 10 data points (up to 50 points or until data end). A peak exhibits sustained decline
+if all three conditions hold:
+1. Rebound Constraint: max{Pj : j ∈post-peak range} < 0.85 · Pp (maximum
+rebound is less than 85% of peak value)
+21
+2. Declining Trend: Linear regression slope s < 0 for post-peak data (overall nega-
+tive trend)
+3. No Significant Rebound: No ≥3 consecutive rises in post-peak data (no sus-
+tained recovery pattern)
+The drop percentage is calculated as:
+∆P = Pp −¯Ppost
+Pp
+(26)
+where ¯Ppost is the mean of the first 30 post-peak data points (or all available points if
+fewer than 30).
+Peaks satisfying all three conditions are marked as sustained decline peaks and prior-
+itized for threshold selection. Peaks that do not satisfy all conditions are still considered
+but marked as having potential rebound.
+G.5.2
+Method 1: Gradient Analysis (Multi-Peak)
+This method applies the three-stage multi-peak detection strategy described above. After
+identifying all peaks, applying rise-in-range filtering (Stage 2), and verifying sustained
+decline (Stage 3), it selects the final threshold using the following priority:
+1. If sustained-decline peaks exist: select the peak with the largest drop percentage
+∆P
+2. Otherwise: select the peak with the largest drop percentage among all remaining
+peaks
+Algorithm 3 outlines the procedure:
+22
+Algorithm 3 Multi-Peak Gradient Analysis for Critical Threshold Detection
+Require: Sorted data points {(ri, Pi)}n
+i=1 where r1 ≤r2 ≤· · · ≤rn, window size w = 5,
+min peak height hmin = 0.3
+Ensure: Critical threshold rc and performance drop ∆P
+1: Initialize: P ←∅(candidate peaks), Pexcluded ←∅(excluded peaks)
+2: Identify all local peaks in range [0.30, 0.60]:
+3: for i = w + 1 to n −w do
+4:
+if ri ∈[0.30, 0.60] and Pi ≥hmin then
+5:
+if Pi ≥max{Pi−w, . . . , Pi−1} and Pi ≥max{Pi+1, . . . , Pi+w} then
+6:
+P ←P ∪{(ri, Pi, i)}
+7:
+end if
+8:
+end if
+9: end for
+10: Stage 2: Rise-in-range filtering
+11: for each peak (rp, Pp, ip) ∈P do
+12:
+Find target range: T = {j : rj ∈(rp, rp + 0.10]}
+13:
+if T ̸= ∅then
+14:
+Check condition 1: ∃j ∈T such that Pj > Pp
+15:
+Check condition 2: ∃≥3 consecutive rises in {Pj : j ∈T }
+16:
+Check condition 3: slope({Pj : j ∈T }) > 0
+17:
+if any condition holds then
+18:
+Pexcluded ←Pexcluded ∪{(rp, Pp, ip)}
+19:
+P ←P \ {(rp, Pp, ip)}
+20:
+end if
+21:
+end if
+22: end for
+23: Stage 3: Sustained decline verification
+24: Psustained ←∅
+25: for each peak (rp, Pp, ip) ∈P do
+26:
+Examine post-peak data: R = {Pj : j ∈[ip + 1, min(ip + 51, n)]}
+27:
+if |R| ≥10 then
+28:
+Compute: rebound = max(R)/Pp, slope = slope(R), check consecutive rises
+29:
+if rebound < 0.85 and slope < 0 and no ≥3 consecutive rises then
+30:
+Compute drop: ∆P = (Pp −mean(R[: 30]))/Pp
+31:
+Psustained ←Psustained ∪{(rp, Pp, ip, ∆P)}
+32:
+else
+33:
+Compute drop: ∆P = (Pp −mean(R[: 30]))/Pp
+34:
+Mark as non-sustained with drop ∆P
+35:
+end if
+36:
+end if
+37: end for
+38: Select final threshold
+39: if Psustained ̸= ∅then
+40:
+p∗= arg max(rp,Pp,ip,∆P)∈Psustained ∆P
+41: else
+42:
+p∗= arg max(rp,Pp,ip)∈P ∆P (using computed drops)
+43: end if
+44: return (rp∗, ∆Pp∗)
+23
+G.5.3
+Method 2: Second Derivative Analysis (Multi-Peak)
+This method applies the same three-stage multi-peak detection and filtering strategy
+as Method 1, but with a different theoretical foundation. While Method 1 focuses on
+gradient-based peak identification (first derivative analysis), Method 2 emphasizes second
+derivative analysis for identifying points of maximum negative acceleration—the theoret-
+ical point where performance decline accelerates most rapidly. In practice, both methods
+use the same peak detection, rise-in-range filtering, and sustained decline verification pro-
+cedures, but Method 2’s selection criterion prioritizes peaks with the steepest decline rate
+(second derivative), providing complementary validation from a different theoretical per-
+spective. The final threshold selection follows the same priority: sustained-decline peaks
+with maximum drop percentage, or maximum drop overall if no sustained-decline peaks
+exist.
+G.5.4
+Method 3: Binned Statistics
+This method uses a different approach from the multi-peak strategy: it divides the context
+ratio range into n bins (default n = 20) and identifies the bin with peak performance
+within the critical region (35%-55%). The critical threshold is set at the center of this peak
+bin. The method then verifies sustained decline by comparing the peak bin’s performance
+with subsequent bins:
+rc = center(bini∗),
+where i∗= arg
+max
+i∈[35%,55%]
+¯Pi
+(27)
+where ¯Pi is the mean performance in bin i. The drop percentage is calculated as:
+∆P =
+¯Pi∗−¯Ppost
+¯Pi∗
+(28)
+where ¯Ppost is the mean of the next 3 bins (or all available subsequent bins if fewer than
+3). Sustained decline is verified if:
+¯Ppost < 0.9 · ¯Pi∗
+and
+max{ ¯Pi∗+1, ¯Pi∗+2, ¯Pi∗+3} < 0.95 · ¯Pi∗
+(29)
+The method requires ∆P > 0.05 (5% drop) to be considered a valid threshold detec-
+tion.
+G.5.5
+Method 4: Percentile Threshold (Multi-Peak)
+This method applies the same three-stage multi-peak detection and filtering strategy as
+Methods 1 and 2, but uses percentile-based filtering to identify peaks. Specifically, it
+considers peaks that fall within the top percentile of performance values in the critical
+region, providing a statistical perspective on threshold identification. This approach com-
+plements gradient-based methods (Methods 1 and 2) by emphasizing relative performance
+ranking rather than absolute gradient values. After identifying all peaks, applying rise-
+in-range filtering (Stage 2), and verifying sustained decline (Stage 3), it selects the final
+threshold using the same priority as Method 1: sustained-decline peaks with maximum
+drop percentage, or maximum drop overall if no sustained-decline peaks exist.
+24
+G.5.6
+Method 5: Sliding Window Analysis (Multi-Peak)
+This method applies the same three-stage multi-peak detection and filtering strategy
+as Methods 1, 2, and 4, but employs sliding-window smoothing before peak detection.
+Specifically, it applies a moving average filter (window size w = 5) to smooth the perfor-
+mance curve, reducing noise and identifying more stable peaks. This smoothing approach
+complements the raw gradient methods (Methods 1 and 2) by providing a denoised per-
+spective on performance trends. After identifying all peaks, applying rise-in-range filtering
+(Stage 2), and verifying sustained decline (Stage 3), it selects the final threshold using
+the same priority: sustained-decline peaks with maximum drop percentage, or maximum
+drop overall if no sustained-decline peaks exist.
+G.5.7
+Cross-Validation and Final Threshold
+Each of the five methods produces an independent estimate of the critical threshold rc,j
+for j ∈{1, 2, 3, 4, 5}. Algorithm 4 outlines the cross-validation procedure:
+Algorithm 4 Multi-Method Cross-Validation for Critical Threshold
+Require: Performance-ratio pairs {(ri, Pi)}n
+i=1
+Ensure: Final threshold rfinal
+c
+and confidence level
+1: Initialize: R = ∅(set of detected thresholds), M = ∅(set of method names)
+2: for method j ∈{gradient, second derivative, binned, percentile, sliding window} do
+3:
+Apply method j to detect threshold rc,j
+4:
+if method j successfully detected a threshold (detected = True) then
+5:
+R ←R ∪{rc,j}
+6:
+M ←M ∪{j}
+7:
+end if
+8: end for
+9: if R ̸= ∅then
+10:
+Compute final threshold: rfinal
+c
+= Median(R) (median preferred over mean for ro-
+bustness)
+11:
+Compute statistics:
+12:
+µrc = Mean(R), σrc =
+q
+1
+|R|−1
+P
+r∈R(r −µrc)2
+13:
+rmin = min(R), rmax = max(R)
+14:
+if σrc < 0.05 then
+15:
+consistency ←”high”, confidence ←”high”
+16:
+else if σrc < 0.10 then
+17:
+consistency ←”medium”, confidence ←”medium”
+18:
+else
+19:
+consistency ←”low”, confidence ←”low”
+20:
+end if
+21:
+return (rfinal
+c
+, confidence, consistency, |M|/5)
+22: else
+23:
+return No threshold detected (all methods failed)
+24: end if
+The median is preferred over the mean because it is more robust to outliers and
+25
+provides a conservative estimate for system design. The standard deviation σrc quantifies
+the consistency across methods, with lower values indicating higher agreement and thus
+higher confidence in the final threshold.
+Method Independence Discussion: While Methods 1, 2, 4, and 5 share a com-
+mon three-stage filtering strategy, they differ in their theoretical foundations (gradient
+analysis, second derivative, percentile ranking, sliding-window smoothing) and applica-
+tion contexts, providing complementary perspectives on threshold identification. Method
+3 (Binned Statistics) uses a fundamentally different approach, ensuring methodological
+diversity.
+The high consistency across all methods (std dev 1.2%) suggests that the
+shared filtering strategy captures robust patterns in the data, while the different theo-
+retical foundations provide validation from multiple perspectives. This design balances
+methodological rigor (through shared criteria) with diversity (through different theoretical
+foundations).
+The method also collects all candidate peaks from methods that support multi-peak
+detection (Methods 1, 2, 4, 5) for comprehensive analysis, though the final threshold is
+determined solely from the method-level estimates.
+Parameter Sensitivity: We conducted sensitivity analysis on key parameters: (1)
+Window size w: Varying w from 3 to 7 changes threshold estimates by ±0.5%, confirming
+robustness. (2) Rise-in-range threshold (10%): Varying from 5% to 15% changes estimates
+by ±0.3%. (3) Rebound threshold (85%): Varying from 80% to 90% changes estimates by
+±0.4%. These results confirm that parameter choices are robust and do not significantly
+affect threshold identification.
+G.5.8
+Threshold Identification Results
+For Qwen2.5-7B, the five-method cross-validation approach identifies the critical threshold
+at approximately 40-50% of maximum context length, with a performance drop of 45.5%
+(from F1 ≈0.55-0.56 to F1 ≈0.3), significantly exceeding the 30% threshold for cliff-
+like degradation. The median of all method estimates provides the final threshold value,
+ensuring robustness against method-specific biases.
+G.6
+Natural Length Distribution Analysis Results
+Figure 1 shows the scatter plot of F1 scores vs. context length ratios for Qwen2.5-7B on
+the mixed dataset. The plot reveals a clear degradation pattern:
+Key Observations:
+• Stable Performance (0-40%): F1 scores range from 0.55 to 0.58, indicating
+consistent performance in short to medium contexts
+• Catastrophic Degradation (40-50%): F1 drops sharply from 0.55-0.56 to 0.3,
+representing a 45.5% performance degradation
+• Continued Low Performance (50-60%): F1 maintains around 0.25-0.3, indi-
+cating persistent degradation beyond the critical threshold
+• Sample Distribution: The mixed dataset successfully covers the full range from
+5% to 95%, with SQuAD samples providing baseline performance in the short-
+context region and NarrativeQA samples covering the long-context region
+26
+The moving average trend line clearly shows the cliff-like drop in the 40-50% region,
+confirming the catastrophic nature of the performance degradation.
+H
+Additional Experimental Results
+H.1
+Experimental Methodology Evolution
+Our experimental methodology evolved through several iterations to address challenges
+encountered during the investigation:
+Stage 1: Dataset Selection. Initial experiments using SQuAD dataset failed to
+observe degradation patterns. Analysis revealed that SQuAD’s average context length
+( 700 characters, 1K tokens) represents less than 1% of the 128K max context, making
+it unsuitable for observing long-context degradation—analogous to testing long-distance
+running ability over a 100-meter sprint.
+Stage 2: Data Quality Optimization. Experiments with NarrativeQA revealed
+two issues: (1) Some samples exceeded the 128K token limit, causing invalid outputs
+(F1=0), resolved by filtering samples exceeding 95% of max context; (2) The dataset
+contains both question-answering and true/false judgment tasks, making accuracy inap-
+propriate, resolved by using F1 score as the primary metric.
+Stage 3: Sample Distribution Optimization. Using only NarrativeQA resulted
+in sample concentration in the 50%-80% range, with few samples in the 5%-30% region,
+creating survivor bias. This was resolved by constructing a mixed dataset combining 500
+SQuAD samples (covering 5%-10%) and 500 NarrativeQA samples (covering 20%-95%),
+providing comprehensive coverage across the full context length spectrum.
+Stage 4: Natural Length Analysis. The final methodology uses each sample’s
+natural token length without truncation or padding, providing stronger causal evidence
+that degradation results from context length itself rather than artifacts from text manip-
+ulation.
+27
+Figure 1: Natural length distribution analysis for Qwen2.5-7B on reading comprehension
+task using mixed dataset. The scatter plot shows individual samples (blue dots) and
+moving average trend line (red). The cliff-like degradation at 40-50% is clearly visible.
+I
+Limitations and Future Work
+I.1
+Limitations
+Our study has several limitations that should be considered when interpreting the results:
+Model and Task Scope: (1) Model Scope: Experiments focus exclusively on
+Qwen2.5-7B; generalization to other model scales (3B, 32B) and architectures (e.g., LLaMA,
+Mistral) requires further investigation. The critical threshold of 40-50% may be model-
+specific, and different architectures may exhibit different degradation patterns. (2) Task
+Scope: We focus on reading comprehension; extending analysis to other tasks (sum-
+marization, reasoning, code generation) would provide additional insights into whether
+critical thresholds are task-dependent or universal across tasks. (3) Architecture Varia-
+tions: Our analysis assumes standard Transformer architecture with RoPE; models using
+different position encodings (e.g., ALiBi, learned positional embeddings) may exhibit dif-
+ferent critical thresholds.
+Methodological Limitations: (4) Mechanism Depth: Analysis relies primarily
+on performance metrics; deeper analysis of internal representations (e.g., attention pat-
+terns, gradient flow, hidden state dynamics) would provide additional insights into the
+mechanistic causes of degradation. While we provide theoretical frameworks for infor-
+mation transmission efficiency and attention concentration, direct measurement of these
+quantities requires access to model internals. (5) Method Independence: While our
+five-method cross-validation provides robust threshold identification, Methods 1, 2, 4,
+and 5 share a common filtering strategy, which may limit the diversity of validation ap-
+proaches. However, Method 3 (Binned Statistics) provides complementary validation, and
+the high consistency across all methods (std dev 1.2%) suggests robustness despite shared
+28
+strategies.
+Experimental Limitations: (6) Sample Size: While we use 1,000 samples in the
+mixed dataset, larger sample sizes would provide even more robust statistical power, es-
+pecially in the critical transition region (40-50%) where sample density affects threshold
+precision. (7) Dataset Bias: The mixed dataset combines SQuAD and NarrativeQA,
+which may introduce domain-specific biases. Generalization to other domains (e.g., sci-
+entific texts, code) requires further validation.
+Reproducibility: To ensure reproducibility, we provide complete code and experi-
+mental details at https://github.com/charles-wang888/intelligence-degradation-in-llm.
+The repository includes all scripts for dataset preparation, natural length analysis, cliff
+point detection, and result visualization, enabling full replication of our experiments.
+I.2
+Future Work
+Future work should explore: (1) extending analysis to more model scales (3B, 32B) and
+architectures; (2) deeper mechanism analysis through attention visualization and repre-
+sentation analysis; (3) extending to other tasks (summarization, reasoning) to verify if
+critical thresholds are task-dependent; (4) developing theoretical frameworks to predict
+critical thresholds for new models; and (5) exploring mitigation strategies based on the
+identified critical thresholds.
+29

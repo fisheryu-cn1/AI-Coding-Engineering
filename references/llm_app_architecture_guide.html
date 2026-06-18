@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大模型应用架构选型参考方案</title>
+<style>
+  :root {
+    --bg: #fafbfc;
+    --fg: #1f2328;
+    --muted: #656d76;
+    --border: #d0d7de;
+    --accent: #0969da;
+    --accent-light: #ddf4ff;
+    --code-bg: #f6f8fa;
+    --table-header: #f3f4f6;
+    --warn: #fff8c5;
+    --warn-border: #d4a72c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    color: var(--fg);
+    background: var(--bg);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  h1 { font-size: 2rem; border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-top: 0; }
+  h2 { font-size: 1.5rem; margin-top: 48px; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--fg); }
+  h3 { font-size: 1.2rem; margin-top: 32px; color: var(--fg); }
+  h4 { font-size: 1.05rem; margin-top: 24px; color: var(--muted); }
+  p, li { font-size: 0.95rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.88rem;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  th {
+    background: var(--table-header);
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--fg);
+  }
+  pre {
+    background: var(--code-bg);
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    border: 1px solid var(--border);
+  }
+  pre code { background: none; padding: 0; }
+  blockquote {
+    margin: 16px 0;
+    padding: 12px 16px;
+    border-left: 4px solid var(--accent);
+    background: var(--accent-light);
+    border-radius: 0 6px 6px 0;
+  }
+  .highlight {
+    background: var(--warn);
+    border: 1px solid var(--warn-border);
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin: 16px 0;
+  }
+  .toc {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+  .toc h3 { margin-top: 0; font-size: 1.1rem; }
+  .toc ul { padding-left: 20px; }
+  .toc li { margin: 4px 0; }
+  .diagram {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    font-family: "SFMono-Regular", monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .diagram-svg {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .diagram-svg img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .tag-blue { background: var(--accent-light); color: var(--accent); }
+  .tag-green { background: #dafbe1; color: #1a7f37; }
+  .tag-yellow { background: var(--warn); color: #7a5c00; }
+  .tag-red { background: #ffebe9; color: #cf222e; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .footer { margin-top: 60px; padding-top: 20px; border-top: 2px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+  @media (max-width: 640px) {
+    body { padding: 20px 16px; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.2rem; }
+    table { font-size: 0.8rem; }
+    th, td { padding: 6px 8px; }
+    .diagram { font-size: 0.75rem; padding: 12px; }
+    .diagram-svg { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>大模型应用架构选型参考方案</h1>
+<p style="color:var(--muted); margin-top:-8px;">
+  <strong>版本</strong>：2026-05-16 &nbsp;|&nbsp; 
+  <strong>适用</strong>：面向需要构建生产级大模型应用的技术团队与架构师
+</p>
+
+<div class="toc">
+<h3>目录</h3>
+<ul>
+<li><a href="#s1">一、概述与选型原则</a></li>
+<li><a href="#s2">二、主流框架全景图</a></li>
+<li><a href="#s3">三、核心框架深度对比</a></li>
+<li><a href="#s4">四、六大典型组合架构</a>
+  <ul>
+    <li><a href="#c1">组合 1：企业知识库 Agent</a></li>
+    <li><a href="#c2">组合 2：智能数据分析平台</a></li>
+    <li><a href="#c3">组合 3：多角色协作内容工厂</a></li>
+    <li><a href="#c4">组合 4：.NET 企业级 Copilot</a></li>
+    <li><a href="#c5">组合 5：低代码原型 → 工程化迁移</a></li>
+    <li><a href="#c6">组合 6：极简全栈 MVP</a></li>
+  </ul>
+</li>
+<li><a href="#s5">五、上下文管理专项方案</a></li>
+<li><a href="#s6">六、选型决策矩阵</a></li>
+<li><a href="#s7">七、实施路径建议</a></li>
+<li><a href="#s8">八、附录：框架资源速查</a></li>
+</ul>
+</div>
+
+<h2 id="s1">一、概述与选型原则</h2>
+
+<h3>1.1 背景</h3>
+<p>当前大模型应用开发已从"单模型调用"进入"多组件编排"阶段。一个完整的应用通常涉及：模型接入、提示工程、检索增强（RAG）、工具调用、多 Agent 协作、状态持久化、前端流式输出、上下文记忆等多个环节。<strong>没有任何单一框架能够最优地覆盖所有环节</strong>，因此架构选型的核心在于<strong>分层组合、各取所长</strong>。</p>
+
+<h3>1.2 核心选型原则</h3>
+<table>
+<tr><th>原则</th><th>说明</th></tr>
+<tr><td><strong>接口契约化</strong></td><td>层与层之间只传递 Pydantic Schema 或 JSON，不共享内部状态对象</td></tr>
+<tr><td><strong>状态隔离</strong></td><td>编排层管理流程状态，业务层管理领域逻辑，存储层管理知识状态</td></tr>
+<tr><td><strong>流式透传</strong></td><td>前端需要实时感知时，中间层不做聚合拦截，直接透传 SSE/Stream</td></tr>
+<tr><td><strong>降级兜底</strong></td><td>LLM 调用层封装统一网关，支持多模型热切换（如 GPT-4 降级到 Claude 3.5）</td></tr>
+<tr><td><strong>渐进演进</strong></td><td>允许从低代码原型（Dify）向工程化代码（LangGraph/PydanticAI）平滑迁移</td></tr>
+</table>
+
+<h2 id="s2">二、主流框架全景图</h2>
+<p>按设计范式将现有框架分为 8 大类：</p>
+
+<div class="diagram-svg">
+  <img src="./llm_app_diagrams/01_landscape.svg" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">
+</div>
+
+<h2 id="s3">三、核心框架深度对比</h2>
+
+<h3>3.1 框架特性矩阵</h3>
+<table>
+<tr>
+  <th>维度</th>
+  <th>LangChain /<br>LangGraph</th>
+  <th>LlamaIndex</th>
+  <th>AutoGen</th>
+  <th>CrewAI</th>
+  <th>PydanticAI</th>
+  <th>Vercel AI SDK</th>
+  <th>OpenAI Agents SDK</th>
+  <th>Semantic Kernel</th>
+</tr>
+<tr>
+  <td><strong>核心定位</strong></td>
+  <td>通用编排与状态机</td>
+  <td>检索增强专家</td>
+  <td>多 Agent 对话研究</td>
+  <td>多 Agent 业务流程</td>
+  <td>类型安全 Agent</td>
+  <td>前端流式数据流</td>
+  <td>极简 Agent 构建</td>
+  <td>企业级多语言 SDK</td>
+</tr>
+<tr>
+  <td><strong>主要语言</strong></td>
+  <td>Python</td>
+  <td>Python</td>
+  <td>Python</td>
+  <td>Python</td>
+  <td>Python</td>
+  <td>TypeScript</td>
+  <td>Python</td>
+  <td>C#/Python/Java</td>
+</tr>
+<tr>
+  <td><strong>核心抽象</strong></td>
+  <td>Runnable /<br>StateGraph</td>
+  <td>QueryEngine /<br>Index</td>
+  <td>ConversableAgent</td>
+  <td>Agent / Task /<br>Crew</td>
+  <td>Agent[Deps,<br>Result]</td>
+  <td>useChat /<br>streamText</td>
+  <td>Agent / Runner /<br>handoff</td>
+  <td>Kernel / Plugin /<br>Planner</td>
+</tr>
+<tr>
+  <td><strong>拓扑支持</strong></td>
+  <td>DAG + 循环图</td>
+  <td>DAG（查询流水线）</td>
+  <td>群聊循环</td>
+  <td>顺序/层级/并行</td>
+  <td>函数式管道</td>
+  <td>前端 Hook</td>
+  <td>简单顺序 + handoff</td>
+  <td>DAG + 计划器</td>
+</tr>
+<tr>
+  <td><strong>状态持久化</strong></td>
+  <td><span class="tag tag-green">Checkpointer 原生</span></td>
+  <td>需外部</td>
+  <td>有限</td>
+  <td>无</td>
+  <td>无</td>
+  <td>无</td>
+  <td>无</td>
+  <td>通过外部存储</td>
+</tr>
+<tr>
+  <td><strong>人机协同</strong></td>
+  <td><span class="tag tag-green">interrupt + Command</span></td>
+  <td>无</td>
+  <td>UserProxyAgent</td>
+  <td>有限</td>
+  <td>无</td>
+  <td>无</td>
+  <td>无</td>
+  <td>通过 Copilot SDK</td>
+</tr>
+<tr>
+  <td><strong>类型安全</strong></td>
+  <td>弱（动态多）</td>
+  <td>中等</td>
+  <td>弱</td>
+  <td>弱</td>
+  <td><span class="tag tag-green">强（Pydantic 原生）</span></td>
+  <td>TypeScript</td>
+  <td>中等</td>
+  <td>强（C# 类型）</td>
+</tr>
+<tr>
+  <td><strong>流式输出</strong></td>
+  <td>支持</td>
+  <td>支持</td>
+  <td>有限</td>
+  <td>有限</td>
+  <td>支持</td>
+  <td><span class="tag tag-green">原生设计</span></td>
+  <td>支持</td>
+  <td>支持</td>
+</tr>
+<tr>
+  <td><strong>RAG 能力</strong></td>
+  <td>需手动拼接</td>
+  <td><span class="tag tag-green">原生最强</span></td>
+  <td>需集成</td>
+  <td>需集成</td>
+  <td>需集成</td>
+  <td>无</td>
+  <td>无</td>
+  <td>通过 Memory Plugin</td>
+</tr>
+<tr>
+  <td><strong>工具调用</strong></td>
+  <td>支持</td>
+  <td>支持</td>
+  <td>支持</td>
+  <td>支持</td>
+  <td><span class="tag tag-green">Pydantic 函数即工具</span></td>
+  <td>无（纯前端）</td>
+  <td>function_tool</td>
+  <td>Semantic + Native Function</td>
+</tr>
+<tr>
+  <td><strong>学习曲线</strong></td>
+  <td>陡峭</td>
+  <td>中等</td>
+  <td>中等</td>
+  <td>平缓</td>
+  <td>平缓</td>
+  <td>平缓</td>
+  <td><span class="tag tag-green">极简</span></td>
+  <td>中等</td>
+</tr>
+<tr>
+  <td><strong>生产成熟度</strong></td>
+  <td>高</td>
+  <td>高</td>
+  <td>中（研究向）</td>
+  <td>中</td>
+  <td>高</td>
+  <td>高</td>
+  <td>中（OpenAI 锁定）</td>
+  <td>高（Azure 生态）</td>
+</tr>
+</table>
+
+<h3>3.2 设计哲学对比</h3>
+<table>
+<tr><th>框架</th><th>一句话设计哲学</th></tr>
+<tr><td><strong>LangChain</strong></td><td>"瑞士军刀"——提供最全的抽象，但复杂度高</td></tr>
+<tr><td><strong>LangGraph</strong></td><td>"状态即接口"——用共享状态 + 图拓扑构建可循环、可持久化的 Agent 状态机</td></tr>
+<tr><td><strong>LlamaIndex</strong></td><td>"检索即核心"——从索引策略到查询合成，端到端优化 RAG</td></tr>
+<tr><td><strong>AutoGen</strong></td><td>"对话即协作"——Agent 通过自然语言消息自由协商任务分配</td></tr>
+<tr><td><strong>CrewAI</strong></td><td>"任务即流程"——人先定义角色与任务结构，Agent 按剧本执行</td></tr>
+<tr><td><strong>PydanticAI</strong></td><td>"类型即契约"——如果编译通过，大概率能运行；强类型贯穿输入输出</td></tr>
+<tr><td><strong>Vercel AI SDK</strong></td><td>"流式即体验"——从前端视角解决 LLM 流式输出的状态管理难题</td></tr>
+<tr><td><strong>OpenAI Agents SDK</strong></td><td>"极简即生产力"——80% 的 Agent 不需要 LangChain 的复杂度</td></tr>
+<tr><td><strong>Smolagents</strong></td><td>"代码即行动"——Agent 的推理直接生成可执行 Python 代码</td></tr>
+<tr><td><strong>Semantic Kernel</strong></td><td>"插件即生态"——将企业能力封装为标准化 Plugin，Planner 自动编排</td></tr>
+<tr><td><strong>Dify</strong></td><td>"可视化即速度"——业务人员拖拽即可验证 AI 流程</td></tr>
+<tr><td><strong>Letta</strong></td><td>"内存即操作系统"——把有限上下文窗口当作 RAM，软件层实现虚拟内存</td></tr>
+<tr><td><strong>Mem0</strong></td><td>"事实即记忆"——自动提取跨会话的事实、偏好、关系</td></tr>
+</table>
+
+<h2 id="s4">四、六大典型组合架构</h2>
+
+<h3 id="c1">组合 1：企业知识库 Agent（RAG + 状态机 + 类型安全）</h3>
+<p><strong>场景</strong>：金融合规知识库、医疗指南问答、企业制度检索——需要高准确率、可溯源、可审核。</p>
+
+<div class="diagram-svg">
+  <img src="./llm_app_diagrams/02_combo1_rag.svg" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">
+</div>
+
+<p><strong>各层职责</strong>：</p>
+<ul>
+<li><strong>LlamaIndex</strong>：负责文档索引、Hybrid Search + Rerank、引用溯源（source nodes）。这是它的主场。</li>
+<li><strong>LangGraph</strong>：负责"判断意图 → 执行检索 → 大模型生成 → 合规审核 → 输出"的状态流转。<code>interrupt()</code> 在涉及投资建议、医疗诊断等敏感场景前暂停，等待人工确认。</li>
+<li><strong>PydanticAI</strong>：封装对外 API，确保 <code>AgentResponse</code> 是强类型（<code>answer: str</code>, <code>sources: list[Source]</code>, <code>confidence: float</code>, <code>needs_review: bool</code>）。</li>
+<li><strong>Vercel AI SDK</strong>：前端实时显示思考过程（"正在检索…" → "正在生成…"），并渲染溯源链接。</li>
+</ul>
+
+<h3 id="c2">组合 2：智能数据分析平台（代码 Agent + 可视化前端）</h3>
+<p><strong>场景</strong>：企业 BI 助手、投研数据分析、科研数据探索——非技术人员用自然语言分析数据。</p>
+
+<div class="diagram-svg">
+  <img src="./llm_app_diagrams/03_combo2_data.svg" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">
+</div>
+
+<p><strong>各层职责</strong>：</p>
+<ul>
+<li><strong>Smolagents</strong>：核心推理引擎。用户问"对比华东和华北区近三月销售额趋势"，Agent 生成 Python 代码调用数据层 API，拿到数据后再生成绘图代码，返回图表和洞察文本。"代码即行动"的模式天然适合数据操作。</li>
+<li><strong>PydanticAI</strong>：封装数据访问层，将自然语言查询转化为类型安全的 SQL。通过 Pydantic 模型限制查询范围（只读、限定表、禁止 DDL），防止 SQL 注入和越权访问。</li>
+<li><strong>Vercel AI SDK</strong>：前端渲染流式文本 + 内联图表。使用 <code>createDataStream</code> 同时推送文本流和图表 URL，实现"边分析边展示"。</li>
+</ul>
+
+<h3 id="c3">组合 3：多角色协作内容工厂（多 Agent 团队 + 任务队列）</h3>
+<p><strong>场景</strong>：投研报告自动生成、营销内容批量生产、合同审查流水线——需要多人角色协作的质量控制。</p>
+
+<div class="diagram-svg">
+  <img src="./llm_app_diagrams/04_combo3_crew.svg" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">
+</div>
+
+<p><strong>各层职责</strong>：</p>
+<ul>
+<li><strong>CrewAI</strong>：定义角色和任务流程。例如"行业研报生成"：Researcher（检索数据）→ Writer（撰写正文）→ Editor（校对格式与合规）→ Reviewer（人工终审）。顺序执行（Sequential）或层级执行（Hierarchical）。</li>
+<li><strong>LlamaIndex</strong>：为 Researcher Agent 提供实时数据（财报、新闻、数据库），使用 <code>QueryEngine</code> 生成带引用的研究摘要。</li>
+<li><strong>PydanticAI</strong>：Writer 和 Editor 使用强类型输出（<code>ReportSection</code> 模型），确保章节结构、字数、关键词密度符合模板。审核 Agent 用 Pydantic 校验合规规则（如"不得出现具体投资建议"）。</li>
+<li><strong>Dify</strong>：作为人工终审的 UI 层。CrewAI 生成初稿后推送到 Dify 的审批流，业务专家在可视化界面修改后触发发布。</li>
+</ul>
+
+<h3 id="c4">组合 4：.NET 企业级 Copilot（微软生态全栈）</h3>
+<p><strong>场景</strong>：企业内部 Copilot、政府/金融行业私有化部署——深度集成 Microsoft 365、Azure、Active Directory。</p>
+
+<div class="diagram-svg">
+  <img src="./llm_app_diagrams/05_combo4_dotnet.svg" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">
+</div>
+
+<p><strong>各层职责</strong>：</p>
+<ul>
+<li><strong>Semantic Kernel</strong>：在 .NET 后端统一编排。<code>Plugin</code> 体系将企业内部的 CRM 查询、ERP 接口、文档检索封装为标准功能单元；<code>Planner</code> 自动拆解用户请求并调用多个 Plugin。C# 类型安全 + 依赖注入与企业现有架构无缝衔接。</li>
+<li><strong>Azure OpenAI</strong>：提供模型 + 内容过滤（Content Safety）+ 私有部署，满足金融/政务合规要求。</li>
+<li><strong>Azure AI Search</strong>：企业文档的向量+关键词混合检索，与 Semantic Kernel 的 <code>Memory</code> 抽象直接对接。</li>
+</ul>
+
+<h3 id="c5">组合 5：低代码原型 → 工程化迁移（双轨策略）</h3>
+<p><strong>场景</strong>：创业公司/大企业创新部门快速试错，验证后无缝迁移到生产代码库。</p>
+
+<div class="diagram-svg">
+  <img src="./llm_app_diagrams/06_combo5_migrate.svg" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">
+</div>
+
+<p><strong>迁移要点</strong>：</p>
+<ul>
+<li>Dify 中验证好的 <strong>Prompt 模板</strong>直接迁移为代码中的 <code>ChatPromptTemplate</code>。</li>
+<li>Dify 中验证好的 <strong>RAG 参数</strong>（chunk size、top-k、rerank 阈值）作为 LlamaIndex 的初始化配置。</li>
+<li>Dify 收集的 <strong>真实用户 query 集</strong>作为回归测试用例，确保重构后输出质量不下降。</li>
+<li>用 <strong>PydanticAI</strong> 替换 Dify 的动态输出为强类型 Schema，接入现有微服务网关和监控体系。</li>
+</ul>
+
+<h3 id="c6">组合 6：极简全栈 MVP（OpenAI 生态闭环）</h3>
+<p><strong>场景</strong>：独立开发者/小团队在一周内上线的客服机器人、个人助理、轻量级 SaaS。</p>
+
+<div class="diagram-svg">
+  <img src="./llm_app_diagrams/07_combo6_mvp.svg" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">
+</div>
+
+<p><strong>各层职责</strong>：</p>
+<ul>
+<li><strong>OpenAI Agents SDK</strong>：极简后端。一个 <code>Agent</code> 定义角色，几个 <code>function_tool</code> 对接外部 API（如查订单、订酒店），<code>handoffs</code> 处理"客服转专家"。代码量极少，学习曲线接近零。</li>
+<li><strong>Vercel AI SDK</strong>：前端数据流。<code>streamText</code> 消费 Agent 的流式输出，<code>useObject</code> 消费结构化数据（如自动生成的表单）。</li>
+<li><strong>Zod</strong>：与 Agents SDK 配合做运行时类型校验（TypeScript 生态的 Pydantic）。</li>
+</ul>
+
+<h2 id="s5">五、上下文管理专项方案</h2>
+
+<p>复杂 Agent 的上下文管理是一个独立的架构难题：Token 窗口溢出、历史信息噪声、跨节点状态传递、长期记忆缺失会直接导致模型"失忆"或"混乱"。</p>
+
+<h3>5.1 专门化上下文/记忆管理框架</h3>
+<table>
+<tr><th>框架</th><th>定位</th><th>核心机制</th><th>适用场景</th></tr>
+<tr><td><strong>Letta (MemGPT)</strong></td><td>LLM 操作系统级上下文管理</td><td>把有限上下文窗口当作 RAM，通过 <code>archival_memory_insert/search</code> 实现分页换入换出；支持多 Agent 共享记忆层</td><td>超长会话（>50轮）、终身个人助理</td></tr>
+<tr><td><strong>Mem0</strong></td><td>跨会话事实记忆层</td><td>自动提取事实/偏好/关系；Adaptive Retrieval 根据当前查询召回最相关记忆</td><td>客服 Agent、理财顾问、任何需要"记住用户"的服务</td></tr>
+<tr><td><strong>Zep</strong></td><td>长期对话记忆服务</td><td>Memory Graph 构建实体关系图；异步事实提取；支持模糊指代消解（"上次说的那个项目"）</td><td>投研问答、医疗问诊、复杂对话回溯</td></tr>
+</table>
+
+<h3>5.2 编排框架内置机制</h3>
+<table>
+<tr><th>框架</th><th>内置机制</th><th>能力边界</th></tr>
+<tr><td><strong>LangGraph</strong></td><td><code>State</code> + <code>Reducer</code> + <code>Checkpointer</code></td><td>管理流程状态（节点间传递）和持久化（断点续传），但不自动压缩语义记忆</td></tr>
+<tr><td><strong>Semantic Kernel</strong></td><td><code>ChatHistory</code> + Token Limit + <code>SummarizationMiddleware</code></td><td>自动裁剪消息列表和摘要旧消息，适合中等长度对话</td></tr>
+<tr><td><strong>AutoGen</strong></td><td><code>GroupChat</code> + <code>ChatResult</code></td><td>管理群聊历史，长期记忆需外部集成</td></tr>
+</table>
+
+<h3>5.3 工程模式：分层记忆架构</h3>
+<p>生产级复杂 Agent 推荐采用五层记忆架构：</p>
+
+<div class="diagram-svg">
+  <img src="./llm_app_diagrams/08_memory.svg" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">
+</div>
+
+<p><strong>实现建议</strong>：</p>
+<ul>
+<li>用 <strong>Letta</strong> 管理第一到三层（物理窗口管理 + 自动换入换出）</li>
+<li>用 <strong>Mem0</strong> 或 <strong>Zep</strong> 管理第四到五层（长期语义记忆 + 实体关系）</li>
+<li>在 LangGraph 的 State 中维护各层的指针和加载策略</li>
+</ul>
+
+<h3>5.4 工程模式：节点间上下文路由</h3>
+<p>复杂 Agent 的不同节点应看到<strong>不同的上下文视图</strong>：</p>
+
+<table>
+<tr><th>节点类型</th><th>应看到的上下文</th><th>不应看到的上下文</th></tr>
+<tr><td>意图识别</td><td>用户最近 1 轮输入 + 全局意图分类规则</td><td>全部历史消息（噪声）</td></tr>
+<tr><td>检索</td><td>用户问题 + 精简实体背景（从 Mem0 查询）</td><td>系统内部逻辑</td></tr>
+<tr><td>生成</td><td>检索结果 + 系统提示 + 最近 2 轮对话</td><td>早期无关历史</td></tr>
+<tr><td>工具执行</td><td>仅工具所需的参数 Schema + 安全上下文</td><td>用户闲聊历史</td></tr>
+<tr><td>审核</td><td>完整请求链路（用于合规审查）</td><td>—</td></tr>
+</table>
+
+<p><strong>实现</strong>：在 LangGraph 中定义 <code>context_router</code> 节点，在每个业务节点入口前按需组装上下文。</p>
+
+<h3>5.5 工程模式：Token 预算分配</h3>
+<p>为不同信息来源分配固定 Token 配额，防止某一部分挤占窗口：</p>
+
+<pre><code>budget = {
+    "system_prompt": 1000,
+    "retrieved_docs": 3000,
+    "chat_history": 2000,
+    "tool_outputs": 2000,
+    "reasoning_scratchpad": 1000
+}</code></pre>
+
+<h2 id="s6">六、选型决策矩阵</h2>
+
+<h3>6.1 按应用场景选型</h3>
+<table>
+<tr><th>应用场景</th><th>推荐组合</th><th>核心框架</th><th>备选方案</th></tr>
+<tr><td><strong>企业知识库问答</strong></td><td>组合 1</td><td>LlamaIndex + LangGraph + PydanticAI</td><td>Dify 快速原型</td></tr>
+<tr><td><strong>智能数据分析</strong></td><td>组合 2</td><td>Smolagents + PydanticAI + Vercel AI SDK</td><td>LangChain + Code Interpreter</td></tr>
+<tr><td><strong>内容生成流水线</strong></td><td>组合 3</td><td>CrewAI + LlamaIndex + PydanticAI + Dify</td><td>AutoGen（研究向）</td></tr>
+<tr><td><strong>Microsoft 生态 Copilot</strong></td><td>组合 4</td><td>Semantic Kernel + Azure OpenAI</td><td>—</td></tr>
+<tr><td><strong>快速验证 → 工程化</strong></td><td>组合 5</td><td>Dify → LangGraph + PydanticAI</td><td>Flowise → 自研</td></tr>
+<tr><td><strong>独立开发者 MVP</strong></td><td>组合 6</td><td>OpenAI Agents SDK + Vercel AI SDK</td><td>Agno</td></tr>
+<tr><td><strong>超长会话助理</strong></td><td>—</td><td>Letta + Mem0</td><td>Zep</td></tr>
+<tr><td><strong>金融/医疗高合规</strong></td><td>组合 1/4</td><td>PydanticAI + LangGraph + 人工审核节点</td><td>Semantic Kernel</td></tr>
+</table>
+
+<h3>6.2 按团队技术栈选型</h3>
+<table>
+<tr><th>团队背景</th><th>首选生态</th><th>理由</th></tr>
+<tr><td>Python 全栈 + 重视类型安全</td><td>PydanticAI + LangGraph</td><td>与 FastAPI/SQLModel 生态无缝衔接</td></tr>
+<tr><td>Python 数据科学</td><td>Smolagents + LlamaIndex</td><td>代码即行动，与 Pandas 生态融合</td></tr>
+<tr><td>TypeScript / 前端为主</td><td>Vercel AI SDK + OpenAI Agents SDK</td><td>前后端统一语言，部署在 Vercel/Node</td></tr>
+<tr><td>.NET / Azure 企业</td><td>Semantic Kernel + Azure OpenAI</td><td>原生集成 Active Directory、Office 365</td></tr>
+<tr><td>Java / 传统企业</td><td>Semantic Kernel (Java)</td><td>微软官方 Java SDK，或 Spring AI</td></tr>
+<tr><td>业务人员 + 少量技术</td><td>Dify / Flowise</td><td>可视化编排，降低参与门槛</td></tr>
+</table>
+
+<h3>6.3 按复杂度与阶段选型</h3>
+
+<div class="diagram-svg">
+  <img src="./llm_app_diagrams/09_matrix.svg" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">
+</div>
+
+<h2 id="s7">七、实施路径建议</h2>
+
+<h3>7.1 分阶段落地路线图</h3>
+<table>
+<tr><th>阶段</th><th>周期</th><th>目标</th><th>关键动作</th></tr>
+<tr><td><strong>第一阶段：验证</strong></td><td>0-4 周</td><td>验证 PMF，确定技术可行性</td><td>用 Dify / OpenAI Agents SDK 搭建原型；收集 100+ 真实 query；评估不同模型的输出质量</td></tr>
+<tr><td><strong>第二阶段：核心</strong></td><td>4-12 周</td><td>搭建生产级核心链路</td><td>迁移到 LangGraph / PydanticAI；接入内部数据源；建立评估基准（Evals）；接入可观测性（LangSmith）</td></tr>
+<tr><td><strong>第三阶段：增强</strong></td><td>3-6 月</td><td>增加复杂能力与记忆</td><td>引入 Letta / Mem0 管理长期记忆；增加多 Agent 协作（CrewAI / LangGraph Subgraph）；接入人工审核节点</td></tr>
+<tr><td><strong>第四阶段：规模化</strong></td><td>6-12 月</td><td>多团队复用与平台化</td><td>抽象为内部 Agent 平台；标准化 Plugin / Tool 市场；A/B 测试框架；成本监控与模型路由优化</td></tr>
+</table>
+
+<h3>7.2 关键成功因素</h3>
+<ol>
+<li><strong>评估先行</strong>：在迁移到工程化框架前，先用 Dify 收集真实用户 query 并建立人工标注的"黄金答案集"，作为后续回归测试基准。</li>
+<li><strong>人机协同</strong>：高价值决策（如投资指令、医疗诊断、合同签署）必须保留人工确认环节，Agent 定位为 Copilot 而非 Autopilot。</li>
+<li><strong>上下文分层</strong>：不要试图用一个框架解决所有记忆问题。物理窗口管理（Letta）、事实记忆（Mem0）、流程状态（LangGraph Checkpointer）各司其职。</li>
+<li><strong>流式体验</strong>：如果前端是聊天界面，从第一天就设计流式输出。后期从同步改为流式的改造成本极高。</li>
+<li><strong>合规底线</strong>：客户服务类 Agent 必须内置话术合规审查（Pydantic 模型约束输出字段 + 审核节点），避免误导性陈述。</li>
+</ol>
+
+<h2 id="s8">八、附录：框架资源速查</h2>
+
+<table>
+<tr><th>框架</th><th>官方文档</th><th>GitHub</th><th>核心语言</th></tr>
+<tr><td>LangChain / LangGraph</td><td>python.langchain.com</td><td>github.com/langchain-ai</td><td>Python</td></tr>
+<tr><td>LlamaIndex</td><td>docs.llamaindex.ai</td><td>github.com/run-llama</td><td>Python</td></tr>
+<tr><td>AutoGen</td><td>microsoft.github.io/autogen</td><td>github.com/microsoft/autogen</td><td>Python</td></tr>
+<tr><td>CrewAI</td><td>docs.crewai.com</td><td>github.com/joaomdmoura/crewai</td><td>Python</td></tr>
+<tr><td>PydanticAI</td><td>ai.pydantic.dev</td><td>github.com/pydantic/pydantic-ai</td><td>Python</td></tr>
+<tr><td>Vercel AI SDK</td><td>sdk.vercel.ai/docs</td><td>github.com/vercel/ai</td><td>TypeScript</td></tr>
+<tr><td>OpenAI Agents SDK</td><td>openai.github.io/openai-agents-python</td><td>github.com/openai/openai-agents-python</td><td>Python</td></tr>
+<tr><td>Smolagents</td><td>huggingface.co/docs/smolagents</td><td>github.com/huggingface/smolagents</td><td>Python</td></tr>
+<tr><td>Dify</td><td>docs.dify.ai</td><td>github.com/langgenius/dify</td><td>Python/TS</td></tr>
+<tr><td>Semantic Kernel</td><td>learn.microsoft.com/semantic-kernel</td><td>github.com/microsoft/semantic-kernel</td><td>C#/Py/Java</td></tr>
+<tr><td>Letta (MemGPT)</td><td>docs.letta.com</td><td>github.com/letta-ai/letta</td><td>Python</td></tr>
+<tr><td>Mem0</td><td>docs.mem0.ai</td><td>github.com/mem0ai/mem0</td><td>Python</td></tr>
+<tr><td>Zep</td><td>getzep.github.io/zep</td><td>github.com/getzep/zep</td><td>Python</td></tr>
+</table>
+
+<hr>
+
+<blockquote>
+<p><strong>结语</strong>：大模型应用架构没有"银弹"。2026 年的工程共识是<strong>分层组合、接口契约化</strong>——让最擅长检索的框架管检索，最擅长编排的框架管流程，最擅长类型安全的框架管接口，最擅长前端的框架管用户体验，通过标准化的 Pydantic Schema 和 REST API 将它们像乐高一样拼起来。从 Dify 验证开始，向 LangGraph + PydanticAI 演进，在需要长期记忆时引入 Letta/Mem0，是已被验证的务实路径。</p>
+</blockquote>
+
+<div class="footer">
+<p>文档版本：2026-05-16 | 生成工具：Kimi K2.6 | 基于公开技术文档与工程实践整理</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,262 @@
+
+
+--- Page 1 ---
+
+Formal Architecture Descriptors as Navigation Primitives
+for AI Coding Agents
+RuoqiJin
+jinruoqi@xiaojinpro.com
+IndependentResearcher
+China
+Abstract SWE-agent[6]foundthatiterativesearchcandegradeperformance
+AIcodingagentsspendasubstantialfractionoftheirtoolcallson relativetonosearchatall.
+undirectedcodebaseexploration.Weinvestigatewhetherproviding Current mitigation approaches fall into two camps. Human-
+agentswithformalarchitecturedescriptors—structureddocuments configuredcontextfiles—CLAUDE.md,AGENTS.md[7](adopted
+declaringmoduleboundaries,symbolsignatures,constraints,and by60,000+projects),CursorRules—allowdeveloperstodescribe
+dataflows—canreducethisnavigationaloverhead. projectsinnatural-languageMarkdown.Arecentempiricaleval-
+Wepresentthreecomplementarystudies.First,acontrolledex- uationfoundnostatisticallysignificantimprovementintasksuc-
+periment(24codelocalizationtasks×4conditions,ClaudeSon- cesswhileincreasinginferencecostbyover20%[8].Automated
+net4.6,temperature=0)demonstratesthatarchitecturecontext— approaches—Aider’stree-sitterrepomaps[9],CodexGraph[10],
+regardlessofformat—reducesnavigationstepsby33–44%(Wilcoxon RepoGraph[11]—extractstructuralinformationprogrammatically
+signed-rank 𝑝 = 0.009, Cohen’s 𝑑 = 0.92). No significant for- butcaptureonlysyntacticrelationships,missingdesignintentand
+matdifferencewasdetected:aseparatestudy(20questions×4 architecturalconstraints.Arecentpositionpaper[12]explicitly
+formats)foundidentical95%accuracyacrossS-expression,JSON, identifiesthegapbetweeninformalinstructionfilesandformal
+YAML,andMarkdown,thoughsmalldifferencescannotberuled ArchitectureDescriptionLanguages(ADLs)[13],butproposesno
+outgivensamplesizes.Second,acriticalartifact-vs-processexperi- specificnotation.
+ment(15tasks×3conditions)demonstratesthatanautomatically Weaddressthisgapwithintent.lisp:anS-expressionarchitecture
+generateddescriptor—withzerohumanrefinementandzerocode descriptorthatfunctionsasastructuredchannelthroughwhich
+restructuring—achieves100%accuracyversus80%blind(𝑝 =0.002, humanarchitecturalintentiscapturedandconsumedbyAIagents.
+𝑑 =1.04),provingthatthedescriptorfileitselfhasdirectnaviga- Ourcontrolledexperimentrevealsthatnosignificantdifference
+tionalvalueindependentofanydeveloperself-clarificationeffect. inLLMcomprehensionwasdetectedacrossformats.Thevalue
+Third,anobservationalfieldstudyacross7,012ClaudeCodeses- ofS-expressionslieselsewhere:intheconstraintstheyimposeon
+sionsshowsthatformaldeclarationcorrelateswith52%reduction thewritingagent,theirerrorresilience,thecompressionratiosthey
+inagentbehavioralvariance. achieve (5:1–64:1 across production projects, weighted average
+Awriter-sideexperiment(96generationruns,96errorinjections) 34:1),andthedownstreamtoolingtheyenable—capabilitiesthat
+revealsthatallparseableformatsachieve>91%generationreliabil- unstructuredformatscannotsupport.
+ity,butfailuremodesdiffercritically:JSONhasthelowestsilent Ourcontributionsare:
+corruption(21%)butfailsatomicallyunderstructuralerror;YAML
+silentlycorrupts50%oferrors;S-expressionsdetectallstructural
+completenesserrorsbuthaveimpreciselocalization.Wepropose
+intent.lisp,anS-expressionarchitecturedescriptor,arguingthatits
+(1) Acontrolledexperimentdemonstratingthatformalarchi-
+valueliesnotinsuperiorLLMcomprehensionbutinthecombina-
+tecturecontextreducesagentnavigationstepsby33–44%
+tionofnon-atomicfailure,compressiondensity(22%shorterthan
+(𝑑 =0.92,𝑝 =0.009),withnosignificantformatdifference
+JSON,5:1–64:1across646Klinesofproductioncode),andsyntactic
+detected.Wenotethiseffectismodel-sensitive:stronger
+enforcementofhierarchy.
+modelsreducetheblindbaseline,compressingthemarginal
+benefit.
+1 Introduction
+(2) Anartifact-vs-processexperimentshowingthatautomati-
+Largelanguagemodel(LLM)-basedcodingagents—ClaudeCode[1], callygenerateddescriptors(zerohumanrefinement)achieve
+Cursor [2], GitHub Copilot Workspace [3]—have demonstrated 100% accuracy versus 80% blind (𝑑 = 1.04,𝑝 = 0.002)—
+remarkableabilitytounderstandandmodifysourcecode.Yeton provingthatthedescriptorartifactitselfhasdirectvalue,
+real-world codebases, these agents spend a substantial fraction independentofanydeveloperself-clarificationeffect.
+oftheirinteractionsexploringratherthanediting:greppingfor (3) Anobservationalfieldstudy(7,012sessions)showingthat
+symbols,globbingforfiles,andreadingmodulestoreconstruct formalarchitecturedeclarationcorrelateswith52%reduc-
+architecturalcontextthatexistsonlyinthedeveloper’smind. tioninagentbehavioralvariance.
+ThisNavigationParadox[4]persistsevenascontextwindows (4) Theintent.lispformatanddesignrationale:S-expressions
+growlarger:thebottleneckshiftsfromretrievalcapacitytonaviga- arechosennotforLLMcomprehension(whichisformat-
+tionalsalience.LoCoBench-Agent[5]identifiesa12-turnefficiency agnostic)butforsyntacticenforcementofhierarchy,grace-
+thresholdbeyondwhichagentsexhibitsharplydiminishingreturns. fulerrordegradation,andcompressiondensity.
+6202
+rpA
+11
+]ES.sc[
+1v80131.4062:viXra
+
+--- Page 2 ---
+
+RuoqiJin
+Table1:Compressionratiosacrossfiveproductionprojects. Table2:Codelocalizationresults.Contextreducesstepsby
+Ratiosvarywithdescriptorgranularity. 33–44%regardlessofformat(Wilcoxon𝑝 <0.015).
+Project Source Lisp Files Ratio Condition Accuracy AvgSteps 𝑑vsBlind
+xiaojinpro-backend 469,594 7,877 32 60:1 Blind 54%(13/24) 5.2 —
+missiond 107,986 5,846 14 18:1 S-expression 58%(14/24) 3.4 0.92
+jarvis-forge 44,321 698 1 64:1 JSON 58%(14/24) 3.4 1.02
+jarvis 22,164 4,329 6 5:1 Markdown 63%(15/24) 2.9 1.43
+jarvis-mechanic 1,856 366 2 5:1
+Total 645,921 19,116 55 34:1
+2 Approach
+Gracefulerrordegradation.Ourerrorinjectionexperiment
+2.1 Theintent.lispFormat (§3.2) validates this empirically: JSON fails atomically—a single
+missingbracerenderstheentirefileunparseablewith0%content
+Anintent.lispfiledeclaresaproject’sarchitectureasanestedS-
+recovery.YAMLfailssilently—50%ofinjectederrorschangese-
+expressiontree.Eachprojectisdecomposedintopillars(top-level
+manticmeaningwithoutanyparserwarning.S-expressionsdetect
+responsibilitydomains),components(moduleswithinpillars),and
+100%ofstructuralcompletenesserrors;whilelocalizationisimpre-
+symbols(functionsignatures,types,constants).
+cise,thecontentbeforetheerrorremainsstructurallyintactwitha
+(intent jarvis fault-tolerantparser.
+(design-constraints Formal parseability enables tooling. A recursive descent
+(three-pillars (memory control tools)) parserunder100lineshandlesthefullS-expressionlanguage.We
+(communication (must-use EventBus))
+notethatJSONoffersitsownecosystemadvantage:modernLLM
+(db-access (only memory/storage)))
+APIs support JSON Schema-constrained generation (Structured
+(pillar memory
+Outputs). S-expressions lack this API-level support but achieve
+(purpose "Data␣capture,␣storage,␣analysis")
+comparablegenerationreliabilitythroughgrammarsimplicity.Fu-
+(component storage
+(role "SOLE␣DB␣gateway") tureworkincludesmulti-agentsubtreepartitioning—acapability
+(invariants "No␣raw␣SQL␣outside␣this␣ enabledbybutnotyetevaluatedwiththecurrentformat.
+module")
+(data-flow "Event␣->␣Storage␣->␣PostgreSQL
+2.2 AgentIntegration
+")
+(symbols Thedescriptorlifecycleinvolvesthreephases:(1)Generation—an
+(function save_message automated survey tool scans the project’s AST and invokes an
+(sig "async␣fn␣save_message(&self,␣
+LLMtoproduceadraft;(2)Consumption—agentsconsultitasa
+...)"))))))
+navigationentrypoint;(3)Co-evolution—thedescriptorisupdated
+alongsidecodechangesandversion-controlled.
+Inpractice,humansdonotwriteintent.lispdirectly.The
+developerdescribesarchitecturalintentinnaturallanguage;anLLM
+translatesthisintoS-expressions;otherLLMagentssubsequently 3 Evaluation
+consumetheresult.Thedescriptorthusfunctionsasastructured
+3.1 Reader-Side:CodeLocalization
+channelforintenttransmission—analogoustohowProtocolBuffers
+servemicroservicecommunication:notbecausetheformatiseasier Design.24codelocalizationtasksfromaRustproject(jarvis,∼22K
+toread,butbecauseitconstrainstheproducer. lines),eachrununderfourconditions:Blind,S-expression,JSON,
+FourpropertiesmakeS-expressionswell-suitedforthisrole: andMarkdowncontext.AllrunsusedClaudeSonnet4.6attemper-
+Syntacticenforcementofhierarchy.S-expressionspermit ature=0,max20steps.
+exactlyonestructure:nestedlistswithatoms.Containmentrela- Result1:Architecturecontextreducesnavigationby33–
+tionshipsareexpressedthroughparenthesization—notbyconven- 44%.Table2showsresults.Wilcoxonsigned-ranktests(censored
+tionbutbysyntax.Ourwriter-sideexperiment(§3.2)findsthat at20steps):Blindvs.S-expr𝑝 =0.009,Blindvs.Markdown𝑝 =
+modern LLMs produce equally concise output in all formats at 0.005—allcontextconditionssignificantlyreducenavigation.Five
+temperature=0—thesyntacticdisciplineofS-expressionsisastruc- tasksfailedacrossallconditionsduetodescriptorstaleness(code
+turalguaranteeratherthananempiricallyobservedgeneration reorganizationafterdescriptorcreation).
+difference. Result 2: No significant format difference detected. All
+Compressiondensity.Table1showscompressionratiosacross pairwise𝑝 >0.07.However,formatcomparisonsyieldedonly3–6
+five production projects (646K total source lines). Ratios range effectivepaireddifferences—insufficienttodetecteffectssmaller
+from5:1(smallprojectswithdenseL3descriptors)to64:1(large than𝑑 ≈0.8.Aseparatecomprehensionexperiment(20questions
+compilerswithsingle-filedescriptors),withaweightedaverageof ×4formats)foundidentical95%accuracy,providingconverging
+34:1. evidencethatformatdifferences,iftheyexist,aresmall.
+
+--- Page 3 ---
+
+FormalArchitectureDescriptorsasNavigationPrimitives
+forAICodingAgents
+Table3:Errorresilience(96injections).Eachformathasa Finding2:Withinthepost-introductionperiod,sessionsthat
+distinctfailuremode. readintent.lispshowednoper-sessionadvantageoverthosethatdid
+not(1.65vs.1.65).Wetermthisthedeveloperself-clarificationeffect—
+Property S-expr JSON YAML MD theactofformalizingarchitecturemayimprovecodeorganization
+andpromptsregardlessofdescriptorconsumption.ExperimentE’s
+E1detection 100% 100% 50% 0%
+result(auto-generateddescriptorsworkonunrefactoredcode)sug-
+Overalldetection 50% 62% 21% 0%
+gestsartifactvalueissufficientonitsown,butthetwomechanisms
+Silentcorruption 50% 21% 50% 100%
+arenotmutuallyexclusive.
+Table4:Artifactvs.processexperiment.AutoGenoutper-
+3.5 ThreatstoValidity
+formsCuratedonaccuracy,suggestingdiminishingreturns
+fromlength. Modelsensitivityandprojectscale.Theeffectsizeismodel-
+sensitive:anearlierrunwithaweakermodelyielded𝑑 =1.70;the
+Condition Acc. Steps Cens.Mean 𝑝vsBlind
+currentSonnet4.6runyields𝑑 =0.92.However,ourtestproject
+(22Klines)maybesmallenoughforstrongmodelstonavigatewith-
+Blind 80% 5.6 8.5 — outassistance.Descriptorsaredesignedforlarge-scalecodebases
+AutoGen 100% 3.9 3.9 0.002
+(100K+lines,Table1)whereevenstrongmodelscannotefficiently
+Curated 87% 2.9 5.2 0.003
+exploreblind.Theshrinkingeffectonsmallprojectsmayindicate
+thatdescriptorvaluescaleswithcodebasecomplexity—ahypothesis
+requiringevaluationonlargerprojects.
+3.2 Writer-Side:GenerationandError
+Statisticalpower.Formatcomparisonsyielded3–6effective
+Resilience
+paireddifferences—insufficienttodetect𝑑 < 0.8.Wereport“no
+Design.8natural-languagearchitecturedescriptions×4formats× significantdifferencedetected”ratherthan“nodifferenceexists.”
+3repetitions(96runs).Errorresilience:3errortypes×96injections. Taskrepresentativeness.Alltasksarecodelocalization.Multi-
+Result3:Generationreliability.JSONachieves100%parse filemodificationandarchitecturaldecisionsremainuntested.Task
+validity;S-expression95.8%;YAML91.7%. selectionwasnotrandomized,introducingpotentialselectionbias
+Result4:Failuremodesdiffercritically.Table3summarizes: towarddescriptor-friendlyqueries.
+Nosingleformatdominates.JSONhaslowersilentcorruption Contextdeliverymismatch.Thecontrolledexperimentinjects
+(21%)butfailsatomicallyonstructuralerrors.S-expressionavoids descriptors into the system prompt (persistent); the field study
+atomicfailure.BotharesuperiortoYAMLandMarkdownforauto- involvestool-callreading(subjecttocompression).Thismayaffect
+matedgovernance. benefitmagnitudeinlongersessions.
+3.3 ArtifactValuevs.ProcessValue
+4 RelatedWork
+Design.15tasksonjarvis-forge(43KlinesRust)—aprojectwhere
+ArchitectureDescriptionLanguages.FormalADLs(AADL,Acme,
+thedeveloperneverrefactoredcodetomatchanydescriptor.Three
+xADL)havearichhistory[13,20],butnonehasbeendesignedfor
+conditions:Blind,AutoGen(∼170-lineauto-generateddescriptor,
+AIcodingagents.
+zerohumanediting),Curated(698-linehand-refineddescriptor).
+Contextengineering.CLAUDE.mdandAGENTS.md[7]pro-
+Result 5: Auto-generated descriptors have direct value.
+AutoGen achieved 100% accuracy vs. 80% blind (Wilcoxon 𝑝 = videMarkdowncontext(60,000+projects).CodifiedContext[14]
+0.002,𝑑 = 1.04)—despitezerohumaninvolvementindescriptor extendsthiswith26,000linesviaMCP.Ourexperimentfoundno
+significantcomprehensiondifferenceacrossformats.
+creationandzerocoderestructuring.Thisrefutesthehypothesis
+Automatedcoderepresentations.Aider[9],RepoGraph[11],
+thatdescriptorvaluerequiresdeveloperself-clarification.
+andGRACE[15]capturesyntacticstructurebutnotdesignintent.
+Result6:Longeris notalwaysbetter.Curated(698lines)
+Multi-agentcoordination.ChatDev[16],MetaGPT[17],Geng
+achievedloweraccuracythanAutoGen(170lines),likelydueto
+etal.[18],andCodeCRDT[19]coordinateagentsviadialogueor
+tokenbudgetcompetition(∼52Kvs.∼20Ktokens).TheAutoGen–
+Curateddifferenceisnotsignificant(𝑝 =0.515).Detaileddescrip- taskgraphs.Noexistingworkusestree-structuredarchitecture
+descriptorsforagentpartitioning.
+torsmayretainvalueforgovernanceandmulti-agenttasksnot
+Specification-driven development. GitHub spec-kit, AWS
+testedhere.
+Kiro,andSelf-Spec[21]shareourinsightbutuseMarkdownor
+LLM-inventedformats.
+3.4 ObservationalFieldStudy
+ThefirstauthordevelopsfouractiveprojectsusingClaudeCode.
+5 Conclusion
+MissionDlogsallagentinteractions:7,012sessions,484,937mes-
+sages,Nov2025–Apr2026.OnApril3,2026,formaldescriptors Ourexperimentsyieldthreefindings:(1)architecturecontextre-
+wereintroducedtotwoprojects. ducesnavigationeffortby33–44%(𝑑 =0.92),withnosignificant
+Finding1:Behavioralvariancereduction.IQRofper-session formatdifferencedetectedinoursample;(2)automaticallygen-
+explore/editratiosdroppedfrom2.24to1.08—a52%reduction.The erated descriptors provide direct navigational value (𝑑 = 1.04),
+descriptorboundsworst-caseagentbehavior. refutingthehypothesisthatdescriptorvaluerequiresdeveloper
+
+--- Page 4 ---
+
+RuoqiJin
+self-clarification;(3)formaldeclarationcorrelateswith52%reduc- [5] LoCoBench-Agent:InteractiveBenchmarkforLLMAgentsinLong-ContextSE.
+tioninagentbehavioralvariance. arXiv:2511.13998,2025.
+[6] J.Yangetal.SWE-agent:Agent-ComputerInterfacesEnableAutomatedSoftware
+Thecontextengineeringdebateshouldnotfocuson“whatfor-
+Engineering.NeurIPS,2024.
+matdoestheLLMprefer”—ourexperimentsdetectednosignificant [7] LinuxFoundation.AGENTS.mdSpecification.2025.
+preference.Themoreproductivequestionis“whatformatavoids [8] Gloaguenetal.EvaluatingAGENTS.md.ETHZurich,2026.
+[9] P.Gauthier.Aider:AIPairProgramminginYourTerminal.2023.
+catastrophicfailurewhenLLMsbothwriteandreadit.”Our𝑑 =0.92
+[10] B.Liuetal.CodexGraph:BridgingLargeLanguageModelsandCodeRepositories
+wasmeasuredona22K-lineprojectwhereSonnet4.6alreadynavi- viaCodeGraphDatabases.NAACL,2025.
+[11] Z. Ouyang et al. RepoGraph: Enhancing AI Software Engineering with
+gatesefficientlyblind.Onproductioncodebases(100K–470Klines),
+Repository-levelCodeGraph.ICLR,2025.
+whereblindexplorationisfundamentallyharder,thebenefitmaybe [12] ArchitectureWithoutArchitects:HowAICodingAgentsShapeSoftwareArchi-
+larger—supportedbythe34:1compressionratioenablingconstant- tecture.arXiv:2604.04990,2026.
+[13] N.MedvidovicandR.N.Taylor.AClassificationandComparisonFramework
+costarchitecturalaccessregardlessofcodebasesize.Auto-generated
+forSoftwareArchitectureDescriptionLanguages.IEEETSE,2000.
+descriptorsoutperformedhand-curatedonesonaccuracy,suggest- [14] Codified Context: Infrastructure for AI Agents in a Complex Codebase.
+ingdiminishingreturnsfromlength—thoughdetaileddescriptors arXiv:2602.20478,2025.
+[15] GRACE: Multi-level Multi-semantic Code Graphs for Code Retrieval.
+mayretainvalueforgovernancetasksnottestedhere. arXiv:2509.05980,2025.
+Theintent.lispspecification,forgesurveytool,experimentcode, [16] C.Qianetal.ChatDev:CommunicativeAgentsforSoftwareDevelopment.ACL,
+2024.
+andanonymizeddataareavailableathttps://github.com/ruoqijin/
+[17] S.Hongetal.MetaGPT:MetaProgrammingforMulti-AgentCollaborative
+forge(DOI:https://doi.org/10.5281/zenodo.19500105). Framework.ICLR,2024.
+[18] Gengetal.EffectiveStrategiesforAsynchronousSoftwareEngineeringAgents.
+References arXiv:2603.21489,2026.
+[19] CodeCRDT:Observation-DrivenCoordinationforMulti-AgentLLMCodeGen-
+[1] Anthropic.ClaudeCode.2025. eration.arXiv:2510.18893,2025.
+[2] Cursor.TheAICodeEditor.2024. [20] P.Clementsetal.DocumentingSoftwareArchitectures:ViewsandBeyond.
+[3] GitHub.CopilotWorkspace.2025. Addison-Wesley,2010.
+[4] CodeCompass:TheNavigationParadox.arXiv:2602.20048,2026. [21] Self-Spec.OpenReview,2025.

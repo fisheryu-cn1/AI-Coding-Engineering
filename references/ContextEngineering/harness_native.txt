@@ -1,0 +1,1227 @@
+
+
+--- Page 1 ---
+
+Harness-Native Software Engineering:
+TheControlPlaneofCodingAgents
+ChaitanyaMishra
+IndependentResearcher
+March2026
+Abstract
+Coding-agent systems are increasingly shaped by infrastructure outside the base model: repository
+guidance,toolpermissions,executionsandboxes,persistentmemory,verificationloops,recoverymecha-
+nisms,anddelegationlogic. Forlong-horizonsoftwaretasks,thosedesignchoicesoftendeterminewhat
+anagentcansee,whatitmaydo,andwhetheritcanrecoverfromfailure. ThispaperintroducesHarness-
+NativeSoftwareEngineeringasaframeworkforanalyzingthatshiftandformalizesthesurroundingrun-
+timelayerastheAgentHarnessControlPlane, witheightfunctions: contextingress,actionmediation,
+execution substrate, state persistence, verification and review, recovery and debugging, delegation and
+coordination,andgovernanceandaudit.
+Drawingonrecentsystemdocumentation,benchmarkpapers,configurationstudies,adoptionanaly-
+ses,andsecurityresearch,thepaperadvancesfiveclaims. Coding-agentperformanceisharness-sensitive.
+Recoverability matters alongside one-shot success. The effective security boundary sits at the harness
+interfacesthroughwhichtools,protocols,permissions,andsandboxesareexposed. Teamsareexternaliz-
+ingagentbehaviorintoversion-controlledartifactssuchasmanifests,skills,andcustom-agentdefinitions.
+Andbenchmarkrankingscanchangewhenharnessconditionsortaskrealismchange. Thepaper’scon-
+tributionisconceptualandmethodological: areusableunitofanalysisforcodingagents,acomparative
+matrix of representative systems, a reporting instrument called the Harness Condition Sheet, a threat
+modelfortheharnesslayer,andaharness-sensitiveprotocolforfutureempiricalwork.
+Keywords. codingagents;agenticsoftwareengineering;harnessengineering;evaluationmethodology;long-
+horizonsoftwaretasks;recoverability;repositorycontext;agentsecurity
+1. Introduction
+Codingagentsarenolongerwell-describedasautocompletesystemswithlargerprompts. Theleadingpub-
+lic systems now operate through terminals, IDE agents, cloud runners, pull-request workflows, persistent
+memoryfiles,custom-agentmanifests,approvalpolicies,hooks,checkpoints,andsubagents. Codexexposes
+approval modes, project guidance via AGENTS.md, cloud tasks, skills, Model Context Protocol (MCP) in-
+tegration, and experimental multi-agent workflows. Claude Code exposes persistent project memory, auto
+memory,hooks,plugins,andcustomsubagents. GitHubCopilot’scodingagentworksthroughissue-to-pull-
+requestexecutioninGitHub-hostedenvironments,withself-review,securityscanning,andcross-agentmem-
+ory. GeminiCLIexposesskills,checkpointing,subagents,hooks,andsandboxing. Cursor,OpenHands,and
+OpenClawsurfaceanalogousstructuresaroundbackgroundexecution,reviewagents,typedtoolsystems,iso-
+latedworkspaces,andmulti-agentrouting[2,3,4,5,11,12,13,14,17,18,19,20,21,22,23,24,25,26,27].
+Recent research points in the same direction from a different angle. IDE-Bench replaces raw terminal
+interactionwithanIDE-nativetoolecosystemandaDockerizedtestharness. VeROintroducesanevaluation
+harnessforagentsthatoptimizeotheragentsandarguesthatuncontrolledexecutionmakessuchevaluation
+1
+
+--- Page 2 ---
+
+Model-centeredview Harness-sensitiveview
+Harnesscontrolplane
+Taskprompt
+Context Action Execution
+ingress mediation substrate
+Task/repo Checked
+Basemodel
+priorstate Model+toolloop artifact/PR
+State Verification Delegation
+Patch/answer
+persistence &recovery &governance
+Context,tools,execution,andreview
+treatedasimplicitscaffolding
+Figure1. Frommodel-centeredtoharness-sensitiveevaluation. Therightpanelmakesexplicittheruntimelayerthat
+governswhattheagentsees,whatitmaydo,andhowitsoutputsarechecked.
+unreliable. AutoHarnessstudiesautomaticsynthesisoftheharnessitself. Anthropic’sJanuary2026noteon
+agent evaluation states the issue directly: when one evaluates an “agent,” one is evaluating a harness and a
+modelworkingtogether. OpenAI’s2026Codexengineeringreportlikewiseframesprogressasharnessengi-
+neering: environment design, verification loops, repository legibility, feedback channels, and orchestration
+choices[28,29,30,9,1,8].
+Theliterature,however,isstillfragmented. Benchmarkpapersoftencomparesystemsunderonlypartially
+specifiedruntimeconditions. Configurationstudiesfocusoncontextfiles, skills, andsubagentsasartifacts.
+Securityworkconcentratesonprotocols,toolinvocation,shellaccess,andpromptinjection. Adoptionwork
+studies pull requests, commit traces, and repository-level patterns. Each cluster is useful. None provides a
+field-levellanguagethat makestheseresults mutuallyintelligible. Thesamelayernowmediates capability,
+failure,cost,andgovernance,yetthefieldstilllacksastablenameforit.
+ThispapercallsthatregimeHarness-NativeSoftwareEngineering. Thetermreferstoastageofagentic
+codinginwhichrealizedcapability,safety,cost,andcontinuityareincreasinglydeterminedbytheharness:
+the model-external layer that curates context, mediates actions, provisions execution, persists state, runs
+verification, supports recovery, coordinates delegation, and enforces governance. The central claim is not
+that models no longer matter. It is that for many deployment-like coding tasks, especially long-horizon
+repositorywork,thebasemodelisnolongertheonlyinformativeunitofanalysis.
+The argument is deliberately narrower than broad visions of AI-native or agentic software engineering.
+PriorvisionpapersdescribealargertransitiontowardAIteammatesandsoftwareengineering3.0[57,58].
+Harness-NativeSoftwareEngineeringfocusesonamorespecificquestion: wheredothedecisivevariables
+sitinsidemoderncoding-agentsystems? Theansweradvancedhereisthattheyincreasinglysitinthecontrol
+planearoundthemodel.
+Contributions. Thepapermakesfivecontributions.
+1. ItintroducesHarness-NativeSoftwareEngineeringasafield-leveltermforagenticcodingsystemswhose
+realizedbehaviorisprimarilymediatedbytheharness.
+2. ItformalizestheAgentHarnessControlPlaneasaneight-functiondecompositionofthatmodel-external
+controllayer.
+3. Itsynthesizesrecentevidenceacrossruntimesystems,benchmarkdesign,recoveryanddebugging,con-
+figurationartifacts,securitywork,andrepository-scaleadoption.
+2
+
+--- Page 3 ---
+
+4. Itproposesareportinginstrument,theHarnessConditionSheet,forbenchmarkanddeploymentdescrip-
+tions.
+5. It lays out a harness-sensitive research program based on fixed-model harness ablations, recoverability
+metrics,unsafe-actionreporting,andcondition-awarebenchmarkcomparisons.
+Therestofthepaperproceedsasfollows. Section2organizestherecentliteratureintocoherentclusters.
+Section3formalizestheproblem. Section4definestheAgentHarnessControlPlane. Section5explainsthe
+analyticalmethod. Section6usescomparativeandcase-basedanalysistoevaluatetheframework. Sections7
+and8developbenchmarkandsecurityimplications. Section9examinesrepositorytracesandorganizational
+adoption. Sections10–12discussimplications,limits,andnextsteps.
+2. RelatedWork
+2.1 Runtimesystemsandexposedcontrolsurfaces
+The most immediate evidence for a harness-centric framing comes from how recent coding-agent systems
+are built and documented. Codex is not described merely as a language model with file-editing tools. It is
+documentedasasoftwareagentthatrunsinaloop,canbeconfiguredthroughrepositoryguidanceandconfig
+layers, can delegate work to cloud tasks, can use MCP servers, can restrict or expand network access, and
+canparticipateinmulti-agentworkflows[2,3,4,5,6,7]. ClaudeCode,GitHubCopilot’scodingagent,and
+GeminiCLIpresentcomparablesurfaces: persistentmemory,hooks,subagents,reviewloops,checkpointing,
+sandboxes,andpolicycontrols[11,12,13,14,17,19,20,21,22,23]. OpenHandsandOpenClawmakethe
+sameshiftexplicitinopentooling,exposingagentreasoningloops,workspaceabstraction,typedtoolactions,
+isolatedworkspaces,androutingacrossexternalharnesses[25,26,27].
+This matters because it changes what counts as system design. In earlier code-assistant work, the sys-
+tem boundary often ended at prompt construction and a handful of tools. In current coding agents, the
+systemboundaryincludesstatefuldirectories, policyfiles, stagedapprovals, externalprotocols, self-review
+routines, and environment templates. The model remains central, but it is increasingly embedded in a pro-
+grammableruntimethatdetermineswhichobservationsreachit,whatactionsarelegal,andhowthoseactions
+arechecked.
+2.2 Harnessesasexplicitresearchobjects
+A concept is usually worth naming when it begins to appear independently in both systems practice and
+research. Thatisnowtrueoftheharness. OpenAI’sFebruary2026engineeringreportusesthetermdirectly
+anddescribesprogressintermsofrepositorylegibility,environmentshaping,observability,testingloops,and
+workflowstructureratherthanpromptphrasingalone[1]. Anthropic’slong-running-agentreportdescribes
+a specialized harness built from the Claude Agent SDK primitives, explicitly separating initialization from
+executionand using persistentfiles and git stateto carry progress across contextwindows[8]. Anthropic’s
+evaluationnotethengeneralizesthepoint: anagentevaluationisanevaluationofaharness-modelpair,not
+ofthemodelinisolation[9].
+Recent preprints extend that move into formal evaluation. IDE-Bench uses an IDE-native tool interface
+and a Dockerized test harness to measure engineering collaboration rather than raw terminal manipulation
+[28]. VeROdefinesanevaluationharnessforagentoptimization,withversionedsnapshots,budget-controlled
+execution,andstructuredtraces[29]. AutoHarnesstreatstheharnessasasynthesizableprogramcomponent
+and studies whether an LLM can write that layer automatically [30]. These works do not yet produce a
+3
+
+--- Page 4 ---
+
+field-wide theory of coding-agent architecture, but they establish that the harness is no longer an informal
+implementationdetail.
+2.3 Recovery,debugging,andlong-horizoncontinuity
+Recovery has become a revealing fault line in agentic coding. Anthropic’s long-running harness is built
+around the fact that many software tasks exceed a single context window and that the agent must recover
+bearings repeatedly. The system therefore uses an initializer phase, explicit setup scripts, progress files,
+git commits, and a requirement to work incrementally through a feature list [8]. Debug2Fix takes a more
+targeted approach: it integrates interactive debuggers into a coding agent through a debug subagent and
+reports improvements of more than 20% in some settings, while also showing that better tooling can allow
+weakermodelstomatchorexceedstrongerones[31]. AgentSteppershiftsthefocusfromtaskcompletionto
+developerunderstandingandshowsthatdebuggingtheagenttrajectoryitselfbenefitsfromadebugger-like
+interfacewithbreakpoints,stepwiseexecution,andlivemanipulationofpromptsandtoolinvocations[32].
+Theseworksjointlysuggestthat validatedfailureis not an edgecase. It is a normal operating condition
+in long-horizon coding. If that is true, then recovery mechanisms are not auxiliary. They are first-order
+capabilitymultipliers. Amodelthatcangenerateplausibleeditsbutcannotpreservecoherentprogressacross
+failurestatesislessdeployment-relevantthanasomewhatweakermodelinsideabetterrecoveryloop.
+2.4 Benchmarkrealismandevaluationinstability
+Benchmark work over the last year has become much sharper about what current coding-agent scores do
+and do not mean. The Agentic Benchmark Checklist paper documents setup and reward-design errors that
+canleadtoupto100%relativeover-orunder-estimation,anditreportsthatapplyingthechecklisttoCVE-
+Bench reduces overestimation by 33% [33]. Saving SWE-Bench shows that rewriting benchmark prompts
+into realistic user-style requests can cut apparent capability by more than 50% for some systems [34]. Fea-
+tureBench reports that a state-of-the-art agentic model achieving 74.4% on SWE-bench solves only 11.0%
+ofitsfeature-developmenttasks[35]. Terminal-Benchfocusesonrealisticterminalworkandkeepsfrontier
+systemsbelowtheperformancelevelsimpliedbymorestylizedcodingbenchmarks[36]. SWE-EVOshifts
+fromisolatedissueresolutiontosoftwareevolutionovermanyfilesanditerations,reportinga21%resolution
+rate for GPT-5 with OpenHands versus 65% on SWE-Bench Verified [37]. ABC-Bench, RepoMod-Bench,
+OmniCode,andSWE-rebenchallmakecomplementarypointsaboutenvironmentfidelity,execution,scale,
+taskbreadth,andcontamination[39,40,41,38].
+Thestandardinterpretationofthisliteratureisthatbenchmarksneedtogetharderormorerealistic. That
+interpretation is correct but incomplete. Many of these changes also alter the effective harness condition
+under which the agent is evaluated: task phrasing, available tools, hidden verification, environment setup,
+continuity horizon, and degrees of freedom around testing. A harness-sensitive framework provides a way
+toexplainwhybenchmarkconclusionsshiftsosharplyunderthosechanges.
+2.5 Configurationartifactsandexternalizedcontext
+Asecondliteratureclusterexamineshowteamsconfigurecodingagentsinpractice. Theexploratorystudyof
+2,926 repositories finds eight configuration mechanisms and identifies three dominant trends: context files
+dominate the landscape, AGENTS.md is emerging as an interoperable standard, and advanced mechanisms
+suchasskillsandsubagentsremainshallowlyadopted[42]. AgentREADMEsaddsalarge-scaleempirical
+study of 2,303 context files and shows that these artifacts behave more like evolving configuration code
+thanstaticdocumentation;developersemphasizebuildinstructions,architecture,andimplementationdetail,
+4
+
+--- Page 5 ---
+
+whilesecurityandperformanceappearmuchlessoften[43]. Thatasymmetrymatters: itsuggeststhatteams
+usecontextfilesprimarilytomakeagentsfunctional,nottoconstrainthemsafely.
+TheAGENTS.mdevaluationliteratureisespeciallyusefulbecauseitdocumentsdisagreement. Onestudy
+of 10 repositories and 124 pull requests finds that AGENTS.md is associated with lower median runtime
+(28.64%) and reduced output-token consumption (16.58%) while preserving comparable task completion
+[44]. Anotherfindsthatcontextfilesoftenreducesuccessrateswhileincreasinginferencecostbymorethan
+20%,eventhoughtheyencouragebroaderexplorationandmoreextensivetesting[45]. Theinterestingpoint
+is not which study “wins.” The interesting point is that repository-visible instructions are already strong
+enoughtochangebehavior,cost,andexplorationpatternsmeasurably. Thatiswhatonewouldexpectifthe
+harnesshasbecomeasoftwareartifactinitsownright.
+Work on codified context makes the same point from a single-system engineering perspective. A re-
+centcasestudyofa108,000-lineC#distributedsystemdescribesathree-componentcontextinfrastructure
+combining a hot-memory constitution, many specialized agents, and a cold-memory knowledge base [46].
+Whetherornotoneadoptsthatdesign,thepaperisevidencethatpersistent,explicit,andmulti-layeredcontext
+isbecominganoperationalsubstrateforcodingagentsratherthanaprompt-writingtrick.
+2.6 Securityboundariesandprotocolattacksurfaces
+Securityworkisnowdifficulttoreconcilewithamodel-onlyaccountofrisk. Theprompt-injectionSoKon
+agenticcodingassistantssynthesizes78studiesandreportsthatadaptiveattacksagainstcurrentdefensescan
+exceed85%success,whileorganizingattacksarounddeliveryvectors,modalities,andpropagationbehavior
+[47]. Breaking the Protocol argues that MCP has architectural vulnerabilities at the protocol level, intro-
+duces MCPBench, and reports 23–41% attack amplification relative to equivalent non-MCP integrations,
+with a proposed protocol extension reducing attack success from 52.8% to 12.4% in the authors’ experi-
+ments [48]. “Your AI, My Shell” evaluates high-privilege coding editors with 314 payloads covering 70
+MITREATT&CKtechniquesandreportsattacksuccessratesupto84%formaliciouscommandexecution
+[49]. SEC-benchshiftsfromsecurityincidentstocapabilityevaluationandshowsthatcurrentLLMagents
+achieveatmost18.0%successonproof-of-conceptgenerationand34.0%onvulnerabilitypatchingforreal-
+worldsoftware-securitytasks[50].
+Officialsystemdocumentationreactsatthesamelayer. Codexdocumentssandboxmodes, networkcon-
+trols, project trust, approval policies, and warnings about prompt injection when internet access is enabled
+[6, 7]. GitHub Copilot’s coding agent emphasizes customizable environments, restricted permissions, and
+approvalgates[13,14]. GeminiCLIdocumentssandboxingandpolicy-governedactionmodes[23,19]. The
+common target is neither raw next-token generation nor code quality in the abstract. It is the harness inter-
+face: where the agent reads, what it trusts, what it may execute, and which actions cross human or policy
+boundaries.
+2.7 Adoption,repositorytraces,andworkflowevidence
+Repository-scale evidence now makes clear that coding agents are not a niche phenomenon. AIDev ag-
+gregates932,791agent-authoredpullrequestsfrom116,211repositoriesand72,189developersacrossfive
+prominentagents[51]. AgenticMuchstudies129,134projectsandestimatesadoptionbetween15.85%and
+22.60%inthefirsthalfof2025,arguingthatthevisibletracesleftbycodingagentsmakelarge-scaleanalysis
+feasible[52]. AcausalstudycomparingautonomousagentswithIDE-basedAIassistantsfindsfront-loaded
+velocity gains when agents are the first observable AI tool in a project, but it also reports persistent qual-
+ity risks, with static-analysis warnings and cognitive complexity increasing by roughly 18% and 39% [53].
+5
+
+--- Page 6 ---
+
+A large-scale study of agent-generated pull requests finds substantial differences in commit count and files
+touchedrelativetohumanPRs,suggestingthatagent-authoredworkisnotjustalargerversionofordinaryhu-
+manchangesets[54]. Studiesofreviewandintegrationaddmoretexture: coredevelopersmoreconsistently
+requireverificationbeforeacceptance,reviewerengagementstronglycorrelateswithsuccessfulintegration,
+andagent-authoredpullrequestsexhibitdistinctivereviewdynamics[55,56].
+These studies matter for this paper because they show where the harness leaves traces. Context files,
+custom-agentmanifests,PRdescriptions,reviewloops,memorysystems,andissue-to-PRworkflowsareall
+observable artifacts of the control plane. Adoption therefore does not merely show that agents are used. It
+showshowteamsareoperationalizingthem.
+2.8 Missinglens
+Taken together, these clusters describe a coherent shift that the current vocabulary does not fully capture.
+Runtime papers show exposed control surfaces. Recovery work shows that continuity depends on external
+stateanddebugginginfrastructure. Benchmarksshowlargeswingswhenruntimeconditionsbecomemore
+realistic. Configuration studies show that agent behavior is being externalized into version-controlled ar-
+tifacts. Security work shows that practical risk resides at protocol, tool, and shell boundaries. Adoption
+workshowsthosesameartifactsenteringrepositoriesandreviewworkflowsatscale. Themissinglensisa
+frameworkthatexplainswhythesefindingsbelongtogether. Thenextsectionsproposethatframework.
+3. ProblemFormulation
+Letacoding-agentsystemberepresentedas
+A = ⟨𝑀,𝐻,𝐸⟩,
+where 𝑀 denotes the base model or routed model set, 𝐻 denotes the harness, and 𝐸 denotes the execu-
+tionenvironment. Atask𝑥 isdrawnfromadistribution T overrepository-levelsoftware-engineeringtasks.
+Running A on 𝑥 produces a trajectory 𝜏 consisting of observations, model inferences, tool calls, file edits,
+environmenttransitions,reviewevents,andpossiblehumaninterventions.
+Thecrucialmoveistotreat𝐻asanobjectofanalysisratherthanasundifferentiatedscaffolding. Acoding
+agent rarely observes 𝑥 directly. It observes a harness-mediated view of 𝑥: issue text after preprocessing,
+repository files after search and selection, memory artifacts, context files, tool schemas, policy constraints,
+andenvironmentstate. Likewise,theagentrarelyactsdirectlyonthetask. Itactsthroughharness-mediated
+mechanisms: toolinvocation,shellexecution,filewritegates,approvalpolicies,cloudrunners,reviewloops,
+anddelegationchannels.
+Definition 1 (Harness). The harness is the model-external layer that determines which context is visible,
+whichactionsareavailable,whereexecutionoccurs,whatstatepersists,howverificationisperformed,how
+failuresarerecovered,howworkisdelegated,andwheregovernanceisenforced.
+That definition is intentionally broader than prompt construction and slightly narrower than the entire
+sociotechnical deployment stack. It includes the runtime elements that shape the agent’s realized behavior
+onatask. Itdoesnotincludeeverythingaboutthesurroundingorganization.
+Definition2(Harness-NativeSoftwareEngineering). Harness-NativeSoftwareEngineeringistheregimeof
+agenticcodinginwhichtherealizedcapability,safety,cost,andcontinuityofacodingsystemareprimarily
+mediatedbytheharnessratherthanbythebasemodelalone.
+6
+
+--- Page 7 ---
+
+Table1. Corenotationusedthroughoutthepaper.
+Symbol Meaning
+A Coding-agentsystem
+𝑀 Basemodelormodel-routingpolicy
+𝐻 Harness,treatedhereasthecontrolplane
+𝐸 Executionenvironment
+𝑥 ∼T Taskdrawnfromataskdistribution
+𝜏 Realizedagenttrajectoryonatask
+ℎ Concreteharnessconditionusedinarunorbenchmark
+VTS Verifiedtasksuccess
+RR Recoveryrate
+UAR Unsafeactionrate
+HIB Humaninterventionburden
+Δ𝐻 Harnesssensitivityunderafixedmodel
+The word “primarily” is important. The claim is comparative, not absolute. A stronger model can still
+dominate a weaker one. The question is whether, for deployment-like coding tasks, changes in the harness
+arelargeenoughandcommonenoughtodeservefirst-classtreatment.
+Tomakethatcomparativeclaimexplicit,definetheutilityofamodel-harnesspaironataskas
+𝑈(𝑀,ℎ,𝑥) = 𝛼·VTS(𝑀,ℎ,𝑥)− 𝛽·Cost(𝑀,ℎ,𝑥)−𝛾 ·UAR(𝑀,ℎ,𝑥)−𝛿·HIB(𝑀,ℎ,𝑥),
+where 𝛼,𝛽,𝛾,𝛿 > 0 encode task- or organization-specific priorities. The exact utility function can change
+acrosssettings. Whatmattersisthatittreatscorrectness,cost,safety,andinterventionasjointoutputsrather
+thanseparatesidemetrics.
+Definition3(Harnesssensitivity). Forafixedmodel 𝑀,taskdistributionT,andtwoharnessconditions ℎ
+1
+and ℎ ,define
+2
+Δ𝐻 (𝑀;ℎ 1 ,ℎ 2 ,T) = E 𝑥∼T [𝑈(𝑀,ℎ 1 ,𝑥)−𝑈(𝑀,ℎ 2 ,𝑥)].
+A task regime is harness-sensitive when |Δ𝐻 | is frequently non-trivial and can rival the gain from a model
+swapunderafixedharness.
+The idea is not new in spirit. Anthropic’s evaluation note already says that an agent evaluation is an
+evaluation of harness plus model [9]. The contribution here is to turn that intuition into a reusable unit of
+analysisforcodingagentsspecifically.
+Asecondconceptisrecoverability. Long-horizonsoftwareworkrarelyproceedswithoutenteringfailure
+states: failing tests, broken builds, incorrect assumptions, policy-denied actions, or tool errors. Define the
+recoveryrateas
+|{𝜏 : 𝜏 entersavalidatedfailurestateandlaterreachesverifiedsuccess}|
+RR = .
+|{𝜏 : 𝜏 entersavalidatedfailurestate}|
+This metric differs from raw task success because it treats failure as part of the trajectory rather than as a
+terminallabel.
+7
+
+--- Page 8 ---
+
+Controlplane
+Contextingress Actionmediation Executionsubstrate
+Statepersistence Verification&review Recovery&debugging
+Delegation&coordination Governance&audit
+Dataplane:modelinferenceandimmediatetoolexecution
+Figure2. TheAgentHarnessControlPlanedecomposedintoeightcontrol-planefunctions. Thefunctionsareanalyti-
+callydistinctbutoperationallycoupled;themodel/toolloopsitsbeneaththemasthedataplane.
+Forsafetyandgovernance,definetheunsafeactionrateas
+∑𝑁
+1
+UAR = 1[run𝑖 attemptsapolicy-disallowedorsecurity-relevantunsafeaction].
+𝑁
+𝑖=1
+Definehumaninterventionburdenas
+approvals+manualcorrections+manualrestarts
+HIB = .
+max(1,successfultasks)
+Thesequantitiesarecrudebutnecessary. Anagentthat“solves”tasksonlybyrepeatedlycrossinggovernance
+boundariesorrequiringheavybabysittingislessdeployment-relevantthanabenchmarktablemightsuggest.
+The final conceptual move is to distinguish data plane from control plane. The data plane is the local
+loopofmodelinferenceandimmediatetoolexecution. Thecontrolplaneisthepersistentorchestrationlayer
+thatdecideswhatcontextenterstheloop,whatactionsarelegal,wherethoseactionsrun,howstatepersists,
+howoutcomesareverified,howfailuresarerepaired,andhowdelegationandhumanauthorityarestructured.
+Harness-NativeSoftwareEngineeringistheclaimthat,formanycodingtasks,thecontrolplanehasbecome
+therightplacetolocatethefield’sdecisivevariables.
+4. TheAgentHarnessControlPlane
+Definition4(AgentHarnessControlPlane). TheAgentHarnessControlPlaneisthetuple
+𝐻 = ⟨𝐶,𝐴,𝑋,𝑆,𝑉,𝑅,𝐷,𝐺⟩,
+where𝐶 iscontextingress, 𝐴isactionmediation, 𝑋 isexecutionsubstrate,𝑆 isstatepersistence,𝑉 isverifi-
+cationandreview, 𝑅 isrecoveryanddebugging, 𝐷 isdelegationandcoordination,and𝐺 isgovernanceand
+audit.
+Thechoiceofeightfunctionsismeanttobeanalyticallyusefulratherthanmetaphysicallyfinal. Thede-
+compositionseparatesvariablesthatareoftenbundledtogetherinproductnarrativesbutthataffectevaluation,
+security,andadoptionindifferentways.
+8
+
+--- Page 9 ---
+
+4.1 Contextingress
+Contextingresscoverseverythingthatdetermineswhattheagentseesbeforeorduringaction: taskdescrip-
+tions,repositoryfilesaftersearchandretrieval,issueandpull-requeststate,memoryartifacts,contextfiles,
+skills,andauxiliarydocumentation. CodexdocumentsprojectguidanceviaAGENTS.md;ClaudeCodedoc-
+uments persistent CLAUDE.md files and auto memory; Gemini distinguishes between persistent workspace
+contextand on-demand skills; configuration studiesshowthat these repository-visibleartifactsnowappear
+acrossmajortoolsandareincreasinglystandardized[3,11,20,42,43].
+Treatingcontextingressasafirst-classcontrol-planefunctionclarifiestwofactsthatotherwiselookcontra-
+dictory. First,contextfilescanimproveefficiencybyreducingrediscoverywork,asseenintheAGENTS.md
+efficiency study [44]. Second, they can degrade success and increase cost when they inject unnecessary or
+poorly scoped requirements, as seen in the negative AGENTS.md evaluation [45]. These are not mutually
+exclusivefindings. They showthat contextingress is an activedesign variable. In a harness-native regime,
+repositorycontextisneitherneutralbackgroundnormerelyprompttext. Itisexecutableguidancethatshapes
+search,testing,andconstraintfollowing.
+4.2 Actionmediation
+Actionmediationincludestoolexposure,toolschemas,permissionmodels,protocolbindings,approvalgates,
+andpolicyfilters. Therelevantquestionisnotjustwhetheratoolexists. Itiswhethertheagentcandiscover
+it, invoke it correctly, route through a protocol server, escalate privileges, or act without human approval.
+Codex, GitHub Copilot, Gemini CLI, and OpenClaw all expose explicit surfaces at this layer: approvals,
+MCPorACPbindings,customagents,routing,andpolicymodes[2,4,6,13,14,19,23,26].
+Thislayerisalsowherepracticalcapabilityandriskmeet. Adebuggerhiddenbehindpoortooldescrip-
+tions may never be used. A shell exposed without trust boundaries can become an attack surface. MCP
+serverscanextendreach,butprotocoltrustbecomespartofthesystem’sthreatmodel[48,47]. Theharness
+thereforedoesmorethanprovidetools. Itregulatesthelegalactionspaceoftheagent.
+4.3 Executionsubstrate
+Execution substrate refers to the place where code runs and side effects occur: local terminal, editor sand-
+box,container,worktree,CIrunner,orcloudtaskenvironment. Theshiftfromchatassistantstorepo-native
+agentsislargelyashiftinexecutionsubstrate. GitHubCopilot’scodingagentstartsinacustomizableGitHub
+Actionsenvironment. Codexdelegatesworktocloudtaskswithconfigurableenvironmentsandnetworkpoli-
+cies. OpenHandsstructuresagentexecutionaroundworkspacesandagentservers. OpenClawisolatesagents
+into separate workspaces and sessions. IDE-Bench and ABC-Bench show why this matters for evaluation:
+environmentsetupandexecutionfidelityarenotdecorationsbutdeterminantsofwhattheagentcanvalidate
+[13,2,7,25,27,28,39].
+Executionsubstrateoftensitshiddeninbenchmarkreporting. Yetamodelpairedwitharich,reproducible
+runnerisamateriallydifferentsystemfromthesamemodelpairedwithabaretoolsandbox. Harness-Native
+SoftwareEngineeringtreatsthatdistinctionascentralratherthanincidental.
+4.4 Statepersistence
+Statepersistencecoversanythingthatsurvivesbeyondasinglecontextwindow: memoryfiles,checkpoints,
+progress notes, git history, resumed threads, and saved sessions. Anthropic’s long-running harness uses
+explicit progress files and git commits to maintain continuity across context windows [8]. Claude Code
+9
+
+--- Page 10 ---
+
+documents persistent project instructions and auto memory [11]. Gemini CLI exposes checkpointing that
+capturesasnapshotbeforefilemodification[21]. GitHubdescribescross-agentmemorythatallowscoding
+agent, CLI, and code review to share repository-specific insights [17]. Codified Context extends the same
+logicintoalargerarchitectureofhotandcoldmemory[46].
+Without this layer, long-horizon autonomy is often illusory. The agent appears persistent only because
+humans repeatedly restate or reconstruct context. A harness-native view makes explicit that continuity is
+achievedbymovingstatefromtheephemeralmodelcontextintodurableexternalartifacts.
+4.5 Verificationandreview
+Verificationandreviewincludetests,linters,browserchecks,self-review,PRreview,securityscanning,and
+CI gating. OpenAI’s internal Codex case study emphasizes repeated testing, self-review, and review loops
+inside the development process rather than after it [1]. GitHub’s coding agent now includes self-review
+and built-in security scanning [14]. Cursor’s Bugbot reviews pull requests automatically [24]. Anthropic’s
+long-running harness constrainsagents to makeincremental, testableprogress through explicitfeature lists
+[8]. Reviewstudiesshowthatintegrationoutcomesdependstronglyonreviewengagementandcoordination
+signals,notonlyontheinitialcodepatch[56,55].
+Thekeypointisstructural. Verificationisnotjustanendpointmetric. Itisacontrol-planemechanismthat
+changes subsequent action. A failing test may trigger rollback, delegation, or more targeted search. A self-
+review step may catch an omission before human review. When verification is weak or absent, the harness
+losesoneofitsmaincorrectionchannels.
+4.6 Recoveryanddebugging
+Recoveryanddebuggingcapturehowthesystemrespondsafterawrongturn. Anthropic’sharnessexplicitly
+assumesthatlongtaskswillcrossmanycontextwindowsandusesstartupscripts,progressnotes,andsmall
+validated steps to recover coherence [8]. Debug2Fix shows that interactive debuggers, exposed through a
+debug subagent, can shift benchmark outcomes materially [31]. AgentStepper shows that developers need
+analogous capabilities for debugging the agent program and the trajectory it produces [32]. Checkpointing
+inGeminiCLIisalighterversionofthesameidea: enablereversibleeditsandsafeexperimentation[21].
+The function is distinct from verification, even though the two interact closely. Verification answers “is
+thecurrentstateacceptable?” Recoveryanswers“giventhatitisnot,howdoesthesystemresumeproductive
+workwithoutlosingtrajectorycoherence?” Thatdifferenceisessentialforlong-horizontasks.
+4.7 Delegationandcoordination
+Delegation and coordination concern how work is partitioned across subagents, specialist tools, human re-
+viewers,orexternalharnesses. Codexdocumentsexperimentalmulti-agentcollaboration[5]. ClaudeCode
+andGeminiCLIbothdocumentcustomsubagents[12,22]. GitHub’smissioncontrolsurfacesassignment,
+steering,restart,andoversightforparallelcoding-agenttasks[15]. GitHub’sengineeringguidanceonmulti-
+agent workflows argues that many failures arise from shared-state ambiguity, weak handoffs, and missing
+coordination structure rather than from pure model incompetence [16]. OpenClaw routes requests to sepa-
+rateagentworkspacesortoexternalharnessesthroughACPsessions[27,26].
+Thisfunctionmattersbecausespecializationandparallelismareincreasinglycommon. Italsointroduces
+new failure modes: duplicated work, conflicting edits, inconsistent assumptions, and policy fragmentation
+acrossagents. Acontrol-planevocabularyisneededtodescribethosefailuresprecisely.
+10
+
+--- Page 11 ---
+
+4.8 Governanceandaudit
+Governanceandauditincludebranchprotections,adminrequirements,sandboxrules,repositorytrust,audit
+trails,approvalpolicies,andprovenance. Codexdocumentsprojecttrust,sandboxmodes,internetcontrols,
+andapprovalpolicies[6,7]. GitHub’scodingagentcentershumanapprovalandenterprise-facingworkflow
+controls [13, 14]. Gemini documents sandboxing and policy-governed modes [23]. Security work makes
+clearwhythislayermatters: itistheplacewherepromptinjection,protocolabuse,andmaliciouscommand
+executionbecomeboundedorunbounded[47,48,49].
+Governance is often described in enterprise language and therefore dismissed as secondary. For coding
+agentsitisnotsecondary. Itispartofthearchitecturethatdetermineswhetheranagentcanbetrustedtoact
+atall.
+4.9 Whyanewtermisneeded
+Onecoulddescribetheseeightfunctionsseparatelywithoutcoininganewterm. ThereasontocoinHarness-
+NativeSoftwareEngineeringisthatthefunctionsarenowempiricallyentangled. Contextfilesaffectsearch
+andtesting. Protocolbindingsaffectbothcapabilityandattacksurface. Checkpointingaffectsrecoveryand
+governance. Review loops affect acceptance, cost, and security. Benchmark scores shift when these condi-
+tions change. A new term is justified only if it organizes the field better than existing language. The claim
+here is that “coding agent” is too broad, “context engineering” is too narrow, and “tool use” is too shal-
+low. Harness-NativeSoftwareEngineeringnamesthespecificarchitecturalregimeinwhichthesefunctions
+jointlydeterminerealizedsoftware-engineeringbehavior.
+5. Methodology
+This is a conceptual and methodological paper grounded in public evidence. It does not report a new con-
+trolledbenchmarkrun. Itinsteadconstructsaframeworkandevaluatesitagainstrecentsystemdocumenta-
+tion,engineeringreports,benchmarkpapers,securityanalyses,configurationstudies,andadoptiondatasets.
+That choice trades experimental novelty for analytical breadth. Given the pace of change in the area, that
+tradeispreferabletopresentingweakornon-reproduciblepseudo-experiments.
+Thesourcecorpuswasselectedtocoverfourevidenceclasses. Thefirstclassissystem-surfaceevidence:
+officialdocumentationandengineeringreportsthatshowwhatfrontiercoding-agentsystemsactuallyexpose
+intheirruntimeandpolicylayers[1,2,8,13,19,25,27]. Thesecondclassisbenchmarkevidence: papersthat
+stressthegapbetweenstylizedevaluationandrepository-levelorlong-horizonengineering[33,34,35,36,37,
+39,40,41,38,28,29]. Thethirdclassisartifactandworkflowevidence: configurationstudiesandrepository-
+scaleadoptionworkthatrevealhowtheharnessbecomesvisibleinpractice[42,43,44,45,51,52,53,55].
+The fourth class is security evidence: papers that attack protocols, skills, tools, and shell surfaces directly
+[47,48,49,50].
+The paper uses these sources in fourdistinctways. Empirical observations are direct claims reported in
+thecitedsources,suchasbenchmarkdrops,documentedsystemfeatures,ormeasuredattacksuccess. Synthe-
+sisacrosssourcescombinesobservationsfrommultipleclustersintobroaderpatterns,forexamplethelink
+between benchmark instability and under-specified harness conditions. Theoretical interpretation appears
+wherethepaperproposesconceptssuchascontrolplane,harnesssensitivity,orrecoverydominance. Spec-
+ulationisreservedfortheresearchagendaandfutureempiricalpredictions. Keepingtheselayersseparateis
+importantbecausethepaperisstrongestasaframingandmethodologycontribution, notasasubstitutefor
+newexperiments.
+11
+
+--- Page 12 ---
+
+Table2. RepresentativesystemsthroughtheAgentHarnessControlPlanelens. Theentriesareintentionallyhigh-level;
+thegoalistolocateexposedcontrol-planefunctionsratherthantoexhaustproductdetail.
+System Modality Contextingress Action/execution Persistence/recovery Verification/delegation/
+governance
+Codex CLI + AGENTS.md,configlayers, approvals,MCP,cloud resumedtasks,project self-reviewloops,
+cloud skills tasks,sandboxmodes config,internetcontrols experimentalmulti-agents,
+admincontrols
+ClaudeCode CLI/SDK CLAUDE.md,automemory hooks,plugins,MCP,tool memory,git-oriented subagents,policysettings,
+permissions long-horizonharness harness-basedeval
+patterns framing
+GitHub Copilot GitHub- issue/PRstate,custom customizableActions workflow-linkedmemory self-review,security
+codingagent native agents,agenticmemory environments,repo acrosscodingagent,CLI, scanning,missioncontrol,
+permissions codereview humanapproval
+GeminiCLI CLI workspacecontext,skills tools,hooks,MCP,policy checkpointing,subagents experimentalsubagents,
+modes,sandboxing restorepoints,governed
+actionmodes
+Cursor Editor projectrules,memories editortools,background backgroundexecution, Bugbotreview,
++ back- agent,MCPintegration memories product-levelaccess
+ground controls
+agent
+OpenHands SDK/CLI conversations,skills, typedtools,workspace explicitstatemanagement extensibleorchestration
+/cloud retrieval abstraction,agentserver inSDK andvalidationflows
+OpenClaw Router / per-agentworkspacefiles, ACPsessions,isolated sessionandagent multi-agentrouting,
+gateway notes,routingbindings workspaces directories per-agentsandboxandtool
+restrictions
+Representative systems were chosen to maximize architectural coverage rather than market share. The
+comparison set includes Codex, Claude Code, GitHub Copilot coding agent, Gemini CLI, Cursor, Open-
+Hands, and OpenClaw. This set spans terminal-native, editor-native, cloud-native, repo-native, and open
+orchestration settings. It also includes both product systems and open frameworks, which helps separate
+surfacebrandingfromarchitecturalpattern.
+Thevalidationcriteriaarefourfold. Explanatorybreadthaskswhethertheframeworkcanorganizethema-
+jorrecentliteratureswithoutforcingthem. Discriminativepoweraskswhethertheframeworkdistinguishes
+systemsinwaysthatmatterforcapability, risk, orevaluation. Predictiveadequacyaskswhethertheframe-
+work helps explain observed benchmark instability, recovery effects, and security boundary shifts. Design
+utility asks whether the framework yields useful concrete outputs, such as the Harness Condition Sheet, a
+threatmodel,orproposedmetricsforfuturework.
+6. ComparativeAnalysis
+6.1 Comparativesystemmatrix
+Table2summarizesrepresentativesystemsthroughtheAgentHarnessControlPlanelens. Thepointisnot
+toproducealeaderboard. Itistoshowthatcurrentcoding-agentsystemsincreasinglydifferlessbywhether
+theyhaveaharnessandmorebyhowexplicit,programmable,andgovernablethatharnessis.
+Three patterns stand out. First, context is increasingly externalized into durable artifacts rather than left
+inside transient prompts. Second, execution is increasingly split across substrates—local terminals, cloud
+sandboxes,CI-stylerunners,andprotocol-connectedtools. Third,governanceismovingupwardintoexplicit
+policyandauditsurfaces. Thesearethestructuralfeaturesthatmotivatethecontrol-planelanguage.
+12
+
+--- Page 13 ---
+
+6.2 Proposition1: Harnesssensitivity
+Proposition 1 (Harness sensitivity). For many repository-level and long-horizon coding tasks, there exist
+harnessconditions ℎ
+1
+and ℎ
+2
+suchthat |Δ𝐻 (𝑀;ℎ
+1
+,ℎ
+2
+,T)| iscomparableto,orlargerthan,theutilitygain
+obtainedbyreplacing 𝑀 withastrongermodelunderfixed ℎ.
+The strongest direct evidence comes from results that disturb intuitive model orderings. Debug2Fix re-
+ports that adding a debug subagent and interactive debugger integration can materially improve bug-fixing
+performance and can allow weaker models to match or exceed stronger ones in some settings [31]. This is
+exactly the kind of result the proposition predicts: a harness change reorders realized performance without
+changingthetaskfamily.
+TheAGENTS.mdliteratureprovidesasecond, subtlerformofevidence. Onestudyfindslowerruntime
+and lower output-token consumption with comparable completion [44]; another finds lower success and
+higher cost but more extensive exploration and testing [45]. The disagreement is not noise to be ignored.
+It shows that manifest quality and repository-level instructions are themselves consequential experimental
+variables. The same model, pointed at the same repository class, can behave differently under different
+guidancelayers.
+Practice reports make the same point without formal ablations. OpenAI’s internal Codex case study de-
+scribesearlyfailuresnotmainlyasmodellimitationsbutasmissingenvironmentstructure,missingfeedback
+loops,andinsufficientrepositorylegibility[1]. Anthropic’slong-runningharnesslikewiseimprovescontinu-
+itybyrestructuringinitialization,statehandoff,andincrementalverification[8]. Theinterpretationadvanced
+hereistheoreticalratherthanexperimental: onceamodelcrossesathresholdofbasicrepositorycompetence,
+realizedbehaviorbecomesstronglyharness-sensitive.
+6.3 Proposition2: Recoverydominance
+Proposition2(Recoverydominance). Onlong-horizoncodingtasks,recoverabilitybecomesamajordeter-
+minantofverifiedsuccessoncebasicrepositorycompetenceispresent.
+Anthropic’slong-runningharnessisbuiltaroundtheassumptionthathours-ordays-longworkwillrepeat-
+edlylosecontext, hitpartialfailures, andrequirere-entry. Theharnessrespondsbyexternalizingstateinto
+progressfiles,setupscripts,gitcommits,andstructuredfeaturelists[8]. Debug2FixandAgentSteppershow
+thatruntimeinvestigationandtrajectorydebuggingarenotluxuriesbutproductivecapabilitiesforboththe
+agentandthedeveloperoftheagent[31,32]. Thesesystemsareallattemptstoturnfailurefromaterminal
+eventintoamanageabletransition.
+Benchmark results support the same interpretation. FeatureBench’s 11.0% success rate on end-to-end
+feature work, Terminal-Bench’s low performance on realistic command-line tasks, and SWE-EVO’s sharp
+drop from SWE-Bench Verified performance all indicate that current agents struggle most when the task
+requiressustainedadaptationratherthanasinglecleanfix[35,36,37]. Amodel-onlyreadingsaysthatthe
+task is simply harder. A harness-native reading says that long-horizon difficulty is inseparable from weak
+recoverymechanisms.
+6.4 Proposition3: Artifactexternalization
+Proposition3(Artifactexternalization). Ascoding-agentadoptionmatures,teamsincreasinglyencodeagent
+behavior into repository-visible and version-controlled artifacts such as context files, skills, custom agents,
+policies,andmemorystructures.
+13
+
+--- Page 14 ---
+
+The configuration literature is already clear on the first half of this claim. Context files dominate con-
+figuration mechanisms across tools, and AGENTS.md is emerging as an interoperable artifact [42]. Agent
+READMEs shows that these files evolve frequently and contain instruction types that resemble operational
+policy as much as documentation [43]. Product systems now treat these artifacts as standard surfaces:
+AGENTS.md, CLAUDE.md, GEMINI.md-style context, skills, custom agents, and cross-agent memory are all
+documentedproductfeatures[3,11,20,18,17].
+Adoptiondatasupportsthesecondhalf. AIDevandAgenticMuchbothshowthatcodingagentsalready
+leave strong traces in repositories, pull requests, commits, and configuration artifacts [51, 52]. In a model-
+centric regime, most customization would stay hidden inside prompts or UI settings. In a harness-native
+regime,customizationbecomesshareableinfrastructure,whichisexactlywhatrepository-visiblemanifests
+andskillsprovide.
+6.5 Proposition4: Boundarydisplacement
+Proposition 4 (Boundary displacement). For deployed coding agents, the dominant actionable security
+boundary has shifted from the model surface to the harness interfaces that regulate tools, protocols, per-
+missions,andexecution.
+Security work gives this proposition unusually sharp evidence. The prompt-injection SoK argues that
+coding-assistant risk is fundamentally amplified by access to tools, shells, and protocol ecosystems [47].
+BreakingtheProtocolarguesthatMCP’svulnerabilitiesarearchitecturalandprotocol-levelratherthaniso-
+lated implementation mistakes [48]. AIShellJack shows that high-privilege coding editors can be remotely
+induced to execute malicious commands with attack success rates up to 84% [49]. None of these failures
+can be understood well by looking only at next-token prediction. They sit at the harness boundary: what
+untrustedcontentcaninfluence,whattoolitcanreach,andwhichpermissionsareambient.
+Officialdocumentationconvergesonthesamediagnosisfromthedefenseside. Codexwarnsthatinternet
+access can turn prompt injection into data exfiltration or unsafe edits and therefore recommends limiting
+networkscopeaggressively[7]. GitHubandGeminilikewiseforegroundsandboxes, environmentcontrols,
+and policy-gated actions [13, 23]. If the practical defenses live in the harness, then the practical boundary
+doestoo.
+6.6 Proposition5: Evaluationinversion
+Proposition5(Evaluationinversion). Benchmarksthatunder-specifyorunrealisticallyfixtheharnesscon-
+ditioncansystematicallymisestimaterealdeploymentcapability,andrankingconclusionsmayinvertwhen
+theharnessconditionchanges.
+TheAgenticBenchmarkChecklist,SavingSWE-Bench,FeatureBench,Terminal-Bench,andSWE-EVO
+alreadyshowlargeswingsinmeasuredcapabilitywhentasksetup,realism,horizon,andhiddenvalidation
+change[33,34,35,36,37]. IDE-Bench,VeRO,ABC-Bench,RepoMod-Bench,andSWE-rebenchreinforce
+thesamepointfromdifferentdirections: realisticexecution,hiddentests,scale,contaminationcontrol,and
+structuredruntimeconditionsallmatter[28,29,39,40,38]. Theharness-nativeinterpretationisstraightfor-
+ward. Thoseconditionsarenotperipheralmetadata. Theyarepiecesoftheevaluatedsystem.
+Thispropositionhasapracticalconsequence. Claimssuchas“model 𝑀 achieves 𝑝%onbenchmark 𝐵”
+shouldoftenbereadasshorthandfor“model 𝑀 underharnesscondition ℎ achieves 𝑝%onbenchmark 𝐵.”
+When ℎisweaklyspecified,comparisonclaimsbecomehardertointerpretthancurrentpracticeadmits.
+14
+
+--- Page 15 ---
+
+6.7 Boundaryconditions
+The framework does not imply that the harness always dominates. Very short, self-contained editing tasks
+can remain strongly model-limited. Static code-generation settings with minimal environment interaction
+also fit the framework less well. A very weak model can still fail despite a strong harness. The claim of
+Harness-NativeSoftwareEngineeringisthereforeregime-specific: itisaboutdeployment-likecodingtasks
+thatinvolverepositorystate,tooluse,verification,orcontinuityovertime.
+6.8 Stresstestsforthetaxonomy
+Ausefultaxonomyshouldsurvivecontactwithrepresentativetaskfamilies.
+Featuredevelopment. FeatureBenchstressescontextingress,executionsubstrate,andverification. Asys-
+tem needs architectural context, the ability to run or simulate the application, and hidden or independent
+validationtoavoidpassingonlyvisibletests[35].
+Long-runningbugfixing. Anthropic’slong-horizoncasestressesstatepersistenceandrecovery. Without
+durable progress artifacts and re-entry structure, the agent repeatedly spends context budget rediscovering
+state[8].
+Securityremediation. SEC-benchandprompt-injectionworkstressactionmediationandgovernance. Se-
+curityperformancedependsnotonlyonsecurecodingknowledgebutalsoontheharness’sabilitytoconstrain
+unsafeactionsandisolateuntrustedcontent[50,47,49].
+Parallel agent workflows. GitHub’s mission control and multi-agent engineering guidance stress delega-
+tion, coordination, and governance. Shared-state ambiguity and weak handoffs become visible even when
+individualsubtasksarewithinmodelcapability[15,16].
+Thesestresstestsdonotprovetheframework,buttheyshowthatthedecompositionremainsinterpretable
+acrossdistincttaskregimes.
+7. BenchmarkandEvaluationProtocol
+Currentcoding-agentbenchmarkreportingusuallyincludesthemodel,tokenbudget,andsometimesaterse
+description of available tools. That is not enough. If the harness condition can change realized behavior
+materially,thenbenchmarkpapersneedadisciplinedwaytostatewhatwasactuallyevaluated.
+Definition 5 (Harness Condition Sheet). A Harness Condition Sheet is a structured report of the concrete
+harnessconditionusedinabenchmarkrunordeploymentstudy. Atminimumitrecordscontextartifacts,tool
+andprotocolexposure,permissionandnetworkpolicy,executionsubstrate,persistencefeatures,verification
+stack,recoverymechanisms,delegationtopology,humanapprovalrules,andrelevantcostortimebudgets.
+Table3mapsprominentbenchmarkfamiliestotheAgentHarnessControlPlanefunctionstheystress. No
+single benchmark spans the entire control plane. That is not a flaw by itself. It becomes a flaw only when
+benchmarkresultsareinterpretedasiftheywerebroaderthantheirstressedfunctionsjustify.
+TheHarnessConditionSheetmattersforthreereasons. First,itincreasesreproducibility. Second,ithelps
+separatemodeleffectsfromharnesseffects. Third,itdiscouragesacommonfailuremodeinbenchmarkcom-
+munication: treatingunder-reportedruntimeconditionsasiftheywerenegligible. Ifonemodelisevaluated
+15
+
+--- Page 16 ---
+
+Table3. Benchmarkfamiliesandthecontrol-planefunctionstheyprimarilystress.
+Benchmark Primary task Whatitmakesmorerealistic MainAgentHarnessControlPlanefunctionsstressed
+class
+IDE-Bench IDE-native en- StructuredIDEtoolsandprivate-codebaserealism Contextingress,actionmediation,execution
+gineeringtasks substrate
+Terminal-Bench Command-line RealCLIexecutionandprofessionalterminal Actionmediation,executionsubstrate,recovery
+tasks workflows
+FeatureBench Feature imple- Multi-commit,end-to-endfeaturework Contextingress,executionsubstrate,verification
+mentation
+SWE-EVO Software evo- Long-horizonmulti-filemodifications Statepersistence,recovery,verification
+lution
+ABC-Bench Backend engi- ContainerizedservicesandexternalAPIvalidation Executionsubstrate,verification,governance
+neering
+RepoMod-Bench Repository Large-scalerepositorytranslationwithhiddentests Contextingress,executionsubstrate,verification
+modernization
+SEC-bench Securitytasks Authenticsecurityworkflowsinisolated Actionmediation,governance,verification
+environments
+VeRO Agent opti- Versionedagentsnapshotsandbudget-controlled Statepersistence,verification,governance
+mization traces
+OmniCode Broader SWE Taskdiversityacrosslanguagesandcategories Contextingress,verification
+tasks
+SWE-rebench Fresh task col- Contamination-awareevaluationandtaskfreshness Contextingress,executionsubstrate,reporting
+lection discipline
+with richer retrieval, broader shell access, stricter self-review, or more permissive retry logic, then a fair
+comparisonrequiresthatthosedifferencesbevisible.
+A minimal Harness Condition Sheet for coding-agent benchmarks should contain at least the following
+fields:
+1. basemodel(s),routinglogic,andreasoningsettings;
+2. interfacemode(CLI,IDE,cloud,PR-native,orhybrid);
+3. contextartifactsloaded(AGENTS.md,skills,memories,issuestate,PRstate);
+4. toolsandprotocolbindings(MCP,ACP,browserautomation,debugger,packagemanagers);
+5. permissionandapprovalpolicy;
+6. internetandexternal-resourcepolicy;
+7. executionsubstrate(localmachine,container,CIrunner,cloudtask);
+8. persistencefeatures(checkpointing,progressfiles,resumedsessions);
+9. verificationstack(tests,linters,self-review,securityscans,CI);
+10. recoverymechanisms(rollback,restart,checkpointrestore,debugsubagents);
+11. delegationtopology(singleagent,specialistsubagents,multi-agent,humanescalation);
+12. budgetconstraints(token,wall-clock,retrycount,computecost).
+Aharness-sensitiveempiricalagendathenbecomes possible. Atminimum, futureworkshould perform
+fixed-modelablationsover: (i)repositoryguidancequality,(ii)verificationdepth,(iii)sandboxandnetwork
+policy,(iv)persistenceandcheckpointing,(v)debuggeraccess,and(vi)delegationtopology. Thedependent
+variablesshouldextendbeyondtasksuccesstoincludeRR,UAR,HIB,tokenandwall-clockcost,andrates
+ofhumanoverride.
+16
+
+--- Page 17 ---
+
+0.8
+smallmodelgapatafixedharness
+0.6
+within-modelharnessshift
+0.4
+schematiconly
+Minimal Managed Rich
+Harnesscondition
+sseccusksatdefiireV
+ModelA
+ModelB
+Figure3. Schematicillustrationofharnesssensitivity. Ashiftinharnessconditioncanmoveafixedmodelmorethan
+thegapbetweentwomodelsevaluatedunderthesamecondition.
+Table4. IllustrativethreatmappingfromattackvectortoAgentHarnessControlPlanefunction.
+Threatvector Main Agent Typicalfailuremode Representativeevidence
+Harness Con-
+trol Plane
+function
+Poisoned issue / Contextingress Untrustedinstructionsbecomeeffectivepolicyor Prompt-injectionSoK[47]
+README / web actionrequests
+content
+Malicious shell Action me- Promptedcommandexecutionwithhighprivilege AIShellJack[49]
+or package com- diation +
+mand governance
+Compromised Action media- Capabilityspoofing,promptinjection,trust MCPsecurityanalysis[48]
+MCP server or tion propagation
+metadata
+Over-permissive Governance Exfiltrationorunsafedependencyaccess Codexinternet-accessguidance[7]
+networkaccess + execution
+substrate
+Weakreview/CI Verification + Harmfulpatchesorsecurityregressionsslipthrough Copilotcoding-agentdocs[13,14]
+controls governance
+Persistent poi- State persis- Maliciousorstaleinstructionssurvivesession Context-artifactliterature[43,46]
+sonedmemoryor tence boundaries
+contextfiles
+8. SecurityandGovernance
+Iftheharnessisthecontrolplaneofacodingagent,thenthethreatmodelmustcenteronharnessinterfaces
+rather than on the model alone. The relevant assets include repository contents, credentials, environment
+variables, shell access, network reachability, memory artifacts, review channels, and provenance data. The
+relevantentrypointsincludeissuetext,pull-requestcomments,retrievedwebcontent,contextfiles,protocol
+servers,pluginorskillmetadata,tooloutputs,andtransitivecontentfetchedbytools.
+The attacker goals documented in recent work are concrete: induce malicious command execution, ex-
+filtrate data, escalate privilege, poison memory or context, manipulate protocol trust, or degrade review
+and verification workflows [47, 48, 49]. These goals map cleanly onto control-plane functions. Prompt
+injection against a retrieved README is primarily a context-ingress problem. Malicious shell execution
+is an action-mediation and governance problem. MCP impersonation or privilege misrepresentation is an
+action-mediationandprotocol-governanceproblem. Unsafepersistenceofattacker-controlledinstructionsis
+astate-persistenceproblem.
+17
+
+--- Page 18 ---
+
+Aharness-nativesecurityposturefollowsdirectlyfromthismapping.
+Minimizeambientauthority. Default-denypolicies,read-onlymodes,restrictednetworkaccess,andnar-
+rowtoolallowlistsmatterbecausetheagent’sactionspaceistheimmediateattacksurface. CodexandGemini
+bothdocumentconstrainedmodesandnetworkcontrolsforthisreason[6,7,23].
+Treatexternalcontentasuntrustedcode-adjacentinput. Issuetext,PRdiscussions,fetcheddocumen-
+tation,andtooloutputsshouldnotbetreatedasbenignnaturallanguage. Thesecurityliteratureshowsthat
+untrustednatural-languagecontentcanbecomeaneffectivecontrolsignalwhenitflowsintotheagentloop
+withoutorigin-awareguardrails[47,48].
+Make state reversible. Checkpointing, explicit rollback, and durable git checkpoints are not just conve-
+niencefeatures. Theylimitblastradiusafterbadactionsandmakeincidentrecoverypractical[8,21].
+Keep verification independent when possible. A harness that only asks the agent to decide whether it
+succeeded is structurally weak. Hidden tests, external API checks, CI gates, and human review provide
+partialindependencefromthemodel’sself-assessment[39,40,14].
+Audit delegation. Multi-agent systems introduce new trust boundaries. Routing decisions, agent identi-
+ties, and per-agent permissions should be logged and constrained, especially when specialized agents have
+differenttoolornetworkaccess[16,27].
+Thebroaderpointisarchitectural. Securityisnotaseparateannextocoding-agentdesign. Itisbuiltinto
+thesamecontrol-planechoicesthatshapecapabilityandcost.
+9. WorkflowIntegrationandOrganizationalImplications
+Repository-scale studies show that coding agents are now entering real development workflows in visible
+ways. AIDev documents nearly a million agent-authored pull requests across more than one hundred thou-
+sand repositories [51]. Agentic Much estimates very high early adoption, between 15.85% and 22.60%
+across129,134studiedprojects[52]. Thesestudiesmatterbecausetheyshiftthediscussionfromdemosand
+benchmarkscorestoevidenceofsustainedrepository-leveluse.
+Aharness-nativeviewhelpsexplaintheadoptionpattern. Whatteamsadoptisnotjustamodelendpoint.
+Theyadoptanoperationalpackage: howtasksaredescribed,howrepositorycontextissurfaced,howexecu-
+tionisprovisioned,howreviewisstaged,whatmemorypersists,andhowagentbehaviorisexternalizedinto
+manifests or custom agents. That is why repository-visible artifacts matter so much. They are the durable
+partsoftheharnessthatteamscaninspect,version,andshare.
+Thepullrequestisemergingasaparticularlyimportantcoordinationinterface. Agent-authoredworkoften
+arrives not as a suggestion inside the IDE but as a branch, patch, or pull request that must survive review
+andverification. Studiesofcoreandperipheraldevelopersshowthatbothgroupsreviewandmodifyagent-
+authored PRs differently, with core developers more consistently insisting on verification and peripheral
+developersmorelikelytomergewithoutCIchecks[55]. Astudyofcollaborationsignalsfindsthatreviewer
+engagement is more predictive of successful integration than simple iteration intensity, while force pushes
+andlargerchangesetscorrelatewithlowermergeprobability[56]. Thesearecontrol-planefacts. Theyspeak
+togovernance,reviewstructure,andcoordinationstability.
+18
+
+--- Page 19 ---
+
+Thequalitypictureismixed. ThelongitudinalcausalstudybyAgarwaletal.findsfront-loadedvelocity
+gainsbutpersistentmaintainabilityrisks,includingincreasesinstatic-analysiswarningsandcognitivecom-
+plexity[53]. Thelarge-scalePRstudybyOgenrwotandBusingeshowsthatagenticPRsdiffersubstantially
+fromhumanPRsincommitcountandchangestructure[54]. Thesefindingscutagainstsimplisticnarratives
+of either universal acceleration or universal failure. They instead suggest that the harness used for review,
+validation,andintegrationdetermineswhetherapparentthroughputturnsintoacceptablesoftware.
+The growth of agentic memory systems reinforces the same point. GitHub’s cross-agent memory is ex-
+plicitly framed as repository-specific knowledge shared across coding agent, CLI, and code review [17].
+Claude Code’s auto memory and persistent project instructions perform a similar function [11]. These are
+not merely convenience features. They are ways of stabilizing behavior over repeated interactions with the
+samecodebase.
+Severalorganizationalimplicationsfollow.
+Behavior becomes policy-bearing infrastructure. When project rules move into AGENTS.md, custom-
+agent definitions, skills, and memory layers, they stop being informal team norms and become machine-
+consumablepolicy. Thatraisesthequalitybarforthoseartifactsandmakestheirreviewprocessconsequen-
+tial.
+Review remains central. The empirical literature does not support eliminating human oversight. It sup-
+ports making review more structured and more selective. Agents can generate candidate work at scale; ac-
+ceptancestilldependsheavilyonreviewandverificationquality[56,55].
+Selectivedeploymentisrational. Thecausalevidencesuggestsdiminishingreturnsandpersistentquality
+risksinsomesettings[53]. Thatarguesagainstblanketorganizationaladoptionandinfavoroftask-specific
+harness design: narrow permissions, well-defined validation, and explicit boundaries for when an agent
+shouldorshouldnotactautonomously.
+Provenancebecomesmoreimportant. Asagent-authoredworkmovesthroughpullrequests,memories,
+andsubagents,organizationsneedtraceabilitynotjustforcompliancebutfordebuggingandaccountability.
+Governanceiseasierwhentheharnessitselfmakesactionslegible.
+10. Discussion
+10.1 WhyHarness-NativeSoftwareEngineeringisnotredundant
+Severaladjacenttermsalreadycirculateintheliteratureandinpractice. Theclosestiscontextengineering.
+Anthropic’s context-engineering note correctly identifies context as a finite and central resource [10]. The
+configurationliteraturereachessimilarconclusionsfromrepositoryartifacts[42,43]. Butcontextengineer-
+ingisonlyonesliceofthepresentframework. Itdoesnot,byitself,captureapprovalpolicy,checkpointing,
+executionsubstrate,reviewloops,protocolattacksurface,ormulti-agentcoordination. Harness-NativeSoft-
+wareEngineeringcontainscontextengineeringbutisnotreducibletoit.
+Asecondadjacenttermisrepo-nativeagency. Thatphrasecapturestheimportantshiftfromchatsurfaces
+toagentsworkinginsiderealrepositories. Thepresentpaperagreeswiththatdiagnosis. Itaddsthatreposi-
+torystatealoneisstillnottherightabstraction. Twosystemscanbothberepo-nativewhiledifferingradically
+inpermissions,persistence,debuggingability,andgovernance. Thosedifferencesbelongtotheharness.
+19
+
+--- Page 20 ---
+
+AthirdadjacentframeisthebroaderliteratureonAI-nativeoragenticsoftwareengineering[57,58]. That
+literature addresses a larger field transition: new human-agent roles, changes in lifecycle structure, and the
+emergenceofAIteammates. Harness-NativeSoftwareEngineeringisnarrower. Itaskswherecapabilityand
+risknowresidewithincoding-agentsystems. Itsanswerisarchitecturalratherthancivilizational.
+10.2 Objections
+Objection1: Theframeworkoverstatestheharnessandunderstatesthemodel. Thatobjectionwould
+be decisive only if the paper claimed that the model no longer matters. It does not. The claim is regime-
+specific and comparative. For short or static tasks, the model may dominate. For long-horizon repository
+work, the cited literature suggests that harness condition is often large enough to deserve equal analytical
+status.
+Objection 2: “Harness” is just engineering plumbing, not a research concept. The recent literature
+weakens that objection. Once harnesses become explicit objects in engineering reports, evaluation papers,
+configurationstudies,andsecurityanalyses,theystopbeingmereplumbing. Theybecometheplacewhere
+manyofthefield’soperativevariablesnowlive[1,9,29,30].
+Objection 3: The argument relies too heavily on product documentation. Official documentation is
+not used here as evidence of objective superiority. It is used as primary evidence of what features and
+controlsurfacesmajorsystemsactuallyexpose. Theframeworkisgroundedinthosedocsplusindependent
+benchmark,configuration,security,andadoptionwork.
+Objection4: Theworkisconceptualratherthanexperimental. Correct. Thecontributionisaframing,
+a decomposition, and a methodology. The paper earns its keep only if those things help organize current
+evidenceandimprovefutureexperimentation. TheHarnessConditionSheet,theproposedmetrics,andthe
+threatmodelareintendedtobeconcreteoutputsofthatkind.
+10.3 Whattheframeworkpredicts
+Iftheframeworkisuseful,severalpredictionsfollow.
+First,futurebenchmarkpaperswillincreasinglyreportharnessdetailsbecausemodel-onlyreportingwill
+lookinsufficient. Second, recoverabilitymetricswillbecomemoreinformativethanone-shotpassrateson
+long-horizon tasks. Third, more organizational customization will move into version-controlled artifacts
+rather than hidden prompts. Fourth, security incidents will continue to cluster at protocol, tool, and execu-
+tionboundariesuntilthoselayersreceivestrongerstandardizationandattestation. Fifth,competitionamong
+codingagentswillshifttowardthedesignqualityoftheharnessasmuchastowardthebasemodel.
+None of these predictions is guaranteed. They are offered as falsifiable consequences of the framework,
+notascertainty.
+11. Limitations
+Thispaperisconceptualandmethodological. Itdoesnotreportnewcontrolledexperiments,anditsstrongest
+claimsthereforeremainpropositionsratherthanuniversalempiricallaws. Theframeworkshouldbereadas
+adisciplinedsynthesisandaresearchagenda,notasthelastwordoncausalmagnitude.
+20
+
+--- Page 21 ---
+
+The source base mixes official documentation, engineering reports, and recent preprints. That is appro-
+priateforafast-movingtopicbuthasdrawbacks. Documentationdescribesexposedfeatures,notnecessarily
+real-worldreliability. Preprintscanchange. Productsurfacesalsomovequicklyenoughthatanystaticcom-
+parativematrixwillage.
+A second limitation is selection bias. The representative systems studied here are public and well-
+documented. Private enterprise harnesses or proprietary internal systems could differ in important ways.
+The framework is intended to generalize beyond the selected systems, but its empirical grounding is
+necessarilyconstrainedbypublicevidence.
+AthirdlimitationisthattheAgentHarnessControlPlanedecompositionisnotunique. Anotherresearcher
+might split or merge some functions differently. The test of the decomposition is usefulness rather than
+ontologicalfinality.
+Finally,thecontrolplaneandthemodelarenotindependentinthestrongestcausalsense. Bettermodels
+can exploit richer harnesses more effectively, and richer harnesses can mask or amplify model weaknesses.
+Harness-NativeSoftwareEngineeringthereforeshouldnotbereadasareplacementformodelanalysis. Itis
+acomplementthatbecomesincreasinglynecessaryasagenticcodingsystemsmature.
+12. Conclusion
+Codingagentshavereachedapointwherethemodelaloneisnolongerthemostinformativeunitofanalysis
+for many software-engineering tasks. Recent systems expose explicit layers for context, tools, execution,
+persistence, verification, recovery, delegation, and governance. Recent benchmark, configuration, security,
+and adoption work all point toward the same conclusion from different directions: those model-external
+layersnowmediatemuchofwhattheagentcando,howsafelyitcandoit,andhowcrediblyitsbehaviorcan
+bemeasured.
+This paper names that regime Harness-Native Software Engineering and formalizes the Agent Harness
+Control Plane as its central analytical object. The claim is not that models no longer matter, nor that every
+codingtaskisharness-dominated. Theclaimisthatforrepository-levelandlong-horizonengineeringwork,
+theharnesshasbecometooconsequentialtoremainbackgroundscaffolding.
+Ifthatclaimisright,thenextphaseofcoding-agentresearchshouldreportharnessconditionsexplicitly,
+ablatethemseriously,andtreatthemasfirst-classdesignvariables. Thatwouldyieldamorefaithfulscience
+ofcodingagentsthanmodel-onlycomparisontablescanprovide.
+21
+
+--- Page 22 ---
+
+A. SystemProfiles
+A.1 Codex
+Codex presents one of the clearest public examples of a harness-native system. Project-scoped guidance is
+surfaced through AGENTS.md and config layers. Actions are mediated through approvals, sandbox modes,
+networkcontrols,MCPservers,andoptionalcloudtasks. Executioncanhappenlocallyorinconfiguredcloud
+environments. Codexalsodocumentsskillsandexperimentalmulti-agentworkflows,makingdelegationan
+explicitruntimechoiceratherthananinformalpromptpattern[2,3,4,5,6,7].
+TheOpenAIengineeringreportaddsabroadersystemsperspective. Thereportrepeatedlyframesprogress
+intermsofrepositorylegibility,observability,testing,review,andenvironmentdesign,whichfitstheAgent
+HarnessControlPlanedecompositionclosely[1].
+A.2 ClaudeCode
+ClaudeCodeemphasizespersistentprojectknowledgeandoperationalstructure. CLAUDE.mdandautomem-
+oryprovidecontextingressandlong-livedstate. Hooks,plugins,andMCPgoverntoolandworkflowexten-
+sion. Subagentsexposedelegationexplicitly. Anthropic’slong-runningharnessshowshowtheseprimitives
+canbecomposedintoaspecializedsystemformulti-sessioncontinuity[11,12,8,9].
+ClaudeCodeisausefulexamplebecauseitmakesplainthatcontextandcontinuityareoperationalsurfaces.
+Theproject-specificmemorymodelisnotmerelypersonalization. Itispartofthesystem’scontrolplane.
+A.3 GitHubCopilotcodingagent
+GitHubCopilot’scodingagentisstronglyPR-native. Thedefaultflowbeginsfromanissueortask,runsina
+customizableGitHubActionsenvironment,andculminatesinapullrequest. Self-review,securityscanning,
+customagents,andmissioncontrolallsurfacetheharnessdirectly. GitHub’spublicwritingonmulti-agent
+failuresisespeciallynotablebecauseitframescoordinationbreakdownsassystem-structureproblemsrather
+thanasgenericmodelweakness[13,14,15,16,17,18].
+This system illustrates the governance-heavy end of the design space. Approval, review, and workflow
+integrationarepartofthefirst-classproductexperience.
+A.4 GeminiCLI
+Gemini CLI is terminal-native but unusually explicit about harness features. Skills, checkpoints, hooks,
+subagents,andsandboxingarealldocumented. Thedistinctionbetweenworkspacecontextandon-demand
+skillsisanalyticallyusefulbecauseitseparatespersistentbackgroundfromconditionalexpertise[19,20,21,
+22,23].
+Gemini CLI also shows how recovery can be treated as a built-in control-plane capability rather than as
+anafterthought. Checkpointingisasmallbutimportantexampleofmakingreversibilitypartoftheruntime.
+A.5 Cursor
+Cursorillustrateshoweditor-nativesystemsareconvergingtowardthesameruntimepatterns. Background
+agents,memories,Bugbotreview,andone-clickMCPinstallationallmovetheproductbeyondinlineassis-
+tance toward a richer harness [24]. The system makes the editor the primary interaction surface, but many
+oftheoperativevariablesstillsitinthesamecontrol-planecategoriesdescribedinthispaper.
+22
+
+--- Page 23 ---
+
+A.6 OpenHands
+OpenHandsisimportantbecauseitexposesagentstructurewithoutproductpackaging. Itsarchitecturedocu-
+mentationforegroundsthereasoningloop,statemanagement,workspaceabstraction,andseparationbetween
+core SDK, tools, sandbox, and agent server [25]. This makes it a useful reference case for the open infras-
+tructureendofthecoding-agentecosystem.
+A.7 OpenClaw
+OpenClaw is analytically useful because it routes across multiple isolated agents and can dispatch into ex-
+ternal coding harnesses through ACP sessions [26, 27]. It makes visible a version of the future in which
+the main “agent” is partly a conductor over other harnesses. That is still compatible with Harness-Native
+SoftwareEngineering;itsimplymakesdelegationandgovernanceevenmorecentral.
+B. HarnessConditionSheetTemplate
+Table5. ApracticalHarnessConditionSheettemplateforcoding-agentbenchmarksanddeploymentreports.
+Field Whattoreport
+Basemodel(s) Modelname,routinglogic,reasoningsettings,temperatureordeterministicmode,
+best-of-𝑁 ifused
+Interfacemode CLI,IDE,cloudtask,PR-native,hybrid,ororchestratedmulti-surfaceworkflow
+Contextartifacts AGENTS.md,CLAUDE.md,workspacecontextfiles,memories,skills,customagents,issue
+/PRstate,retrievalcorpora
+Toolinventory Availabletools,debuggeraccess,browserautomation,testrunners,packagemanagers,
+searchtools,buildtools
+Protocolbindings MCP,ACP,A2A,remoteagents,internalAPIs,externalservices
+Approvalpolicy Read-onlyorwriteaccess,toolapprovalmode,humanconfirmationpoints,escalation
+rules
+Internetpolicy Off,allowlist,unrestricted,cachedsearch,orenvironment-specificnetworkprofile
+Executionsubstrate Localmachine,container,worktree,CIrunner,cloudenvironment,ormixedmode
+Persistencefeatures Checkpointing,progressfiles,resumedthreads,gitcheckpointpolicy,repository
+memory
+Verificationstack Visibletests,hiddentests,self-review,securityscans,browserchecks,CI,externalAPI
+validation
+Recoverymechanisms Retrypolicy,rollback,checkpointrestore,debugsubagents,restartscripts,failure
+summaries
+Delegationtopology Singleagent,specialistsubagents,conductorpattern,multi-agentparallelism,human
+handoff
+Governanceandaudit Auditlogs,branchprotections,provenancerecords,adminrequirements,repositorytrust
+model
+Budgets Tokencap,wall-clocklimit,retrycount,computebudget,evaluationbudget
+23
+
+--- Page 24 ---
+
+C. EvaluationMetrics
+Table6. Suggestedmetricsforharness-sensitiveevaluation.
+Metric Definitionanduse
+Verified Task Suc- Fractionoftasksacceptedbyhiddenorindependentverificationratherthanbytheagent’s
+cess(VTS) ownassertionalone
+Recovery Rate Fractionoftrajectoriesthatlatersucceedafterenteringavalidatedfailurestate;usefulfor
+(RR) long-horizonwork
+UnsafeActionRate Fractionofrunsthatattemptpolicy-disallowedorsecurity-relevantunsafeactions
+(UAR)
+Human Interven- Approvals,manualcorrections,andmanualrestartspersuccessfultask;captures
+tionBurden(HIB) operationalbabysittingcost
+Continuity Effi- Adeployment-sensitivesuccess-per-costmetric,forexample
+ciency(CE) CE=VTS/(tokens+𝜆·wall-clock)
+ReviewFriction Numberofreviewrounds,reviewlatency,orratioofacceptedtorevisedagent-authored
+patches
+VerificationDepth Countorqualitytierofindependentchecksperformedbeforeacceptance
+D. GlossaryofAdjacentTerms
+Table7. Disambiguationofnearbyterms.
+Term Meaninginrelationtothispaper
+Agentic software engi- Broadfieldconcernedwithhowagentsparticipateinsoftwareengineering;widerthan
+neering thispaper’sfocus
+AI-nativesoftwareengi- VisionofalargerlifecycletransitiontowardAIteammates;broaderandmorestrategic
+neering/SE3.0 thanHarness-NativeSoftwareEngineering
+Contextengineering Designofwhatentersthemodel’scontext;astrictsubsetofthecontrolplaneanalyzed
+here
+Repo-nativeagency Agentsactingdirectlyonrepositorystate;compatiblewithHarness-NativeSoftware
+Engineeringbutnotsufficienttocharacterizetheharness
+Harness/scaffold Model-externalorchestrationlayer;thispaperusesharnessbecauseitbettercaptures
+execution,policy,andpersistence
+Controlplane Persistentlayerthatdeterminescontext,actionlegality,execution,recovery,and
+governance
+Dataplane Localloopofmodelinferenceandimmediatetoolexecution
+24
+
+--- Page 25 ---
+
+E. BenchmarkCrosswalk
+Table8. Extendedbenchmarkcrosswalk.
+Benchmark Horizon Corerealismmove MainblindspotsrelativetofullAgentHarness
+ControlPlane
+IDE-Bench Medium IDE-nativestructuredtoolecosystemandprivate Limitedcoverageoforganization-levelgovernance
+repositories andlong-runmemory
+Terminal-Bench Medium High-skillrealCLItasks LessemphasisonPR-nativereviewand
+repository-specificmemory
+FeatureBench Medium to End-to-endfeatureimplementationwithexecutable Lessexplicitfocusonpermissionandgovernance
+long environments variation
+SWE-EVO Long Softwareevolutionovermanyfilesanditerations Narrowerlanguageandecosystemcoverage
+ABC-Bench Medium Backendlifecycleincludingservicedeploymentand Lessdirectemphasisonrepositorycontextartifacts
+APIchecks
+RepoMod- Long Large-scalerepositorytranslationwith Specializedtaskfamily;weakerdirectcoverageof
+Bench implementation-agnostichiddentests humanreview
+OmniCode Short to Broadertask-typediversityacrosslanguages Lighteremphasisonlong-horizoncontinuityand
+medium recovery
+SEC-bench Medium Authenticsecurity-engineeringtasksinisolated Focusesonsecuritycapability,notgeneralworkflow
+environments adoption
+VeRO Medium Evaluatingagentsthatoptimizeagentsusingversioned Meta-agentsettingdiffersfromstandarddeveloper
+snapshotsandtraces workflow
+SWE-rebench Variable Freshtaskcollectionandcontamination-aware Morefocusedondatapipelineandfreshnessthanon
+evaluation governancesurfaces
+F. ThreatScenarios
+F.1 Poisonedissuetextwithbroadshellaccess
+Arepositoryissuecontainsanapparentlyhelpfulreproductioncommandthatsilentlyexfiltrateslocaldatato
+an attacker-controlled endpoint. If the agent operates with broad shell authority, open network access, and
+no approval gate, the attack crosses context ingress, action mediation, execution substrate, and governance
+allatonce. Codex’sinternet-accessdocumentationexplicitlywarnsthatpromptinjectioncanleakdatawhen
+network access is enabled [7]. AIShellJack shows that the broader class of malicious-command attacks is
+nothypothetical[49].
+F.2 CompromisedMCPserver
+Atoolserveradvertisescapabilitiesitshouldnothaveandreturnsprompt-injectingcontentthroughbidirec-
+tionalsampling. ThisispreciselythesortofarchitecturalgaphighlightedintheMCPsecurityanalysis[48].
+Themainlessonisthatprotocoltrustispartoftheharness,notasidechanneloutsideit.
+F.3 Persistentpoisonedmemory
+Acontextormemoryartifactaccumulatesstaleormaliciousinstructionsovertime. Becausethecontentis
+durableandautomaticallyreloaded,theattacksurvivesacrosssessionsandcanbecomehardertodistinguish
+from legitimate project guidance. This is one reason why the quality and provenance of memory artifacts
+matterasmuchastheirmereexistence[43,46].
+25
+
+--- Page 26 ---
+
+F.4 Parallelagentswithinconsistentauthority
+Twospecialistagentsoperateonthesamerepositorywithdifferenttoolrestrictionsandoverlappingrespon-
+sibilities. Oneagentproposesachangethattheothersilentlyassumesisalreadyvalid;theconductormerges
+outputswithoutasharedverificationcheckpoint. GitHub’swritingonmulti-agentfailuresmakesclearthat
+suchcoordinationbreakdownsarecommoninpractice[16]. Heretheproblemisnotmodelreasoningalone
+butweakdelegationandgovernancestructure.
+References
+[1] OpenAI. Harness engineering: leveraging Codex in an agent-first world. OpenAI, February 2026.
+https://openai.com/index/harness-engineering/.
+[2] OpenAIDevelopers. CodexCLIdocumentation. 2026. https://developers.openai.com/codex/cli.
+[3] OpenAIDevelopers. CustominstructionswithAGENTS.md. 2026. https://developers.openai.com/co
+dex/guides/agents-md.
+[4] OpenAIDevelopers. Customization: projectguidance,skills,MCP,andmulti-agentsinCodex. 2026.
+https://developers.openai.com/codex/concepts/customization.
+[5] OpenAIDevelopers. Multi-agentsinCodex. 2026. https://developers.openai.com/codex/multi-agent.
+[6] OpenAIDevelopers. Codexsecurity. 2026. https://developers.openai.com/codex/security.
+[7] OpenAIDevelopers. Agentinternetaccess. 2026. https://developers.openai.com/codex/cloud/internet
+-access.
+[8] Anthropic.Effectiveharnessesforlong-runningagents.AnthropicEngineering,November2025.https:
+//www.anthropic.com/engineering/effective-harnesses-for-long-running-agents.
+[9] Anthropic. DemystifyingevalsforAIagents. AnthropicEngineering,January2026. https://www.an
+thropic.com/engineering/demystifying-evals-for-ai-agents.
+[10] Anthropic.EffectivecontextengineeringforAIagents.AnthropicEngineering,September2025.https:
+//www.anthropic.com/engineering/effective-context-engineering-for-ai-agents.
+[11] Anthropic. HowClauderemembersyourproject. ClaudeCodedocumentation,2026. https://code.cla
+ude.com/docs/en/memory.
+[12] Anthropic. Createcustomsubagents. ClaudeCodedocumentation,2026. https://code.claude.com/do
+cs/en/sub-agents.
+[13] GitHub. GitHubCopilotcodingagent101: GettingstartedwithagenticworkflowsonGitHub. GitHub
+Blog,September2025,updatedJanuary2026. https://github.blog/ai-and-ml/github-copilot/github-c
+opilot-coding-agent-101-getting-started-with-agentic-workflows-on-github/.
+[14] GitHub. What’snewwithGitHubCopilotcodingagent. GitHubBlog,March2026. https://github.blo
+g/ai-and-ml/github-copilot/whats-new-with-github-copilot-coding-agent/.
+[15] GitHub. How to orchestrate agents using mission control. GitHub Blog, December 2025. https:
+//github.blog/ai-and-ml/github-copilot/how-to-orchestrate-agents-using-mission-control/.
+26
+
+--- Page 27 ---
+
+[16] GitHub. Multi-agentworkflowsoftenfail.Here’showtoengineeronesthatdon’t. GitHubBlog,March
+2026. https://github.blog/ai-and-ml/generative-ai/multi-agent-workflows-often-fail-heres-how-to-e
+ngineer-ones-that-dont/.
+[17] GitHub. BuildinganagenticmemorysystemforGitHubCopilot. GitHubBlog,January2026. https:
+//github.blog/ai-and-ml/github-copilot/building-an-agentic-memory-system-for-github-copilot/.
+[18] GitHub. Your stack, your rules: introducing custom agents in GitHub Copilot for observability, IaC,
+andsecurity. GitHubBlog,December2025. https://github.blog/news-insights/product-news/your-sta
+ck-your-rules-introducing-custom-agents-in-github-copilot-for-observability-iac-and-security/.
+[19] GeminiCLITeam. GeminiCLIdocumentation. 2026. https://geminicli.com/docs/.
+[20] GeminiCLITeam. AgentSkills. 2026. https://geminicli.com/docs/cli/skills/.
+[21] GeminiCLITeam. Checkpointing. 2026. https://geminicli.com/docs/cli/checkpointing/.
+[22] GeminiCLITeam. Subagents(experimental). 2026. https://geminicli.com/docs/core/subagents/.
+[23] GeminiCLITeam. SandboxingintheGeminiCLI. 2026. https://geminicli.com/docs/.
+[24] Cursor. Bugbot, Background Agent access to everyone, and one-click MCP install. Cursor 1.0
+changelog,June2025. https://cursor.com/changelog/1-0.
+[25] OpenHands. Architecture overview: OpenHands Software Agent SDK. OpenHands documentation,
+2026. https://docs.openhands.dev/sdk/arch/overview.
+[26] OpenClaw. ACPAgents. OpenClawdocumentation,2026. https://docs.openclaw.ai/tools/acp-agents.
+[27] OpenClaw. Multi-AgentRouting. OpenClawdocumentation,2026. https://docs.openclaw.ai/concept
+s/multi-agent.
+[28] S.Mateegaetal. IDE-Bench: EvaluatingLargeLanguageModelsasIDEAgentsonReal-WorldSoft-
+wareEngineeringTasks. arXivpreprintarXiv:2601.20886,2026. https://arxiv.org/abs/2601.20886.
+[29] V. Ursekar et al. VeRO: An Evaluation Harness for Agents to Optimize Agents. arXiv preprint
+arXiv:2602.22480,2026. https://arxiv.org/abs/2602.22480.
+[30] AutoHarness authors. AutoHarness: improving LLM agents by automatically synthesizing a code
+harness. arXivpreprintarXiv:2603.03329,2026. https://arxiv.org/abs/2603.03329.
+[31] S. Garg and Y. Huang. Debug2Fix: Supercharging Coding Agents with Interactive Debugging Capa-
+bilities. arXivpreprintarXiv:2602.18571,2026. https://arxiv.org/abs/2602.18571.
+[32] R.HutterandM.Pradel.AgentStepper: InteractiveDebuggingofSoftwareDevelopmentAgents.arXiv
+preprintarXiv:2602.06593,2026. https://arxiv.org/abs/2602.06593.
+[33] Y. Zhu et al. Establishing Best Practices for Building Rigorous Agentic Benchmarks. arXiv preprint
+arXiv:2507.02825,2025. https://arxiv.org/abs/2507.02825.
+[34] S. Garg, B. Steenhoek, and Y. Huang. Saving SWE-Bench: A Benchmark Mutation Approach for
+RealisticAgentEvaluation. arXivpreprintarXiv:2510.08996,2025. https://arxiv.org/abs/2510.08996.
+27
+
+--- Page 28 ---
+
+[35] Q.Zhouetal.FeatureBench: BenchmarkingAgenticCodingforComplexFeatureDevelopment.arXiv
+preprintarXiv:2602.10975,2026. https://arxiv.org/abs/2602.10975.
+[36] Terminal-BenchTeam. Terminal-Bench: BenchmarkingAgentsonHard,RealisticTasksinCommand
+LineInterfaces. arXivpreprintarXiv:2601.11868,2026. https://arxiv.org/abs/2601.11868.
+[37] M. V. T. Thai et al. SWE-EVO: Benchmarking Coding Agents in Long-Horizon Software Evolution
+Scenarios. arXivpreprintarXiv:2512.18470,2025. https://arxiv.org/abs/2512.18470.
+[38] I.Badertdinovet al. SWE-rebench: An AutomatedPipeline forTaskCollection and Decontaminated
+EvaluationofSoftwareEngineeringAgents. arXivpreprintarXiv:2505.20411, 2025. https://arxiv.or
+g/abs/2505.20411.
+[39] J.Yangetal.ABC-Bench: BenchmarkingAgenticBackendCodinginReal-WorldDevelopment.arXiv
+preprintarXiv:2601.11077,2026. https://arxiv.org/abs/2601.11077.
+[40] X.Lietal. RepoMod-Bench: ABenchmarkforCodeRepositoryModernizationviaImplementation-
+AgnosticTesting. arXivpreprintarXiv:2602.22518,2026. https://arxiv.org/abs/2602.22518.
+[41] A. Sonwane et al. OmniCode: A Benchmark for Evaluating Software Engineering Agents. arXiv
+preprintarXiv:2602.02262,2026. https://arxiv.org/abs/2602.02262.
+[42] M. Galster et al. Configuring Agentic AI Coding Tools: An Exploratory Study. arXiv preprint
+arXiv:2602.14690,2026. https://arxiv.org/abs/2602.14690.
+[43] W.Chatlatanagulchaietal.AgentREADMEs: AnEmpiricalStudyofContextFilesforAgenticCoding.
+arXivpreprintarXiv:2511.12884,2025. https://arxiv.org/abs/2511.12884.
+[44] J. L. Lulla et al. On the Impact of AGENTS.md Files on the Efficiency of AI Coding Agents. arXiv
+preprintarXiv:2601.20404,2026. https://arxiv.org/abs/2601.20404.
+[45] T. Gloaguen et al. Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding
+Agents? arXivpreprintarXiv:2602.11988,2026. https://arxiv.org/abs/2602.11988.
+[46] A.Vasilopoulos.CodifiedContext: InfrastructureforAIAgentsinaComplexCodebase.arXivpreprint
+arXiv:2602.20478,2026. https://arxiv.org/abs/2602.20478.
+[47] N. Maloyan. Prompt Injection Attacks on Agentic Coding Assistants: A Systematic Analysis of
+Vulnerabilities in Skills, Tools, and Protocol Ecosystems. arXiv preprint arXiv:2601.17548, 2026.
+https://arxiv.org/abs/2601.17548.
+[48] N.MaloyanandD.Namiot. BreakingtheProtocol: SecurityAnalysisoftheModelContextProtocol
+Specification and Prompt Injection Vulnerabilities in Tool-Integrated LLM Agents. arXiv preprint
+arXiv:2601.17549,2026. https://arxiv.org/abs/2601.17549.
+[49] Y. Liu et al. “Your AI, My Shell”: Demystifying Prompt Injection Attacks on Agentic AI Coding
+Editors. arXivpreprintarXiv:2509.22040,2025. https://arxiv.org/abs/2509.22040.
+[50] H. Lee, Z. Zhang, H. Lu, and L. Zhang. SEC-bench: Automated Benchmarking of LLM Agents on
+Real-WorldSoftwareSecurityTasks. arXivpreprintarXiv:2506.11791,2025. https://arxiv.org/abs/25
+06.11791.
+28
+
+--- Page 29 ---
+
+[51] H. Li et al. AIDev: Studying AI Coding Agents on GitHub. arXiv preprint arXiv:2602.09185, 2026.
+https://arxiv.org/abs/2602.09185.
+[52] R. Robbes et al. Agentic Much? Adoption of Coding Agents on GitHub. arXiv preprint
+arXiv:2601.18341,2026. https://arxiv.org/abs/2601.18341.
+[53] S.Agarwal,H.He,andB.Vasilescu.AIIDEsorAutonomousAgents? MeasuringtheImpactofCoding
+AgentsonSoftwareDevelopment. arXivpreprintarXiv:2601.13597,2026. https://arxiv.org/abs/2601
+.13597.
+[54] D. Ogenrwot and J. Businge. How AI Coding Agents Modify Code: A Large-Scale Study of GitHub
+PullRequests. arXivpreprintarXiv:2601.17581,2026. https://arxiv.org/abs/2601.17581.
+[55] S. T. Cynthia, J. K. Das, and B. Roy. Are We All Using Agents the Same Way? An Empirical Study
+of Core and Peripheral Developers Use of Coding Agents. arXiv preprint arXiv:2601.20106, 2026.
+https://arxiv.org/abs/2601.20106.
+[56] C.NachumaandM.Zibran. WhenAITeammatesMeetCodeReview: CollaborationSignalsShaping
+theIntegrationofAgent-AuthoredPullRequests. arXivpreprintarXiv:2602.19441,2026. https://arxi
+v.org/abs/2602.19441.
+[57] A.E.Hassanetal. TowardsAI-NativeSoftwareEngineering(SE3.0): AVisionandaRoadmap. arXiv
+preprintarXiv:2410.06107,2024. https://arxiv.org/abs/2410.06107.
+[58] A.E.Hassanetal.AgenticSoftwareEngineering: FoundationalPillarsandaResearchRoadmap.arXiv
+preprintarXiv:2509.06216,2025. https://arxiv.org/abs/2509.06216.
+29
