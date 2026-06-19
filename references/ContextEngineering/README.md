@@ -1,6 +1,6 @@
 # ContextEngineering 文献目录
 
-本目录收集上下文工程（Context Engineering）相关核心论文，按阅读报告《上下文工程文献综述》中的编号组织。
+本目录收集上下文工程（Context Engineering）相关核心论文，按阅读报告《上下文工程文献综述》中的编号组织。另有奠基性综述与扩展参考资料单独列出。
 
 ## 文件命名规则
 
@@ -20,9 +20,12 @@ references/ContextEngineering/
 ├── 02-Liu-Lost_in_the_Middle.pdf
 ├── ...
 ├── 17-Vogel-Codebase_Memory.pdf
+├── 18-Mei-Survey_of_Context_Engineering.pdf   # 奠基性综述：首次将 Context Engineering 作为正式学科提出
+├── 19-Zhang-Memory_in_Large_Language.pdf      # 扩展综述：LLM 记忆机制、评估与治理
 ├── 06-Hong-Context_Rot.html           # 仅有一篇 HTML 研究报告
 ├── 06-Hong-Context_Rot_files/         # HTML 引用的静态资源
 ├── 阅读报告_上下文工程文献综述.md      # 完整综述与横向比较
+├── 上下文工程_核心参考资料清单.md      # 领域关键论文、工业实践、框架定义与工具资源索引
 ├── README.md                          # 本文件
 └── notes/                             # PDF 的文本摘录/笔记
     ├── 01-Paulsen-Context_Is_What_You_Need.txt
@@ -37,6 +40,7 @@ references/ContextEngineering/
 | A 组 | 长上下文能力的极限与失效机制 | 01–06 |
 | B 组 | 上下文工程的基础设施化 | 07–11 |
 | C 组 | 代码特异性上下文技术 | 12–17 |
+| D 组 | 奠基性与扩展综述 | 18–19 |
 
 ## 使用建议
 

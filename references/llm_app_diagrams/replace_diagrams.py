@@ -3,7 +3,7 @@
 import re
 
 HTML_PATH = "llm_app_architecture_guide.html"
-SVG_PREFIX = "./llm_app_diagrams/"
+SVG_PREFIX = "./"
 
 # Ordered list of SVG files matching the 9 .diagram blocks in the HTML
 SVG_FILES = [
