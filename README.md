@@ -10,7 +10,7 @@ This repository documents the research, design frameworks, and engineering explo
 
 The core thesis: *Traditional RAG (Retrieval-Augmented Generation) is insufficient for large-scale software engineering tasks because it lacks structural reasoning capabilities. By converting API documentation, framework guides, and software design documents into structured knowledge graphs, we can provide coding agents with precise, traceable, and dynamically retrievable context.*
 
-All content is research-oriented and written in **Chinese**, sourced from real-world engineering analysis of platforms like WeChat Mini Programs and Next.js.
+Most research and design documents are written in **Chinese**, sourced from real-world engineering analysis of platforms like WeChat Mini Programs and Next.js.
 
 ---
 
@@ -20,21 +20,36 @@ All content is research-oriented and written in **Chinese**, sourced from real-w
 GraphIt/
 ├── README.md                          # This file
 ├── LICENSE                            # MIT License
-├── research/                          # Deep-dive research reports
-│   ├── AI代码生成工具大型项目生成能力深度研究报告.md
-│   ├── 知识图谱管理Agent上下文_深度研究报告.md
-│   ├── API信息提供策略_补充研究报告.md
-│   └── API与框架文档自动化知识图谱提取_研究报告.md
-│
 ├── design/                            # Design frameworks & technical schemes
 │   ├── GraphIt_软件设计方案.md          # Project overview & system architecture
 │   ├── AI代码生成上下文控制_设计分析框架.md
 │   ├── API文档知识图谱构建专题设计.md
 │   ├── Wiki与图数据库混合架构策略笔记.md
-│   └── 软件详设提取为图谱的方案.md
+│   ├── 软件详设提取为图谱的方案.md
+│   └── Claude-Code-context-management.md
+│
+├── research/                          # Deep-dive research reports
+│   ├── README.md
+│   ├── agentic_coding_paper_disagreements.md
+│   ├── agentic_coding_tech_brief_2026-07.html
+│   ├── arxiv_2026-06_industry_consensus_analysis.md
+│   ├── arxiv_2026-06_literature_scan.md
+│   ├── ai-coding/                     # Large-project generation capability studies
+│   ├── architecture/                  # Architecture & AI automation evolution
+│   ├── context-engineering/           # Context management and KG-agent integration
+│   ├── industry/                      # Industry trend analysis
+│   ├── ontology/                      # Ontology application research
+│   ├── sdd/                           # Software design document processing
+│   └── theory/                        # Foundational theory & safety analysis
 │
 └── references/                        # Curated reference materials
-    └── 上下文工程_核心参考资料清单.md
+    ├── AIOS/                          # LLM as OS / agent infrastructure
+    ├── CodeGraph/                     # Code graph and repository-level analysis
+    ├── ContextEngineering/            # Context engineering and long-context research
+    ├── KnowledgeEngineering/          # Knowledge engineering and GraphRAG
+    ├── PetriNets/                     # Petri net modeling resources
+    ├── llm_app_diagrams/              # Diagrams for LLM application architectures
+    └── ontology/                      # Ontology design references
 ```
 
 ---
@@ -71,13 +86,16 @@ A three-layer information provision strategy:
 |------------------------------|-----------|
 | The overall project vision and architecture | `design/GraphIt_软件设计方案.md` |
 | How to control context for AI code generation | `design/AI代码生成上下文控制_设计分析框架.md` |
-| How knowledge graphs can manage agent context | `research/知识图谱管理Agent上下文_深度研究报告.md` |
-| Whether to provide full API docs or just summaries | `research/API信息提供策略_补充研究报告.md` |
-| How to automatically extract API/framework docs into KGs | `research/API与框架文档自动化知识图谱提取_研究报告.md` |
+| How knowledge graphs can manage agent context | `research/context-engineering/知识图谱管理Agent上下文.md` |
+| Whether to provide full API docs or just summaries | `research/context-engineering/API信息提供策略.md` |
+| How to automatically extract API/framework docs into KGs | `research/context-engineering/API与框架文档自动化知识图谱提取.md` |
 | OpenAPI-to-KG mapping and extraction strategies | `design/API文档知识图谱构建专题设计.md` |
 | How to convert software design docs into graphs | `design/软件详设提取为图谱的方案.md` |
 | Hybrid Wiki + Graph DB architecture | `design/Wiki与图数据库混合架构策略笔记.md` |
-| Core papers and tools in the field | `references/上下文工程_核心参考资料清单.md` |
+| Agentic coding landscape and paper disagreements | `research/agentic_coding_paper_disagreements.md` |
+| Latest industry consensus and literature scan (2026-06) | `research/arxiv_2026-06_industry_consensus_analysis.md` |
+| Core papers and tools in context engineering | `references/ContextEngineering/` |
+| Code graph and repository-level agent papers | `references/CodeGraph/` |
 
 ---
 
@@ -105,4 +123,4 @@ This is primarily a personal research knowledge base. However, if you find error
 
 ---
 
-*Last updated: April 2026*
+*Last updated: July 2026*
