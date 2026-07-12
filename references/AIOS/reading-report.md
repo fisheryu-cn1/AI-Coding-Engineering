@@ -316,5 +316,69 @@ papers/
 
 ---
 
-*报告生成时间：2026-05-02*
+## 五、2026 年 6–7 月新增论文（arXiv 检索）
+
+> 来源：基于 `references/README.md` 研究方向，检索 2026-06-01 以来 arXiv 相关预印本后筛选下载。  
+> 完整评估报告见：`research/arxiv_2026-06_literature_scan.md`
+
+### 文件清单
+
+| 编号 | 标题 | 作者/来源 | 提交日期 | 文件 |
+|------|------|-----------|----------|------|
+| 07 | LLM-as-Code: Agentic Programming for Agent Harness | Junjia Qi 等，arXiv:2606.15874 | 2026-06-14 | `07-Qi-LLM-as-Code.pdf` |
+| 08 | ActPlane: Programmable OS-Level Policy Enforcement for Agent Harnesses | Yusheng Zheng 等，arXiv:2606.25189 | 2026-06-23 | `08-Zheng-ActPlane.pdf` |
+| 09 | RepoRescue: An Empirical Study of LLM Agents on Whole-Repository Compatibility Rescue | Zhihao Lin 等（含 David Lo），arXiv:2607.01213 | 2026-07-01 | `09-Lin-RepoRescue.pdf` |
+
+### 论文摘要与评价
+
+#### 07. LLM-as-Code: Agentic Programming for Agent Harness
+
+**核心论点**：当前 LLM Agent 框架把编排控制权交给 LLM，导致 token 爆炸、控制流幻觉和完成不可靠。本文提出 **Agentic Programming**：程序掌握所有控制流（循环、分支、顺序），LLM 仅作为 `LLM-as-Code` 的可调用组件负责推理/生成。上下文由执行历史的调用树构成 DAG，每个调用的上下文长度取决于调用深度而非累计步数。
+
+**与项目相关性**：直接对应本项目的 AIOS 与 Context Engineering 研究方向，对设计更可控的 AI 编程 Agent / Harness 有范式级启发。
+
+**评价**：概念清晰，批判有力，是 Agentic Coding 控制平面设计的重要参考。**建议优先精读。**
+
+---
+
+#### 08. ActPlane: Programmable OS-Level Policy Enforcement for Agent Harnesses
+
+**核心论点**：Agent harness 的策略（如“提交前必须跑测试”）需要在 LLM 旁边强制执行，但现有工具调用护栏或 OS 沙箱都存在语义鸿沟。ActPlane 让 Agent 用自然语言声明策略，通过 eBPF 在 OS 内核层强制执行，并提供语义反馈与隔离，开销仅 1.9%–8.4%。
+
+**与项目相关性**：为 AIOS 的安全策略执行提供了从意图到内核的完整工程路径，与 Agentic Coding 的可信执行环境高度相关。
+
+**评价**：工程导向强，eBPF + IFC DSL 的实现路径具体可操作。**建议重点阅读其策略模型与架构。**
+
+---
+
+#### 09. RepoRescue: An Empirical Study of LLM Agents on Whole-Repository Compatibility Rescue
+
+**核心论点**：研究 LLM Agent 对“老旧仓库在新运行环境下兼容性修复”的能力。构建 193 个 Python + 122 个 Java 仓库的 RepoRescue 基准，评估 Claude Code、Kimi、GPT-5.2/Codex 等系统，发现不同系统能力互补，union 可达 62.7%。
+
+**与项目相关性**：属于 Agentic coding 的实证研究，对评估 Agent 在真实维护任务中的表现有参考价值。
+
+**评价**：David Lo（SMU）团队出品， empirical study 质量有保障。**建议选读，关注其基准构建与评估维度。**
+
+---
+
+## 六、全部文件清单（更新后）
+
+```
+papers/
+├── 01-LLM-as-OS-Agents-as-Apps.pdf               (10.0 MB)
+├── 02-AIOS-LLM-Agent-OS.pdf                      (1.3 MB)
+├── 03-MemOS-Memory-Augmented-Generation.pdf      (1.6 MB)
+├── 04-Anthropic-Agentic-Coding-Trends-Report.pdf (855 KB)
+├── 05a-LLM-As-DBA.pdf                            (5.3 MB)
+├── 05b-D-Bot.pdf                                 (5.3 MB)
+├── 06-PublicAgent.pdf                            (421 KB)
+├── 07-Qi-LLM-as-Code.pdf                         (~1.0 MB)
+├── 08-Zheng-ActPlane.pdf                         (~1.0 MB)
+├── 09-Lin-RepoRescue.pdf                         (~1.1 MB)
+└── reading-report.md                             (本文件)
+```
+
+---
+
+*报告生成时间：2026-05-02（原始）；2026-07-12 增补 6–7 月论文*
 *整理人：AI Assistant*

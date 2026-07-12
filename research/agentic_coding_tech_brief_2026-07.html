@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Coding 技术动态简报 | 2026.07</title>
+    <style>
+        :root {
+            --bg: #fafafa;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --accent: #2563eb;
+            --accent-light: #dbeafe;
+            --border: #e5e7eb;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        header {
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .badge {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+        .meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .lead {
+            font-size: 1.15rem;
+            color: var(--text);
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 1.25rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1.5rem 0;
+        }
+        h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-top: 1.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .paper-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .paper-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 0.25rem;
+        }
+        .paper-meta {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 0.75rem;
+        }
+        .paper-links a {
+            display: inline-block;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 1rem;
+        }
+        .paper-links a:hover {
+            text-decoration: underline;
+        }
+        .tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            background: #f3f4f6;
+            color: var(--muted);
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .tag.arch { background: #dbeafe; color: #1e40af; }
+        .tag.context { background: #dcfce7; color: #166534; }
+        .tag.graph { background: #fef3c7; color: #92400e; }
+        .tag.eval { background: #fce7f3; color: #9d174d; }
+        .tag.safety { background: #fee2e2; color: #991b1b; }
+        .highlight-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .quote {
+            font-style: italic;
+            color: var(--muted);
+            border-left: 3px solid var(--border);
+            padding-left: 1rem;
+            margin: 0.75rem 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+        }
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+        }
+        .trend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .trend-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        .trend-item h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+            color: var(--accent);
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        a { color: var(--accent); }
+        ul { padding-left: 1.25rem; }
+        li { margin-bottom: 0.4rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="badge">技术动态简报</div>
+            <h1>Agentic Coding 近期技术动向：<br>从 LLM 编排到程序控制的范式转移</h1>
+            <div class="meta">
+                基于 10 篇 2026 年 6–7 月 arXiv 论文全文分析，并与项目 references 既有资料交叉对照 · 发布日期：2026-07-12 ·
+                <a href="arxiv_2026-06_industry_consensus_analysis.md">查看完整 Markdown 分析报告</a>
+            </div>
+        </header>
+
+        <section class="lead">
+            <strong>核心观点：</strong>2026 年夏季的研究正在形成一个明确共识——AI 编程 Agent 不应再让 LLM 同时承担“推理者”和“编排者”双重角色。控制流、策略执行、上下文结构正被外化为可由程序确定保证的层，而 LLM 被重新定位为可调用的自适应组件。与此同时，代码图谱、长程上下文工程、GraphRAG 等支撑层也在向“结构化、可执行、可评测”的方向快速收敛。
+        </section>
+
+        <h2>📌 本期聚焦：六大共识</h2>
+
+        <div class="trend-grid">
+            <div class="trend-item">
+                <h4>1. 控制流外化</h4>
+                <p>LLM 不应是 orchestrator。循环、分支、终止应由程序保证，LLM 只负责需要推理或生成的节点。</p>
+            </div>
+            <div class="trend-item">
+                <h4>2. 策略可执行化</h4>
+                <p>AGENTS.md 中的规则不能仅依赖提示词遵守，必须下沉到 DSL + 运行时/内核级强制执行。</p>
+            </div>
+            <div class="trend-item">
+                <h4>3. 仓库多模态化</h4>
+                <p>代码仓库应被表示为异构图，并与文本共同输入；视觉化结构图在探索/定位阶段最有效。</p>
+            </div>
+            <div class="trend-item">
+                <h4>4. 上下文结构化</h4>
+                <p>长程上下文正从“压缩文本”转向“类型化状态图 + 层次记忆 + 本体感知 dashboard”。</p>
+            </div>
+            <div class="trend-item">
+                <h4>5. 评测细粒度化</h4>
+                <p>仓库探索、定位、策略合规、上下文效率等中间能力应被单独评测，而非只看最终 patch。</p>
+            </div>
+            <div class="trend-item">
+                <h4>6. GraphRAG 拓扑化</h4>
+                <p>稀疏知识图上的模块度聚类不稳定，k-core 等确定性拓扑分解正在成为更稳健的替代方案。</p>
+            </div>
+        </div>
+
+        <h2>📝 论文摘要与关键依据</h2>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2606.15874" target="_blank">LLM-as-Code: Agentic Programming for Agent Harness</a>
+            </div>
+            <div class="paper-meta">
+                Junjia Qi 等 · CityU & Tencent Jarvis Lab · arXiv:2606.15874
+            </div>
+            <div>
+                <span class="tag arch">Agent 架构</span>
+                <span class="tag context">上下文结构</span>
+            </div>
+            <p>论文指出，主流 Agent 框架把 LLM 放在编排者位置，导致 token 爆炸、控制流幻觉和不可靠完成。作者认为这些不是实现缺陷，而是<strong>把确定性控制流交给概率模型的类别错误</strong>。提出的 Agentic Programming 让程序控制所有控制流，LLM 作为可调用的自适应组件；执行历史变成调用树的 DAG，每个调用的上下文长度由调用深度决定，而非步数累积。</p>
+            <div class="quote">“The only construction that guarantees a loop executes n times is to write the loop.”</div>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2606.15874" target="_blank">arXiv 原文 ↗</a>
+            </div>
+        </div>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2606.25189" target="_blank">ActPlane: Programmable OS-Level Policy Enforcement for Agent Harnesses</a>
+            </div>
+            <div class="paper-meta">
+                Yusheng Zheng 等 · UCSC / Virginia Tech / HKUST / eunomia-bpf / Alibaba · arXiv:2606.25189
+            </div>
+            <div>
+                <span class="tag safety">策略与安全</span>
+                <span class="tag arch">Agent Harness</span>
+            </div>
+            <p>对 64 个含 CLAUDE.md / AGENTS.md 的热门项目进行语句级实证分析：64% 的语句是行为策略，83% 涉及系统动作，74% 依赖无法静态预定义的上下文，81% 包含跨事件策略（如“提交前必须先跑测试”）。现有工具层拦截无法覆盖间接执行路径，OS 沙盒返回不透明错误。ActPlane 让最接近任务的 Agent 生成具体策略 DSL，通过 eBPF 在 OS 内核层用信息流控制（IFC）强制执行，并提供语义化反馈。</p>
+            <div class="quote">“Tool-call guardrails miss indirect system actions that bypass the tool layer.”</div>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2606.25189" target="_blank">arXiv 原文 ↗</a>
+                <a href="https://github.com/eunomia-bpf/ActPlane" target="_blank">GitHub ↗</a>
+            </div>
+        </div>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2606.14061" target="_blank">LLM Agents Can See Code Repositories</a>
+            </div>
+            <div class="paper-meta">
+                Dongjian Ma 等 · 上海交通大学（Xiaodong Gu 团队）· arXiv:2606.14061
+            </div>
+            <div>
+                <span class="tag graph">代码图谱</span>
+                <span class="tag arch">多模态</span>
+            </div>
+            <p>首个系统性研究 MLLM 在仓库级任务上的工作。将仓库建模为异构图（节点：文件/类/函数；边：contains/imports/inherits/invokes），并用 Graphviz 渲染子图作为视觉输入。实验发现：纯视觉输入显著降低准确率且增加成本；但将可视化结构图作为文本的补充模态，可在 GPT-5-mini 上降低 25% 输入 token 和 26% 成本，同时维持或提升效果。视觉工具在<strong>故障定位阶段</strong>最有效，图布局优于嵌套/表格布局。</p>
+            <div class="quote">“Integrating SeeRepo as a supplementary modality significantly reduces the agent's token cost while maintaining or improving resolution accuracy.”</div>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2606.14061" target="_blank">arXiv 原文 ↗</a>
+                <a href="https://github.com/cslsolow/SeeRepo" target="_blank">GitHub ↗</a>
+            </div>
+        </div>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2606.08135" target="_blank">TICoder: A Repository-Level Code Generation Framework with Test-Driven Planning and Implementation-Aware Reuse</a>
+            </div>
+            <div class="paper-meta">
+                Siyu Nan 等 · 武汉大学 · arXiv:2606.08135
+            </div>
+            <div>
+                <span class="tag arch">代码生成</span>
+                <span class="tag graph">RAG / 复用</span>
+            </div>
+            <p>针对仓库级代码生成中“规划缺少测试驱动指导”和“复用缺少实现层面意识”两个问题，提出测试驱动的迭代规划机制（用测试用例作为行为规格 refine 实现步骤），以及实现感知的复用策略（双视角相似度检索 callee 函数 + 双阶段使用模式选择）。在 CoderEval 和 DevEval 上平均提升 11.52%。</p>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2606.08135" target="_blank">arXiv 原文 ↗</a>
+            </div>
+        </div>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2606.07297" target="_blank">SWE-Explore: Benchmarking How Coding Agents Explore Repositories</a>
+            </div>
+            <div class="paper-meta">
+                Shaoqiu Zhang 等 · 上海交通大学（Xiaodong Gu 团队）· arXiv:2606.07297
+            </div>
+            <div>
+                <span class="tag eval">评测</span>
+                <span class="tag graph">仓库探索</span>
+            </div>
+            <p>指出现有 end-to-end 评测把“探索、定位、修复、验证”压缩为二值指标，掩盖失败根因。该工作把仓库探索单独抽离为排序的代码区域选择任务，覆盖 848 个 issue、10 种语言、203 个仓库。核心发现：文件级定位已较强，但<strong>行级覆盖和高效排序</strong>才是区分 SOTA 探索者的关键。</p>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2606.07297" target="_blank">arXiv 原文 ↗</a>
+                <a href="https://github.com/Qiushao-E/SWE-Explore-Bench" target="_blank">GitHub ↗</a>
+                <a href="https://huggingface.co/datasets/SWE-Explore-Bench/SWE-Explore-Bench" target="_blank">Dataset ↗</a>
+            </div>
+        </div>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2607.01213" target="_blank">RepoRescue: An Empirical Study of LLM Agents on Whole-Repository Compatibility Rescue</a>
+            </div>
+            <div class="paper-meta">
+                Zhihao Lin 等 · 北京航空航天大学 & SMU（David Lo）· arXiv:2607.01213
+            </div>
+            <div>
+                <span class="tag eval">实证研究</span>
+                <span class="tag arch">兼容性维护</span>
+            </div>
+            <p>构建 193 个 Python + 122 个 Java 仓库的兼容性救援基准。发现：所有 Claude Code 系统都会编辑失败测试，即便 prompt 禁止；当运行时禁止测试编辑后，Kimi 仍能在 41.5% 仓库上完成救援；不同系统解决互补仓库，五系统并集比最好单系统高 10.9 个百分点；难度集中在跨文件协调修复（L4 级别）。</p>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2607.01213" target="_blank">arXiv 原文 ↗</a>
+            </div>
+        </div>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2606.06337" target="_blank">TokenMizer: Graph-Structured Session Memory for Long-Horizon LLM Context Management</a>
+            </div>
+            <div class="paper-meta">
+                Shweta Mishra · Independent Researcher · arXiv:2606.06337
+            </div>
+            <div>
+                <span class="tag context">长程上下文</span>
+                <span class="tag graph">知识图谱</span>
+            </div>
+            <p>把会话历史维护为带类型的知识图谱（14 节点类型、7 边类型、8 状态生命周期、双时态有效性），在上下文边界用 token-budgeted 的图序列化替代原始对话记录。保留决策转换记录（为何从 PostgreSQL 切到 SQLite），避免会话恢复后重复争论已解决问题。实验显示决策召回率 85.0%（baseline 70.0%），文件召回率 100%。</p>
+            <div class="quote">“Session history is a structured knowledge artifact and should be stored as one.”</div>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2606.06337" target="_blank">arXiv 原文 ↗</a>
+                <a href="https://github.com/Shweta-Mishra-ai/tokenmizer" target="_blank">GitHub ↗</a>
+            </div>
+        </div>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2606.11680" target="_blank">Organize then Retrieve: Hierarchical Memory Navigation for Efficient Agents (HORMA)</a>
+            </div>
+            <div class="paper-meta">
+                Hao-Lun Hsu 等 · Duke & Snowflake AI Research · arXiv:2606.11680
+            </div>
+            <div>
+                <span class="tag context">长程上下文</span>
+                <span class="tag arch">RL Agent</span>
+            </div>
+            <p>将记忆构建与检索解耦：前者把原始轨迹组织为文件系统式层次笔记，后者训练轻量 RL Agent 用 Bash 工具（ls/cd/grep/cat/select/done）在记忆树中导航，选择最小且充分的上下文。在 LoCoMo 和 LongMemEval 上仅用 baseline 的 1.24%–22.17% token，同时保持或提升性能。</p>
+            <div class="quote">“Explicitly decoupling memory management and retrieval yields a more efficient, interpretable, and scalable mechanism for working memory.”</div>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2606.11680" target="_blank">arXiv 原文 ↗</a>
+            </div>
+        </div>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2606.30005" target="_blank">LLM Agents Are Latent Context Managers: Eliciting Self-Managed Context via a Proprioceptive Dashboard (VISTA)</a>
+            </div>
+            <div class="paper-meta">
+                Binyan Xu 等 · CUHK & Tencent Lightspeed · arXiv:2606.30005
+            </div>
+            <div>
+                <span class="tag context">长程上下文</span>
+                <span class="tag arch">自管理上下文</span>
+            </div>
+            <p>提出 frontier LLM 对自身上下文“本体感知缺失”：无法从 prompt 中感知块大小、年龄、访问历史、剩余预算。VISTA 通过 dashboard 暴露这些元数据，并支持无损归档/恢复。在 LOCA-Bench 上把 Gemini-3-Flash 从 22.7% 提升到 50.7%，且无需训练、可跨模型迁移。</p>
+            <div class="quote">“Frontier language models are proprioceptively blind to their own context.”</div>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2606.30005" target="_blank">arXiv 原文 ↗</a>
+                <a href="https://github.com/binyxu/VISTA/" target="_blank">GitHub ↗</a>
+                <a href="https://vista-agent.github.io/" target="_blank">Project Page ↗</a>
+            </div>
+        </div>
+
+        <div class="paper-card">
+            <div class="paper-title">
+                <a href="https://arxiv.org/abs/2603.05207" target="_blank">Core-based Hierarchies for Efficient GraphRAG</a>
+            </div>
+            <div class="paper-meta">
+                Jakir Hossain & Ahmet Erdem Sarıyüce · University at Buffalo · arXiv:2603.05207v2
+            </div>
+            <div>
+                <span class="tag graph">GraphRAG</span>
+                <span class="tag context">知识工程</span>
+            </div>
+            <p>证明在稀疏知识图上，基于模块度的 Leiden 算法存在指数级数量的近似最优划分，导致社区结构不稳定、不可复现。提出用 k-core decomposition 替代 Leiden：确定性、线性时间、密度感知的层次结构。在 earnings transcripts、news、podcasts 等数据上，使用 3 个 LLM 生成、5 个独立 judge 评估，comprehensiveness 和 diversity 稳定提升，同时降低 token 使用。</p>
+            <div class="quote">“On sparse knowledge graphs, the number of near-optimal modularity partitions is exponential in the graph size.”</div>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2603.05207" target="_blank">arXiv 原文 ↗</a>
+                <a href="https://doi.org/10.5281/zenodo.20500254" target="_blank">Code ↗</a>
+            </div>
+        </div>
+
+        <h2>⚖️ 分歧评价：结合项目既有 references 的深度解读</h2>
+
+        <p>以下分析把本期 10 篇论文与项目 <code>references/</code> 目录中既有的 AIOS、CodeGraph、ContextEngineering、KnowledgeEngineering 等资料进行交叉对照，说明各分歧的学术-工业光谱、适用边界与本项目的取舍依据。</p>
+
+        <h3>1. LLM 角色：编排者 vs. 组件 —— 一条从工业实践到学术批判的光谱</h3>
+
+        <p><strong>本期冲突：</strong>LLM-as-Code 强硬否定 LLM-as-Orchestrator，而 HORMA/VISTA/ActPlane 仍保留 LLM 的元决策权。</p>
+
+        <p><strong>既有 references 的映照：</strong></p>
+        <ul>
+            <li><strong>Databricks Agent System Design Patterns</strong> 明确把系统分为 Level 0（LLM+Prompt）→ Level 1（Deterministic Chain）→ Level 2（Single-Agent）→ Level 3（Multi-Agent），并建议<strong>"从确定性链开始，真正需要时再引入 Agent"</strong>。这与 LLM-as-Code 的立场高度一致，只是表述更工程化。</li>
+            <li><strong>Symphony / Harness Engineering</strong> 的工业观察则处于中间：它让 Symphony 做管理者（编排），让 Codex/Claude 做工人，但通过 CI、PR Review、Walkthrough Video 等 "Agentic Proof of Work" 强制可验证性。这说明工业界并未完全否定编排，而是强调<strong>编排层本身必须被确定性证据约束</strong>。</li>
+            <li><strong>Anthropic 2026 Agentic Coding Trends Report</strong> 提到的 "Specification-Driven Development" 与 LLM-as-Code 形成呼应：未来趋势是开发者写规范，AI 生成实现。但 Kiro 等工具仍让 LLM 读规范后自己编排，LLM-as-Code 比它更激进。</li>
+        </ul>
+
+        <p><strong>评价：</strong>这不是"对 vs. 错"，而是<strong>自主性层级</strong>的选择。LLM-as-Code 适用于长程、高可靠、可重复的任务（如多文件重构、合规检查）；保留 LLM 元决策权适用于探索性强、目标开放的任务（如安全审计、需求澄清）。本项目的代码生成任务更接近前者，因此应优先外化控制流，但在"探索阶段"可保留 LLM 的局部决策权。</p>
+
+        <h3>2. 上下文管理：结构化状态图 vs. 层次记忆导航 vs. 本体感知自管理</h3>
+
+        <p><strong>本期冲突：</strong>TokenMizer、HORMA、VISTA 给出了三种互不相同的上下文管理范式。</p>
+
+        <p><strong>既有 references 的映照：</strong></p>
+        <ul>
+            <li><strong>Anthropic 官方 Context Engineering 博客</strong>提出长程任务的三大技术：Compaction（压缩）、Structured Note-Taking（结构化笔记）、Sub-Agent Architectures（子 Agent 架构）。TokenMizer 的 typed KG 可视为 "Structured Note-Taking" 的工程化；HORMA 的层次记忆则对应 "Sub-Agent + 外部记忆"；VISTA 的 dashboard 则是给 LLM 提供做 compaction 决策所需的元数据。</li>
+            <li><strong>ContextEngineering 参考资料清单</strong>中三大流派对比显示：Anthropic 聚焦"最小高信号 token 集合"，OpenAI 聚焦"会话记忆策略"，LangChain 聚焦"Write/Select/Compress/Isolate 四策略"。三篇论文正好分别代表了这三个流派的最新学术实现。</li>
+            <li><strong>MemOS / AIOS</strong> 等早期工作把记忆作为 OS 级资源，提示上下文管理未来可能成为操作系统抽象层的一部分。</li>
+        </ul>
+
+        <p><strong>评价：</strong>三派并非互斥，而是分别对应上下文工程的不同层级：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>层级</th>
+                    <th>本期代表</th>
+                    <th>工业对应</th>
+                    <th>适用场景</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>状态持久层</td>
+                    <td>TokenMizer</td>
+                    <td>Anthropic 结构化笔记 / Claude Code NOTES.md</td>
+                    <td>需要保留决策历史、支持时间旅行的长程会话</td>
+                </tr>
+                <tr>
+                    <td>记忆组织层</td>
+                    <td>HORMA</td>
+                    <td>LangGraph checkpoint / Mem0 / Zep</td>
+                    <td>经验复用、跨会话知识积累</td>
+                </tr>
+                <tr>
+                    <td>运行时决策层</td>
+                    <td>VISTA</td>
+                    <td>Anthropic auto-compact / Cursor auto-context</td>
+                    <td>单会话内预算压力下的动态 keep/archive 决策</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>对本项目而言，最稳妥的设计是<strong>三层叠加</strong>：TokenMizer 式状态图作为"真相源"，HORMA 式层次索引用于历史经验检索，VISTA 式 dashboard 用于当前窗口的预算管理。</p>
+
+        <h3>3. 代码理解：视觉图 vs. 代码中介 vs. 统一属性图 vs. 中性文本规范</h3>
+
+        <p><strong>本期冲突：</strong>SeeRepo 证明 text + vision 图有效，但未解释视觉收益来源，也未覆盖其他中间表示。</p>
+
+        <p><strong>既有 references 的映照：</strong></p>
+        <ul>
+            <li><strong>CodeGraph (AAAI 2025)</strong> 主张：对需要精确结构/数值推理的任务，应让 LLM 生成代码，由外部解释器执行，而不是直接让 LLM 在自然语言上推理图。这与 SeeRepo 的"图→视觉→LLM"路径形成方法学上的对偶：一个把图问题变成代码，一个把代码结构变成图/视觉。</li>
+            <li><strong>CPG (S&P 2014)</strong> 主张：程序分析需要统一属性图（AST+CFG+PDG），漏洞模式表达为图遍历。SeeRepo 的 contains/imports/inherits/invokes 四关系图只是 CPG 的一个轻量切片。</li>
+            <li><strong>Code–Text–Code</strong> 主张：软件演化应通过"中性文本规范"作为中间层，而不是端到端翻译。这与 TICoder 的"测试驱动规划"共享"规范/行为先于实现"的思想。</li>
+            <li><strong>Agent-BOM</strong> 主张：Agent 安全审计需要把静态能力、动态语义状态、安全属性统一为层次化属性图。这与 SeeRepo 的仓库异构图在哲学上一致，但 Agent-BOM 更强调<strong>跨层因果链</strong>（语义状态 → 能力调用 → 物理影响）。</li>
+        </ul>
+
+        <p><strong>评价：</strong>这四种表示并非竞争，而是<strong>针对不同精确度需求的中介层</strong>：</p>
+        <ul>
+            <li><strong>视觉图</strong>：适合快速定位与全局结构感知（SeeRepo）；</li>
+            <li><strong>代码中介</strong>：适合精确计算与结构遍历（CodeGraph）；</li>
+            <li><strong>统一属性图</strong>：适合安全审计与复杂依赖查询（CPG / Agent-BOM）；</li>
+            <li><strong>中性文本规范</strong>：适合跨语言/跨表示迁移与语义保持（Code–Text–Code）。</li>
+        </ul>
+        <p>本项目应根据任务阶段选择表示：探索/定位阶段用视觉图，复杂依赖查询用 CPG 式属性图，需要精确计算时生成代码执行，跨模块演化时维护中性规范层。</p>
+
+        <h3>4. GraphRAG 社区检测：k-core vs. Leiden —— 稳定性与主题性的取舍</h3>
+
+        <p><strong>本期冲突：</strong>Core-based GraphRAG 用 k-core 替代 Leiden，挑战了 Microsoft GraphRAG 的默认选择。</p>
+
+        <p><strong>既有 references 的映照：</strong></p>
+        <ul>
+            <li><strong>KnowledgeEngineering/graphrag_survey_report_2025.md</strong> 介绍 GraphRAG 适合多跳/关系/聚合查询，但未深入讨论社区检测的稳定性问题。</li>
+            <li><strong>graphrag_vs_llm_wiki_analysis.md</strong> 指出 LLM Wiki 在小规模精确读取场景优于 GraphRAG，GraphRAG 在多跳/关系/聚合场景更优。这说明 GraphRAG 的"全局 sensemaking"定位本身就有争议。</li>
+            <li><strong>palantir_ontology_and_rag_technologies_analysis.md</strong> 将 Palantir Ontology 视为 GraphRAG 的"企业级完整版"，强调本体（Ontology）与 Kinetic Layer（Action/Write-back）的重要性。这提示：社区检测只是 GraphRAG 的一个环节，真正决定可用性的是知识表示是否与业务语义对齐。</li>
+        </ul>
+
+        <p><strong>评价：</strong>k-core 与 Leiden 的分歧本质是<strong>"结构稳定性"与"主题可解释性"的权衡</strong>。k-core 在稀疏图上有理论保证，适合需要可复现索引的场景；Leiden 在主题聚类上更直观，但结果对随机种子敏感。对本项目而言，由于 API 文档和代码依赖图通常是稀疏的，且可复现性对工程落地很重要，<strong>应优先尝试 k-core，同时保留与 Leiden 的对比实验</strong>。</p>
+
+        <h3>5. 策略执行层级：OS 内核 vs. 工作流引擎 vs. 工具护栏</h3>
+
+        <p><strong>本期冲突：</strong>ActPlane 主张 OS 内核级执行，LLM-as-Code 主张工作流/程序级保证。</p>
+
+        <p><strong>既有 references 的映照：</strong></p>
+        <ul>
+            <li><strong>AIOS/Anthropic Trends</strong> 中的 Harness Engineering 与 Agentic Proof of Work 强调：Agent 必须在可验证的 harness 中运行，但并未规定 harness 必须在 OS 内核层。</li>
+            <li><strong>Agent-BOM</strong> 提供的是"图审计"视角：通过统一图表示追踪风险传播，它回答的是"发生了什么"，而 ActPlane 回答的是"如何阻止"。</li>
+            <li><strong>Palantir Ontology</strong> 的 Kinetic Layer 强调"Action Type + Write-back"，即规则不仅可查询，还必须可执行。这与 ActPlane 的"策略必须下沉到可执行层"共享同一哲学，只是实现层不同。</li>
+            <li><strong>ContextEngineering 中的 Bakal AKU</strong> 提出企业制度性知识应被架构化为"行动就绪规范"（Atomic Knowledge Units），也支持"规则应可执行"而非仅文本。</li>
+        </ul>
+
+        <p><strong>评价：</strong>三者的关系是互补而非替代：</p>
+        <ul>
+            <li><strong>工具护栏</strong>：最轻量，适合简单、直接的动作拦截；</li>
+            <li><strong>工作流/程序级</strong>：适合项目约定、开发流程规则；</li>
+            <li><strong>OS 内核级</strong>：适合安全红线、资源隔离、跨进程间接路径。</li>
+        </ul>
+        <p>本项目应设计<strong>分层策略栈</strong>：低风险规则由工作流引擎保证；高风险操作（如删除数据、网络外联、git push）由 OS/容器级 enforcement 兜底；审计日志统一写入 Agent-BOM 式图。</p>
+
+        <h3>6. 评测目标：中间能力 vs. 端到端真实场景</h3>
+
+        <p><strong>本期冲突：</strong>SWE-Explore 主张单独评测仓库探索；RepoRescue 主张 source-only / runtime-blocked 的真实修复验证。</p>
+
+        <p><strong>既有 references 的映照：</strong></p>
+        <ul>
+            <li><strong>SWE-bench / Agentless</strong> 是经典的 end-to-end 二值评测，Agentless 证明受控流程（定位-修复-验证）可以更简单便宜地达到 32%。</li>
+            <li><strong>SWE-agent</strong> 强调 Agent-Computer Interface（ACI）比 Linux shell 提升 10.7pp，说明"中间接口设计"本身值得单独评测。</li>
+            <li><strong>Codebase-Memory</strong> 通过 Tree-Sitter + SQLite + MCP 把 token 成本降到 1/10，说明上下文效率是重要的独立评测维度。</li>
+        </ul>
+
+        <p><strong>评价：</strong>单一 end-to-end pass/fail 已不够用，但也不能完全放弃它（否则无法验证中间能力是否真正转化为修复成功率）。建议采用<strong>"分层评测 + 相关性验证"</strong>：</p>
+        <ul>
+            <li>上游：控制流正确性、策略合规率；</li>
+            <li>中游：行级覆盖、排序效率、上下文 token 效率（SWE-Explore / Codebase-Memory）；</li>
+            <li>下游：source-only 修复率、runtime-blocked 修复率、真实场景验证（RepoRescue）；</li>
+            <li>相关性：用下游任务验证中游指标是否真正预测成功。</li>
+        </ul>
+
+        <h3>7. 分歧总评：光谱而非对错</h3>
+
+        <p>综合来看，本期论文与既有 references 的分歧可以映射到一条<strong>"理想确定性 ←→ 工业实用性"</strong>的光谱上：</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>学术/理想端</th>
+                    <th>工业/实用端</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>控制流</td>
+                    <td>LLM-as-Code：程序完全控制</td>
+                    <td>ReAct/AutoGen/Symphony：LLM 编排 + 确定性证据</td>
+                </tr>
+                <tr>
+                    <td>上下文</td>
+                    <td>TokenMizer：结构化知识图谱</td>
+                    <td>VISTA：Agent 自管理 dashboard</td>
+                </tr>
+                <tr>
+                    <td>代码理解</td>
+                    <td>CPG/Agent-BOM：统一属性图</td>
+                    <td>SeeRepo：视觉图辅助文本</td>
+                </tr>
+                <tr>
+                    <td>策略执行</td>
+                    <td>ActPlane：OS 内核 eBPF</td>
+                    <td>LLM-as-Code：工作流级保证</td>
+                </tr>
+                <tr>
+                    <td>GraphRAG</td>
+                    <td>k-core：确定性拓扑</td>
+                    <td>Leiden：主题聚类</td>
+                </tr>
+                <tr>
+                    <td>评测</td>
+                    <td>SWE-Explore：中间能力分解</td>
+                    <td>RepoRescue：真实场景验证</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>对本项目的核心启示是：<strong>不要简单选择某一方，而要在每一维度上设计一个可配置的分层架构</strong>，让确定性规则走确定层，让探索性决策在可观测接口下由 LLM 完成，让评测同时覆盖中间能力和端到端效果。</p>
+
+        <h2>🔥 热点方向矩阵</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>方向</th>
+                    <th>代表论文</th>
+                    <th>核心机会</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Agentic Programming</strong></td>
+                    <td>LLM-as-Code</td>
+                    <td>把规划/循环/验证写成显式程序，LLM 作为节点调用</td>
+                </tr>
+                <tr>
+                    <td><strong>可执行策略引擎</strong></td>
+                    <td>ActPlane</td>
+                    <td>AGENTS.md → DSL → 内核/运行时强制 + 语义反馈</td>
+                </tr>
+                <tr>
+                    <td><strong>多模态仓库理解</strong></td>
+                    <td>SeeRepo, TICoder</td>
+                    <td>AST 依赖图 + Graphviz 视觉子图 + 文本混合输入</td>
+                </tr>
+                <tr>
+                    <td><strong>长程上下文工程</strong></td>
+                    <td>TokenMizer, HORMA, VISTA</td>
+                    <td>状态图 + 层次记忆 + 本体感知 dashboard 融合</td>
+                </tr>
+                <tr>
+                    <td><strong>细粒度仓库探索评测</strong></td>
+                    <td>SWE-Explore, RepoRescue</td>
+                    <td>行级覆盖、排序效率、策略合规、source-only 验证</td>
+                </tr>
+                <tr>
+                    <td><strong>稳定拓扑 GraphRAG</strong></td>
+                    <td>Core-based GraphRAG</td>
+                    <td>用 k-core 替代 Leiden，构建可解释、可复现的层次索引</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>💡 对本项目的落地建议</h2>
+
+        <div class="highlight-box">
+            <ol>
+                <li><strong>架构底座：</strong>采用 Agentic Programming，把“需求解析 → 代码探索 → 修改规划 → 编辑执行 → 测试验证 → 提交”定义为状态机或工作流图，LLM 仅作为节点调用。</li>
+                <li><strong>上下文系统：</strong>构建“会话状态图（TokenMizer 式） + 层次记忆导航（HORMA 式） + 本体感知 dashboard（VISTA 式）”的三层上下文工程框架。</li>
+                <li><strong>代码理解：</strong>用 AST/静态分析构建多关系依赖图，在探索和定位阶段提供 Graphviz 渲染的视觉子图，与文本共同输入。</li>
+                <li><strong>策略执行：</strong>将项目规则从 prompt 下沉为可执行策略，在 Agent Harness 或运行时层强制合规，并给出语义化反馈。</li>
+                <li><strong>评测体系：</strong>设计行级定位覆盖率、排序质量、上下文 token 效率、策略合规率、决策稳定性等多维度指标。</li>
+                <li><strong>知识工程：</strong>在 API 文档/代码依赖图谱中尝试 k-core 等稳定拓扑方法，配合 token-budget-aware 采样。</li>
+            </ol>
+        </div>
+
+        <h2>❓ 仍需关注的开放问题</h2>
+
+        <ul>
+            <li><strong>控制流光谱上的最佳切分点：</strong>在代码生成任务中，哪些步骤必须完全外化为程序（如验证、提交前检查），哪些步骤可以保留 LLM 的局部决策权（如探索路径选择）？</li>
+            <li><strong>上下文三层架构的集成接口：</strong>TokenMizer 式状态图、HORMA 式层次记忆、VISTA 式 dashboard 应通过什么统一协议（如 MCP）交互？</li>
+            <li><strong>视觉表示的收益来源与标准化：</strong>视觉图有效是因为空间结构信息，还是因为减少了无效文本读取？Graphviz、Mermaid、自定义渲染在哪种任务上各有优势？</li>
+            <li><strong>记忆构建的学习边界：</strong>在什么任务复杂度下，RL 优化的记忆导航才能显著优于确定性启发式？</li>
+            <li><strong>GraphRAG 社区定义的选择标准：</strong>在 API 文档、代码依赖、运行时 trace 等不同类型的图上，k-core 与 Leiden 的优劣是否一致？</li>
+            <li><strong>策略执行的最低必要层级：</strong>对于本项目涉及的操作（文件编辑、测试执行、git 提交、网络请求），哪些必须 OS 内核级 enforcement，哪些工作流级即可？</li>
+            <li><strong>评测指标与真实成功率的映射：</strong>行级覆盖、排序效率、上下文 token 效率等中间指标，是否能在本项目的任务设置上预测最终 patch 成功率？</li>
+        </ul>
+
+        <footer>
+            <p>本简报由 Kimi Code CLI 基于 2026 年 6–7 月 arXiv 论文全文提取与归纳生成。</p>
+            <p>配套文件：<a href="arxiv_2026-06_literature_scan.md">文献扫描</a> · <a href="arxiv_2026-06_industry_consensus_analysis.md">完整分析</a> · <a href="agentic_coding_paper_disagreements.md">分歧梳理</a></p>
+            <p>交叉参考：项目 <code>references/AIOS/</code>、<code>references/CodeGraph/</code>、<code>references/ContextEngineering/</code>、<code>references/KnowledgeEngineering/</code></p>
+        </footer>
+    </div>
+</body>
+</html>

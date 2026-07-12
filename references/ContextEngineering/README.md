@@ -22,6 +22,9 @@ references/ContextEngineering/
 ├── 17-Vogel-Codebase_Memory.pdf
 ├── 18-Mei-Survey_of_Context_Engineering.pdf   # 奠基性综述：首次将 Context Engineering 作为正式学科提出
 ├── 19-Zhang-Memory_in_Large_Language.pdf      # 扩展综述：LLM 记忆机制、评估与治理
+├── 20-Mishra-TokenMizer.pdf                   # 2026-06：图结构会话记忆（Graph-Structured Session Memory）
+├── 21-Hsu-HORMA.pdf                           # 2026-06：层级记忆导航（Hierarchical Memory Navigation）
+├── 22-Xu-VISTA.pdf                            # 2026-06：可感知上下文的 Agent 仪表盘（Proprioceptive Dashboard）
 ├── 06-Hong-Context_Rot.html           # 仅有一篇 HTML 研究报告
 ├── 06-Hong-Context_Rot_files/         # HTML 引用的静态资源
 ├── 阅读报告_上下文工程文献综述.md      # 完整综述与横向比较
@@ -41,6 +44,7 @@ references/ContextEngineering/
 | B 组 | 上下文工程的基础设施化 | 07–11 |
 | C 组 | 代码特异性上下文技术 | 12–17 |
 | D 组 | 奠基性与扩展综述 | 18–19 |
+| E 组 | 2026 年 6 月新增：Agent 记忆与上下文管理 | 20–22 |
 
 ## 使用建议
 

@@ -9,6 +9,7 @@
 | 文件 | 类型 | 说明 |
 |------|------|------|
 | `from_rag_to_multi_agent_systems.pdf` | 论文 | *From RAG to Multi-Agent Systems: A Survey of Modern Approaches in LLM Development*（Aquino 等，2025）——从 RAG 到多 Agent 系统的演进综述 |
+| `01-Hossain-Core-based_Hierarchies_GraphRAG.pdf` | 论文 | *Core-based Hierarchies for Efficient GraphRAG*（Hossain & Sarıyüce，arXiv:2603.05207v2，2026-06-02 更新）——用 k-core 分解替代 Leiden 社区检测，提升 GraphRAG 效率与可复现性 |
 | `graphrag_survey_report_2025.md` | 报告 | 2025 年 GraphRAG 技术综述与分析 |
 | `graphrag_vs_llm_wiki_analysis.md` | 分析 | GraphRAG 与 LLM Wiki 的对比分析 |
 | `graphrag_vs_llmwiki_vs_rag_by_domain.md` | 分析 | 按领域对比 GraphRAG、LLM Wiki 与传统 RAG |
