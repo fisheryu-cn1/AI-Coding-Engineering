@@ -25,10 +25,9 @@ venv/
 # Node
 node_modules/
 
-# Playwright / browser automation
+# Temporary / working directories
+template_unpacked/
 .playwright-mcp/
-
-# Workbuddy / AI agent temp files
 .workbuddy/
 
 # Large data files (if added later)
