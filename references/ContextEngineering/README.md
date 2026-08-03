@@ -1,6 +1,6 @@
 # ContextEngineering 文献目录
 
-本目录收集上下文工程（Context Engineering）相关核心论文，按阅读报告《上下文工程文献综述》中的编号组织。另有奠基性综述与扩展参考资料单独列出。
+本目录收集上下文工程（Context Engineering）相关核心论文，按阅读报告中的编号组织。当前已包含 2026 年 7 月新增的仓库上下文、压缩与 Agent Skills 论文。另有综述和扩展参考资料单独列出。
 
 ## 文件命名规则
 
@@ -36,6 +36,23 @@ references/ContextEngineering/
     └── 11-Mishra-Harness_Native_Software_Engineering.txt
 ```
 
+### F 组：2026 年 7 月新增：仓库上下文、压缩与 Agent Skills
+
+| 编号 | 文件 | 主题 |
+|---|---|---|
+| 23 | `23-Luk-ContextSniper_v3.pdf` | 代码记忆与精确证据选择 |
+| 24 | `24-Qin-Agent_Retrieval_Bench_v1.pdf` | 仓库上下文检索评测 |
+| 25 | `25-Wang-MRCoder_v1.pdf` | 仓库级上下文选择 |
+| 26 | `26-Lin-Know_Before_Fix_v1.pdf` | QA 驱动仓库知识获取 |
+| 27 | `27-Dang-Addressable_Recall_Compaction_v1.pdf` | 可寻址上下文压缩 |
+| 28 | `28-Li-Agentic_Context_Management_v1.pdf` | 长程 Agent 上下文管理 |
+| 29 | `29-Khatri-Do_Context_Files_Help_v1.pdf` | `AGENTS.md` / `CLAUDE.md` 消融研究 |
+| 30 | `30-Gao-Registry_to_Repository_v2.pdf` | Agent Skills 的工程化演进 |
+
+> 新增文件名中的 `_vN` 表示 arXiv 版本号；论文优先级和下载校验信息见 [`../arxiv_2026-07_manifest.md`](../arxiv_2026-07_manifest.md)。
+
+
+
 ## 分组速查
 
 | 组 | 主题 | 编号 |
@@ -45,6 +62,7 @@ references/ContextEngineering/
 | C 组 | 代码特异性上下文技术 | 12–17 |
 | D 组 | 奠基性与扩展综述 | 18–19 |
 | E 组 | 2026 年 6 月新增：Agent 记忆与上下文管理 | 20–22 |
+| F 组 | 2026 年 7 月新增：仓库上下文、压缩与 Agent Skills | 23–30 |
 
 ## 使用建议
 

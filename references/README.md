@@ -10,7 +10,7 @@
 |------|------|------|
 | [`AIOS/`](./AIOS) | AI 操作系统与 Agent 应用 | LLM as OS、AIOS、MemOS、Agentic Coding 趋势等论文与阅读报告 |
 | [`CodeGraph/`](./CodeGraph) | 代码图谱与 AI 软件工程 | 代码属性图、RepoGraph、代码-文本-代码规范、LLM Agent 安全审计等 |
-| [`ContextEngineering/`](./ContextEngineering) | 上下文工程 | 17 篇核心论文 + 2 篇综述 + 阅读报告 + 核心参考资料清单 |
+| [`ContextEngineering/`](./ContextEngineering) | 上下文工程 | 核心论文、7 月仓库上下文与 Agent Memory 论文、阅读报告与资料清单 |
 | [`KnowledgeEngineering/`](./KnowledgeEngineering) | 知识工程、RAG、GraphRAG | 知识工程学科分析、GraphRAG 报告、RAG→Multi-Agent 综述 |
 | [`llm_app_diagrams/`](./llm_app_diagrams) | 大模型应用架构图 | SVG 架构图与 HTML 选型参考方案 |
 | [`ontology/`](./ontology) | 本体工程与知识图谱 | LLM-KG 构建、本体建模、Palantir 轻量化分析等 |
@@ -25,3 +25,6 @@
 - **RAG / GraphRAG / Multi-Agent 综述**：→ [`KnowledgeEngineering/from_rag_to_multi_agent_systems.pdf`](./KnowledgeEngineering/from_rag_to_multi_agent_systems.pdf)
 - **大模型应用架构图解**：→ [`llm_app_diagrams/llm_app_architecture_guide.html`](./llm_app_diagrams/llm_app_architecture_guide.html)
 - **Petri 网学习路径**：→ [`PetriNets/Petri网与组合分析_学习资源清单.md`](./PetriNets/Petri网与组合分析_学习资源清单.md)
+- **2026 年 7 月新增论文**：→ [`../arxiv_2026-07_literature_scan.md`](../arxiv_2026-07_literature_scan.md)
+- **7 月 PDF 下载台账**：→ [`arxiv_2026-07_manifest.md`](./arxiv_2026-07_manifest.md)
+- **7 月 PDF 校验和**：→ [`arxiv_2026-07_SHA256SUMS`](./arxiv_2026-07_SHA256SUMS)

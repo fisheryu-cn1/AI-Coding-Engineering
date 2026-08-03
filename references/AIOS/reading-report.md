@@ -16,6 +16,8 @@
 | 05a | LLM As DBA | arXiv | 2023 | `05a-LLM-As-DBA.pdf` |
 | 05b | D-Bot: Database Diagnosis System using Large Language Models | arXiv | 2023 | `05b-D-Bot.pdf` |
 | 06 | PublicAgent: Multi-Agent Data Analysis | arXiv | 2025 | `06-PublicAgent.pdf` |
+| 10 | Don't Blame the Large Language Model: How Agent Harness Evolution Shapes Coding Agent Quality | Oussama Ben Sghaier 等 | arXiv:2607.03691v2 | 2026-07 | [PDF](10-Ben_Sghaier-Agent_Harness_Evolution_v2.pdf) |
+| 11 | ICAE-Bench: Evaluating Coding Agents as Interactive Project Builders | Zhongyuan Peng 等 | arXiv:2607.21217v1 | 2026-07 | [PDF](11-Peng-ICAE_Bench_v1.pdf) |
 
 ---
 

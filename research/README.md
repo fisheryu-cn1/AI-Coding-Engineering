@@ -18,6 +18,11 @@ research/
 └── README.md                 # 本文件
 ```
 
+## 月度 arXiv 检索
+
+- [2026 年 7 月论文检索与阅读建议](../arxiv_2026-07_literature_scan.md) — 17 篇 P0/P1 论文、下载清单与阅读路线
+- [2026 年 6 月文献扫描](arxiv_2026-06_literature_scan.md) — 6 月基础扫描与既有论文分析
+
 ---
 
 ## 各主题索引

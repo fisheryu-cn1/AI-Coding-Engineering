@@ -13,7 +13,8 @@
 | 02 | OntoKG: Ontology-Oriented Knowledge Graph Construction | arXiv | 2026 | `02-OntoKG.pdf` |
 | 03 | IRS: Information Retrieval System for Cyber Threat Intelligence (含KG部分) | arXiv | 2025 | `03-IRS-KG-Cyber.pdf` |
 | 04 | Integration Strategy and Tool between Formal Ontology and Graph Database Technology | MDPI Electronics | 2021 | `04-Ontology-GraphDB-Integration.pdf` (HTML提取) |
-| 05 | NatureKG: Ontology and Knowledge Graph for Nature Finance | Frontiers | 2025 | `05-NatureKG.pdf` |
+| 06 | OwlPath: Lossless Knowledge Compression for LLM Bug Repair | arXiv:2607.27249v1 | 2026-07 | `06-Zhang-OwlPath_v1.pdf` |
+| 07 | OntoExtend: A Framework for Requirement-driven and Scalable Ontology Extension with LLMs | arXiv:2607.17963v1 | 2026-07 | `07-Lippolis-OntoExtend_v1.pdf` |
 
 ---
 

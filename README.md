@@ -19,6 +19,7 @@ Most research and design documents are written in **Chinese**, sourced from real
 ```
 GraphIt/
 ├── README.md                          # This file
+├── arxiv_2026-07_literature_scan.md    # 2026 年 7 月 arXiv 检索与阅读建议
 ├── LICENSE                            # MIT License
 ├── design/                            # Design frameworks & technical schemes
 │   ├── GraphIt_软件设计方案.md          # Project overview & system architecture
@@ -93,7 +94,9 @@ A three-layer information provision strategy:
 | How to convert software design docs into graphs | `design/软件详设提取为图谱的方案.md` |
 | Hybrid Wiki + Graph DB architecture | `design/Wiki与图数据库混合架构策略笔记.md` |
 | Agentic coding landscape and paper disagreements | `research/agentic_coding_paper_disagreements.md` |
-| Latest industry consensus and literature scan (2026-06) | `research/arxiv_2026-06_industry_consensus_analysis.md` |
+| Latest 2026-07 arXiv literature scan and reading plan | `arxiv_2026-07_literature_scan.md` |
+| Downloaded paper versions and checksums | `references/arxiv_2026-07_manifest.md` |
+| Latest 2026-06 industry consensus and literature scan | `research/arxiv_2026-06_industry_consensus_analysis.md` |
 | Core papers and tools in context engineering | `references/ContextEngineering/` |
 | Code graph and repository-level agent papers | `references/CodeGraph/` |
 
@@ -123,4 +126,4 @@ This is primarily a personal research knowledge base. However, if you find error
 
 ---
 
-*Last updated: July 2026*
+*Last updated: August 2026*
