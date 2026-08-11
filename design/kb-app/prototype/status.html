@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>状态 · GraphIt-KB</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="status">
+<header class="topnav" id="topnav"></header>
+
+<div class="page">
+  <h1 style="font-size:19px;margin:0 0 16px">库状态总览</h1>
+  <div class="stat-grid" id="stats"></div>
+
+  <div class="status-cols">
+    <section>
+      <h2>最近索引时间线</h2>
+      <div id="timeline"></div>
+    </section>
+    <section>
+      <h2>失败任务</h2>
+      <table class="fail-table" id="fail-table"></table>
+    </section>
+  </div>
+
+  <section class="status-full">
+    <h2>LLM token 月度消耗（千 tokens）</h2>
+    <div class="bars" id="token-chart"></div>
+    <div class="chart-legend">
+      <span><i class="sw" style="background:#a9c0da"></i>输入 tokens</span>
+      <span><i class="sw" style="background:#d9c9a3"></i>输出 tokens</span>
+      <span class="muted">构建期摘要 / 实体抽取消耗为主；P5 索引零 LLM。</span>
+    </div>
+  </section>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
