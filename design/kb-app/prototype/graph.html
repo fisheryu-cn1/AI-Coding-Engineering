@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图谱 · GraphIt-KB</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="graph">
+<header class="topnav" id="topnav"></header>
+
+<div class="page">
+  <div class="graph-toolbar">
+    <span class="gt-label">主题</span>
+    <span id="g-topics" style="display:inline-flex;gap:6px;flex-wrap:wrap"></span>
+    <span class="gt-label">实体类型</span>
+    <span id="g-etypes" style="display:inline-flex;gap:10px"></span>
+    <span class="hops-ctrl">跳数
+      <input id="g-hops" type="range" min="1" max="3" step="1" value="2" style="width:90px">
+      <span id="g-hops-val">2 跳</span>
+    </span>
+    <button id="path-btn" class="btn">查找路径</button>
+    <button id="reset-btn" class="btn">重置视图</button>
+    <span id="path-hint" class="path-mode-hint"></span>
+  </div>
+
+  <div class="graph-legend">
+    <span class="lg"><i class="lg-shape lg-circle" style="width:13px;height:13px"></i>主题</span>
+    <span class="lg"><i class="lg-shape lg-circle"></i>文档</span>
+    <span class="lg"><i class="lg-shape"></i>章节</span>
+    <span class="lg"><i class="lg-shape lg-diamond"></i>实体</span>
+    <span class="muted">双击主题/文档下钻 · 右键收起 · 悬停边看类型</span>
+  </div>
+
+  <div class="graph-layout">
+    <div id="cy"></div>
+    <aside class="graph-side">
+      <div id="g-info"><div class="muted">点击节点查看详情。<br>双击主题/文档下钻，右键收起。<br>“查找路径”模式下依次点选两个节点。</div></div>
+      <div id="path-out"></div>
+    </aside>
+  </div>
+</div>
+
+<script src="assets/vendor/cytoscape.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

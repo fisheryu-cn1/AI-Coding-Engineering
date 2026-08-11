@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>检索 · GraphIt-KB</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="search">
+<header class="topnav" id="topnav"></header>
+
+<div class="page">
+  <form id="search-form" class="search-controls">
+    <div class="searchrow">
+      <input id="q" type="search" placeholder="检索文档标题、摘要与章节内容…（试试：GraphRAG、上下文、仓库）" autofocus>
+      <button class="btn btn-primary" type="submit">检索</button>
+    </div>
+    <div id="controls"></div>
+  </form>
+
+  <div id="ent-filters" class="entity-filters" style="display:none"></div>
+
+  <div class="search-layout">
+    <div id="results"></div>
+    <aside class="cloud-card card">
+      <h3>相关实体</h3>
+      <div class="hint">点击实体追加为过滤条件，在结果中收窄</div>
+      <div id="cloud" class="cloud"></div>
+    </aside>
+  </div>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

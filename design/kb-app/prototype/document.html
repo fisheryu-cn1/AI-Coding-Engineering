@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文档 · GraphIt-KB</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="doc">
+<header class="topnav" id="topnav"></header>
+
+<div class="page" style="max-width:1280px">
+  <div class="doc-layout">
+    <aside class="doc-toc" id="toc"></aside>
+
+    <main class="doc-main">
+      <h1 id="doc-title"></h1>
+      <div class="doc-meta" id="doc-meta"></div>
+      <div class="doc-summary" id="doc-summary"></div>
+      <div id="sections"></div>
+    </main>
+
+    <aside class="doc-side">
+      <div class="side-block">
+        <h3>关联资料</h3>
+        <div id="rel-list"></div>
+      </div>
+      <div class="side-block">
+        <h3>提及实体</h3>
+        <div id="ent-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+      </div>
+      <div class="side-block">
+        <h3>版本 / 引用</h3>
+        <div id="ver-info"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
