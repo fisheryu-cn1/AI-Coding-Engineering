@@ -1,0 +1,1127 @@
+                                       LLMLingua: Compressing Prompts for Accelerated Inference
+                                                             of Large Language Models
+
+                                            Huiqiang Jiang, Qianhui Wu, Chin-Yew Lin, Yuqing Yang, Lili Qiu
+                                                                         Microsoft Corporation
+
+                                          {hjiang, qianhuiwu, cyl, yuqing.yang, liliqiu}@microsoft.com
+
+arXiv:2310.05736v2 [cs.CL] 6 Dec 2023                        Abstract                           LLMs through quantization (Dettmers et al., 2022;
+                                                                                                Xiao et al., 2023), compression (Frantar and Alis-
+                                            Large language models (LLMs) have been ap-          tarh, 2023), etc. However, these approaches may
+                                            plied in various applications due to their as-      be not suitable when the LLMs can be accessed via
+                                            tonishing capabilities. With advancements in        APIs only.
+                                            technologies such as chain-of-thought (CoT)
+                                            prompting and in-context learning (ICL), the           Approaches that attempt to reduce the length of
+                                            prompts fed to LLMs are becoming increas-           original prompts while preserving essential infor-
+                                            ingly lengthy, even exceeding tens of thousands     mation have emerged lately. These approaches are
+                                            of tokens. To accelerate model inference and        grounded in the concept that natural language is
+                                            reduce cost, this paper presents LLMLingua,         inherently redundant (Shannon, 1951) and thus can
+                                            a coarse-to-fine prompt compression method          be compressed. Gilbert et al. (2023) also indicate
+                                            that involves a budget controller to maintain       that LLMs can effectively reconstruct source code
+                                            semantic integrity under high compression ra-       from compressed text descriptions while maintain-
+                                            tios, a token-level iterative compression algo-     ing a high level of functional accuracy. Therefore,
+                                            rithm to better model the interdependence be-       we follow this line of studies to compress a long
+                                            tween compressed contents, and an instruc-          prompt into a shorter one without any gradient flow
+                                            tion tuning based method for distribution align-    through the LLMs to support applications based on
+                                            ment between language models. We conduct            a larger range of LLMs.
+                                            experiments and analysis over four datasets
+                                            from different scenarios, i.e., GSM8K, BBH,            In terms of information entropy, tokens with
+                                            ShareGPT, and Arxiv-March23; showing that           lower perplexity (PPL) contribute less to the over-
+                                            the proposed approach yields state-of-the-art       all entropy gains of the language model. In other
+                                            performance and allows for up to 20x compres-       words, removing tokens with lower perplexity has
+                                            sion with little performance loss.1                 a relatively minor impact on the LLM's compre-
+                                                                                                hension of the context. Motivated by this, Li
+                                       1 Introduction                                           (2023) propose Selective-Context, which first em-
+                                                                                                ploys a small language model to compute the self-
+                                       The widespread adoption of ChatGPT has trans-            information of each lexical unit (such as sentences,
+                                       formed numerous scenarios by harnessing the pow-         phrases, or tokens) in original prompts, and then
+                                       erful generalization and reasoning capabilities of       drops the less informative content for prompt com-
+                                       large language models (LLMs). In practical ap-           pression. However, this method not only ignores
+                                       plications, crafting suitable prompts is crucial         the interdependence between the compressed con-
+                                       and usually involves techniques such as chain-of-        tents but also neglects the correspondence between
+                                       thought, in-context learning, and retrieving related     the LLM being targeted and the small language
+                                       documents or historical conversations (Wei et al.,       model used for prompt compression.
+                                       2022; Chase, 2022). While these methods can
+                                       elicit highly effective generations by activating           This paper proposes LLMLingua, a coarse-
+                                       LLMs' domain-specific knowledge, they often re-          to-fine prompt compression method, to address
+                                       quire longer prompts. Therefore, striking a balance      the aforementioned issues. Specifically, we first
+                                       between the massive computational demands of             present a budget controller to dynamically allo-
+                                       LLMs and the need for longer prompts has become          cate different compression ratios to various com-
+                                       an urgent issue. Some studies attempt to accelerate      ponents in original prompts such as the instruction,
+                                       model inference by modifying the parameters of           demonstrations, and the question, and meanwhile,
+
+                                           1Our code is available at https://aka.ms/LLMLingua.
+perform coarse-grained, demonstration-level com-         Chevalier et al., 2023) even require to fine-tune the
+pression to maintain semantic integrity under high       whole language model, which severely limits their
+compression ratios. We further introduce a token-        application scenarios. Furthermore, there are some
+level iterative algorithm for fine-grained prompt        studies (Chase, 2022; Zhang et al., 2023) that at-
+compression. Compared with Selective Context, it         tempt to utilize LLMs to summarize dialog or data,
+can better preserve the key information within the       thereby forming memory and knowledge. How-
+prompt by taking into account the conditional de-        ever, these approaches require multiple invocations
+pendencies between tokens. Additionally, we pose         of LLMs, which are quite costly.
+the challenge of distribution discrepancy between
+the target LLM and the small language model used            Some methods reduce the prompt length by se-
+for prompt compression, and further propose an           lecting a subset of demonstrations. For example,
+instruction tuning based method to align the distri-     Zhou et al. (2023) introduces a reinforcement learn-
+bution of both language models.                          ing based algorithm to allocate a specific number
+                                                         of demonstrations for each question. Some other
+   We validate the effectiveness of our approach on      methods focus on token pruning (Goyal et al., 2020;
+four datasets from different domains, i.e., GSM8K        Kim and Cho, 2021; Kim et al., 2022; Rao et al.,
+and BBH for reasoning and ICL, ShareGPT for con-         2021; Modarressi et al., 2022) and token merg-
+versation, and Arxiv-March23 for summarization.          ing (Bolya et al., 2023). However, these approaches
+The results show that our method yields state-of-        are proposed for smaller models such as BERT, ViT.
+the-art performance across the board. Furthermore,       Moreover, they depend on fine-tuning the models
+we conduct extensive experiments and discussions         or obtaining intermediate results during inference.
+to analyze why our approach attains superior per-
+formance. To our best knowledge, we are the first           The most similar work to this paper is Selective-
+to evaluate reasoning and ICL capabilities in the        Context (Li, 2023), which evaluates the infor-
+domain of efficient LLMs.                                mativeness of lexical units by computing self-
+                                                         information with a small language model, and
+2 Related Work                                           drops the less informative content for prompt com-
+                                                         pression. This paper is inspired by Selective-
+2.1 Efficient LLMs                                       Context and further proposes a coarse-to-fine
+                                                         framework to address its limitations.
+Efficient large language models have gained sig-
+nificant attention in recent research community,         2.2 Out-of-Distribution (OoD) Detection
+especially with the growing prominence of Chat-
+GPT. Most of these methods aim to reduce the             Recently, a series of studies have been proposed
+costs of inference and fine-tuning by modifying the      for unsupervised OoD detection. With only in-
+model parameters through quantization (Dettmers          distribution texts available for learning, these meth-
+et al., 2022; Frantar et al., 2023; Xiao et al., 2023),  ods either fine-tune a pre-trained language model
+compression (Frantar and Alistarh, 2023), instruct       (Arora et al., 2021) or train a language model from
+tuning (Taori et al., 2023; Chiang et al., 2023; Xu      scratch (Mai et al., 2022). Wu et al. (2023) analyze
+et al., 2023), or delta tuning (Hu et al., 2022).        the characteristics of these methods and leverage
+                                                         multi-level knowledge distillation to integrate their
+   A line of studies attempt to optimize inference       strengths while mitigating their limitations. Finally,
+costs from the perspective of the input prompts.         perplexity output by the resulting language model
+Motivated by the observation of the abundance of         is used as the indication of an example being OoD.
+identical text spans between the input and the gener-
+ated result, Yang et al. (2023) directly copy tokens        This paper also regards perplexity as a measure-
+from prompts for decoding to accelerate the infer-       ment of how well a language model predicts a sam-
+ence process of LLMs. Some approaches focus on           ple. In contrast to out-of-distribution detection,
+compressing prompts, specifically, learning special      which identifies examples with high perplexities
+tokens via prompt tuning of LLMs to reduce the           as indicative of unreliable predictions, we consider
+number of tokens to be processed during inference        tokens with higher perplexity to be more influential
+(Mu et al., 2023; Ge et al., 2022; Wingate et al.,       during the inference process of language models.
+2022; Chevalier et al., 2023; Ge et al., 2023). Un-
+fortunately, these methods are usually tailored to       2.3 LLMs as a Compressor
+particular tasks and some of them (Mu et al., 2023;
+                                                         Recently, many perspectives have interpreted
+                                                         large language models and unsupervised learn-
+ Original Prompt                             LLMLingua                         Black-box LLMs
+
+Instruction: Follow the given examples         I Budget                              III Compressed
+and answer the question.                       Controller                            Prompt Execution
+Demonstration 1: Q: In a certain
+school, 2/3 of the male students like to                      0 Distribution  Compressed Prompt
+play basketball, .... What percent of the                        Alignment
+population of the school do not like to                                       : Sam bought a dozen boxes each 30
+play basketball if the ratio of the male to           Small                   highl pens inside, $10 each. ... thelters
+female students is 3:2 and there are                 Model                    separately at the of three $2. much make
+1000 students? Let's think step by step                                       total,\nLets think step\nbought boxes x0
+The students are divided into 3 + 2 = 5          II Iterative Token-          oflters\nHe 2 3ters in\nSam then boxes
+Each part represents 1000/5 = 200                   Level Prompt              6lters/box 0ters\nHe sold these boxes
+students. So, there are 3 x 200 = 600               Compression               5\nAfterelling these boxes there
+males. And there are 2 x 200 = 400.                                           36030lters\nese00 of three\nsold groups2
+...basketball is 520/1000 * 100 = 52.                                         each so made *2 $20 from\nIn total,
+The answer is 52.                                                             he015\nSince his he $ - $120 = $115 in
+Demonstration 2:                                                              profit.\nThe answer is 115
+...
+Demonstration 8: Q: Sam bought a                                                                              117 tokens
+dozen boxes, each with 30 highlighter
+pens inside,... The answer is 115.
+Question: Janet's ducks lay 16 eggs per
+day..... How much in dollars does she
+make every day at the farmers' market?
+
+                               2366 tokens
+
+     Figure 1: Framework of the proposed approach LLMLingua.
+
+ing as a kind of compressor for world knowl-                 4 Methodology
+edge (Sutskever, 2023; Delétang et al., 2023), by
+using arithmetic coding (Rissanen, 1976; Pasco,              In this section, we elaborate on the proposed coarse-
+1976). Our research can be viewed as an endeavor             to-fine prompt compression approach, LLMLingua.
+to further compress information within prompts by            First, we introduce a budget controller to dynam-
+capitalizing on the compression-like characteristics         ically allocate different compression ratios to var-
+of large language models.                                    ious components in prompts and meanwhile, per-
+                                                             form coarse-grained, demonstration-level compres-
+3 Problem Formulation                                        sion to maintain semantic integrity under high com-
+                                                             pression ratios. Next, we describe the proposed it-
+A prompt compression system is designed to gen-              erative prompt algorithm designed to retain knowl-
+                                                             edge from the prompt while compressing. Finally,
+erate a compressed prompt x = { }=1 from                     we introduce alignment to address the distribution
+a given original prompt x = (xins, xdems, xque),             gap between the small model and black-box large
+                                                             models. Figure 1 show the framework.
+ins  ins ins dems                            dems dems
+where x = { }=1 , x = { }=1 , and                            4.1 Budget Controller
+xque = {que}=1 que denote the instruction, demon-
+                                                             The budget controller here is designed to allocate
+strations, and the question in the original prompt           different budgets, i.e., compression ratio, to differ-
+                                                             ent components in a prompt such as instructions,
+x. , ins, dems, and que represent the numbers                demonstrations, and questions, at the sentence or
+of tokens in x, xins, xdems, and xque, respectively.         demonstration level. There are two considerations:
+
+Let  = ins + dems + que denote the total se-                    (i) In general, the instruction and the question in
+                                                             a prompt have a direct influence on the generated
+quence length of x, the compression rate is defined          results, as they should contain all the necessary
+                                                             knowledge to generate the following answer. On
+as  = /,   [0, 1], and the compression ratio                 the contrary, if there are multiple demonstrations
+                                                             in the original prompt, the conveyed information
+is 1/. A smaller value of  implies a lower infer-            may be redundant. Therefore, a tailored budget
+                                                             controller is required to allocate more budget (i.e.,
+ence cost, which is preferable. Let x represent
+
+the LLM-generated results derived by x and x
+
+denotes the tokens derived by x, the distribution of
+
+x is expected to be as similar to x as possible.
+
+This can be formulated as:
+
+min KL((x |x), (x |x)),                                 (1)
+x, 
+Algorithm 1 Pseudo code of Budget Controller.                   Algorithm 2 Pseudo code of Iterative Token-level
+                                                                Prompt Compression (ITPC).
+Input: A small language model M; the original prompt
+x = (xins, xdems, xque).                                        Input: A small language model M; the prompt from budget
+                                                                controller x = (xins, xD , xque); target compression rate,
+1: Set the selected demonstration set D = .                     adjusted compression rate ins,que.
+                                                                 1: Set the selected token set T = 
+2: Get demonstration compression rate dem by Eq.(2).             2: Get segment set S.
+3: Calculate the perplexity of each demonstration via M.         3: for  = 1, 2, . . . ,  do
+                                                                 4: Get the conditional probabilities (s) via Eq.(5)
+4: Rank all demonstrations in descending order of their per-     5: Get the compression threshold  with Eq. (6).
+                                                                 6: Append the compressed token to T via Eq.(7).
+    plexity as a list (xdem, ..., xdem ), where  is the number   7: end for
+                (1)                ()                            8: Concatenate all tokens in T as x.
+                                                                Output: The compressed prompt x.
+    of  demonstrations,  xdem  is  the  -th  demonstration.
+                                                                demonstration to D will make the total number of
+                           ()                                   tokens in D exceed maximum tokens  ·demsdems,
+                                                                where  is the granular control coefficient.
+5: for  = 1 do
+                                                                Adjust compression ratios for instruction and
+6: if  D >  · dems dems then                                    question. After obtaining the coarse-grained
+                                                                compression result D = { }=1 D , we allocate the re-
+7:      Break.                                                  maining budget to the instruction and the question:
+
+ 8: end if                                                                     =  · dems dems -  D , (3)
+ 9: Append xdem to D.                                                                      ins + que
+
+                           ()                                   where  D denote the total number of tokens in D.
+
+10:  =  + 1                                                     4.2 Iterative Token-level Prompt Compression
+
+11: end for                                                     Utilizing perplexity for prompt compression en-
+12: Allocate remaining budget to xins and xque via Eq. (3).     counters the intrinsic limitation, i.e., the indepen-
+                                                                dence assumption, similar to the shortcomings of
+Output: The subset of demonstrations D obtained from            the Mask Language Model (Yang et al., 2019) as:
+coarse-grained compression; Additional budget ins,que for
+the instruction and the question.                                                          
+
+smaller compression ratios) for instructions and                         (x) = ( |<)
+questions, and less budget for demonstrations.                                      =1 (4)
+
+   (ii) When a high compression ratio is required,                               (x) = ( |<, <),
+token-level dropout as in Li (2023) might make
+the compressed prompts too trivial and thus lose                                                         =1
+vital information from the original prompt. Con-
+sequently, sentence-level dropout should be em-                 where x = (xins, xD, xque) is the original prompt
+ployed instead to preserve a certain degree of lin-             after demonstration-level compression; xD is the
+guistic integrity. Especially in the case of multiple           concatenation of all demonstrations in D;  is the
+redundant demonstrations, we can even perform                   final compressed prompt; < and < denote the
+demonstration-level control to meet the compres-                preserved and compressed tokens before the -th
+sion requirement.                                               token ;  and  denote the numbers of all tokens
+                                                                in x and x, respectively.
+   Algorithm 1 illustrates the overall procedure of
+the budget controller.                                             Here we propose an iterative token-level prompt
+                                                                compression (ITPC) algorithm to mitigate the inac-
+Derive compression ratio for demonstrations.                    curacy introduced by the conditional independence
+We first compute the compression rate for demon-                assumption. Algorithm 2 shows the pseudo codes.
+strations dems according to the target overall com-
+pression rate  and the pre-defined compression                     Specifically, we first divide the target prompt x
+rate for instructions and questions, i.e., ins and              into several segments S = {s1, s2, ..., s}. And
+que, respectively.
+
+         dems =  - (ins ins + que que) . (2)
+                               dems
+
+Demonstration-level prompt compression.
+With the derived dems for demonstrations, we
+then perform a coarse-grained demonstration-level
+prompt compression: we construct D, a subset of
+demonstrations from xdems.
+
+   Specifically, we first employ a small language
+model M, such as GPT-2 or LLaMA, to com-
+pute the perplexity of each demonstration in xdems.
+Then, we select demonstrations in descending order
+of their perplexity values, until adding one more
+then, we use the smaller model M to obtain the               5 Experiments
+perplexity distribution of all segments. The com-
+pressed prompt obtained from each segment is                 5.1 Settings
+concatenated to the subsequent segment, enabling
+more accurate estimation of the conditional prob-            Datasets To comprehensively assess the effec-
+ability. The corresponding probability estimation            tiveness of compressed prompts in retaining LLM
+function can be formulated as:                               abilities, we evaluated their performance across
+                                                             four datasets. For reasoning and in-context learn-
+                                                             ing (ICL), we use GSM8K (Cobbe et al., 2021)
+                                                             and BBH (Suzgun et al., 2022). As for contextual
+               ,                                             understanding, we use ShareGPT (sha, 2023) for
+                                                             conversation and Arxiv-March23 (Li, 2023) for
+     (s) =             ( , | ,<, s< )                        summarization. It's worth noting that neither the
+                                                             small LM nor the target LLMs used in this paper
+               =1 (5)                                        have seen any of the evaluation datasets, especially
+                                                             the last two which were newly collected this year.
+              ,  + -1 ,                                      We followed the experimental setup of previous
+                                                             work (Fu et al., 2023a; Li, 2023) for the usage of
+                            ( , | ,<, s< ),                  these datasets. Please refer to Appendix A.1 for
+                                                             detailed information.
+                  =1
+                                                             Evaluation Following Cobbe et al. (2021), Fu
+where  , denotes the -th token in the -th seg-               et al. (2023a), and Li (2023), we utilize the Ex-
+ment, ,  and ,  represent the token length of -              act Match as the evaluation metric for GSM8K
+th original and compressed segment, respectively.            and BBH. We use BLEU (Papineni et al., 2002),
+                                                             ROUGE (Lin, 2004), and BERTScore (Zhang et al.,
+   When the conditional probabilities for each seg-          2020) as the evaluation metrics for ShareGPT and
+ment (s ) are obtained, the compression ratio                Arxiv-March23.
+threshold   w.r.t. s  are dynamically calculated
+based on the PPL distribution and the correspond-            Implementation Details In this paper, we em-
+ing compression ratio s , where                              ploy the GPT-3.5-Turbo-0301 and the Claude-v1.3
+                                                             as the target LLMs, which can be accessed via Ope-
+               ins + , if s  from xins,                      nAI2 and Claude API3. To improve the stability
+                                                             of outputs produced by LLMs we apply greedy
+       s  =       dems, if s  from xD, (6)                   decoding with a temperature of 0 across all exper-
+              que + , if s  from xque.                       iments. The Alpaca dataset (Taori et al., 2023) is
+                                                             exclusively employed for aligning small language
+   Finally, tokens in each s  with the PPL greater           models with black-box LLMs, and is not utilized
+than   are retained in the compressed prompt.                in the evaluation process. In our experiments, we
+                                                             utilize either Alpaca-7B4 or GPT2-Alpaca as the
+              s = { ,|( ,) >   }                      (7)    small pre-trained language model M for compres-
+                                                             sion. We implement our approach based on Py-
+4.3 Distribution Alignment                                   Torch 1.12.05 and Huggingface's Transformers6.
+                                                             We set the granular control coefficient  to 2. We
+To narrow the gap between the distribution of the            use the pre-defined compression rates ins = 0.85
+LLM and that of the small language model used                and que = 0.9 for instructions and questions. The
+for prompt compression, here we align the two                segment size used in the iterative token-level com-
+distributions via instruction tuning.                        pression is set to 100.
+
+   Specifically, we start from a pre-trained small               2https://platform.openai.com/
+language model M and use the data generated by                   3https://anthropic.com/
+the LLM to perform instruction tuning on M. The                  4https://github.com/tatsu-lab/stanford_alpaca
+optimization of M can be formulated as:                          5https://pytorch.org/
+                                                                 6https://github.com/huggingface/transformers
+       min E    1      L x, y,LLM; M , (8)
+
+                  =1
+
+where M denotes the parameters of M,
+
+( x ,  yLLM)  denotes  the  pair  of  instruction  x  and
+
+         
+
+the  LLM  generated  texts  yLLM,       is  the  number  of
+
+                              
+
+all examples used for instruction tuning.
+Methods                              ShareGPT            Arxiv-March23
+
+                      BLEU Rouge1 Rouge2 RougeL BS F1 Tokens 1/ BLEU Rouge1 Rouge2 RougeL BS F1 Tokens 1/
+
+Constraint I          2x constraint                      350 tokens constraint
+
+Sentence Selection 28.59 46.11 31.07 37.94 88.64 388 1.5x 22.77 50.1 25.93 33.63 88.21 379 4x
+
+Selective-Context 25.42 46.47 29.09 36.99 88.92 307 1.9x 21.41 51.3 27.94 36.73 89.60 356 4x
+
+Ours                  27.36 48.87 30.32 38.55 89.52 304 1.9x 23.15 54.21 32.66 42.74 90.33 345 4x
+
+Constraint II         3x constraint                      175 tokens constraint
+
+Sentence Selection 18.94 35.17 18.96 26.75 85.63 255 2.3x 12.41 38.91 14.25 26.72 87.09 229 7x
+
+Selective-Context 15.79 38.42 20.55 28.89 87.12 180 3.3x 12.23 42.47 19.48 29.47 88.16 185 8x
+
+Ours                  19.55 40.81 22.68 30.98 87.70 177 3.3x 13.45 44.36 24.86 34.94 89.03 176 9x
+
+Table 1: Performance of different methods under different target compression ratios on the conversation (ShareGPT)
+and summarization (Arxiv-March23) task.
+
+Methods                  GSM8K       BBH
+
+                      EM Tokens 1/ EM Tokens 1/          BBH, ShareGPT, and Arxiv-March23. It can be
+                                                         seen that our proposed method consistently out-
+Full-shot             78.85 2,366 - 70.07 774 -          performs the prior methods by a large margin in
+                                                         almost all experiments.
+1-shot constraint
+                                                            Specifically, on GSM8K and BBH, the reason-
+1-shot                77.10 422      6x 69.60 284 3x     ing and in-context learning-related benchmark, our
+                                     5x 54.27 276 3x     method even achieves slightly higher results than
+Selective-Context 53.98 452          5x 27.13 260 3x     the full-shot approach, while also delivering im-
+                                     5x 70.11 288 3x     pressive compression ratios (1/) of 5x and 3x
+GPT4 Generation 71.87 496                                respectively, with the 1-shot constraint. This well
+                                                         demonstrates that our compressed prompts effec-
+Ours                  79.08 446                          tively retain the reasoning information contained
+                                                         in the original prompt. As the compression ratio
+half-shot constraint                                     increases, i.e., under the half-shot and quarter-shot
+                                                         constraints, the performance experiences a slight
+Sentence Selection 72.33 230 10x 39.56 175 4x            decline. For instance, on GSM8K, the EM scores
+                                                         will decrease by 1.44 and 1.52, respectively, de-
+Selective-Context 52.99 218 11x 54.02 155 5x             spite compression ratios as high as 14x and 20x.
+                                                         On BBH, our approach achieves compression ra-
+GPT4 Generation 68.61 223 11x 27.09 161 5x               tios of 5x and 7x with the EM score decreasing
+                                                         by 8.5 and 13.2 points, respectively. In fact, this
+Ours                  77.41 171 14x 61.60 171 5x         performance is already quite satisfactory, as it ap-
+                                                         proaches the score of 62.0 achieved by PaLM-540B
+quarter-shot constraint                                  in half-shot constraint. Our case study reveals
+                                                         that this declined performance on BBH is mainly
+Sentence Selection 66.67 195 12x 46.00 109 7x            due to challenging reasoning tasks, such as track-
+                                                         ing_shuffled_objects_seven_objects.
+Selective-Context 44.20 157 15x 47.37 108 7x
+                                                            Moreover, on ShareGPT and Arxiv-March23,
+GPT4 Generation 56.33 188 20x 26.81 101 8x               two contextual understanding benchmarks, we can
+                                                         see that our approach achieves acceleration ratios
+Ours                  77.33 117 20x 56.85 110 7x         of 9x and 3.3x with a high BERTScore F1, indi-
+                                                         cating that our approach successfully retains the
+zero-shot             48.75 11 215x 32.32 16 48x         semantic information of the initial prompts.
+Simple Prompt
+                      74.9 691 3x -  --                  5.3 Analysis on Reasoning & ICL Tasks.
+
+Table 2: Performance of different methods under differ-  Here we analyze the performance of our approach
+ent target compression ratios on the GSM8K mathemati-    and baseline methods on the difficult reasoning and
+cal reasoning and Big-bench Hard (BBH) datasets. We      in-context learning (ICL) benchmarks GSM8K and
+also include the instruction of the prompt in zero-shot  BBH.
+experiments for a vertical comparison.
+                                                            We notice that our approach shows significant
+Baselines We consider the following baselines:
+
+   · GPT4-Generation: Instruct GPT-4 to com-
+      press the original prompt. We used ten sets
+      of instructions here and reported the best re-
+      sults. Appendix C displays the instructions
+      we employed.
+
+   · Random Selection: Random select the demon-
+      strations or sentences of the original prompt.
+
+   · Selective-Context (Li, 2023): Use the phrase-
+      level self-information from a small language
+      model to filter out less informative content.
+      We use the same small LM, i.e., Alpaca-7B
+      for a fair comparison.
+
+5.2 Main Results
+
+Table 1 and 2 report the results of our approach
+alongside those baseline methods on GSM8K,
+performance improvements over the strong base-                                         EM Tokens 1/
+line Selective-Context under all settings. We
+conjecture that, as relying on phrase-level self-     Ours                             79.08 439 5x
+information, Selective-Context is prone to lose
+critical reasoning information during the chain-of-   - w/o Iterative Token-level Prompt Compression 72.93 453 5x
+thought process. Especially on GSM8K, its perfor-
+mance is lower than ours by 33.10 points at a com-    - w/o Budget Controller          73.62 486 5x
+pression ratio of 20x. The inferior performance of
+Sentence Selection suggests that it may face similar  - w/o Dynamic Compression Ratio  77.26 457 5x
+issues of fragmentary reasoning logic. Surprisingly,
+though GPT-4 has demonstrated its strong text gen-    - w/ Random Selection in Budget Controller 72.78 477 5x
+eration capability, the suboptimal performance on
+prompt compression indicates that the generated       - w/o Distribution Alignment     78.62 452 5x
+prompts may omit crucial details from the original
+prompt, particularly reasoning steps.                 - w/ Remove Stop Words           76.27 1,882 1.3x
+
+   In addition to the findings mentioned above, the   Table 3: Ablation study on GSM8K in 1-shot constraint.
+experiments also demonstrate that our method can
+preserve the ICL capacity of prompts for LLMs.        ered. We conjecture this variant may lose essen-
+Compared to the zero-shot results, our approach       tial information in the prompt, especially for low-
+exhibits significant performance improvements of      frequency keywords that frequently appear in the
+51.55 and 24.53 even with the largest compression     given prompt. When comparing Ours with w/o
+ratios. Notably, on GSM8K, our 20x compressed         Dynamic Compression Ratio and with w/o Bud-
+prompt outperforms the 8-shot 3-step CoT by 2.43,     get Controller, it reveals that different components
+further suggesting that our method can effectively    of the prompt exhibit varying sensitivity. Instruc-
+retain the reasoning information.                     tions and questions necessitate a lower compres-
+                                                      sion ratio. To balance the relationship between
+5.4 Ablation                                          compression ratio and language integrity, introduc-
+                                                      ing a demonstration or sentence-level filter better
+To validate the contributions of different compo-     preserves sufficient linguistic information, even at
+nents in our approach, we introduce five variants     higher compression ratios. Ours w/ Random Selec-
+of our model for ablation study: i) Ours w/o It-      tion in Budget Controller indicates that selecting
+erative Token-level Compression, which performs       sentences or demonstrations based on perplexity
+token-level compression in a single inference rather  can better identify information-rich sentences for
+than iteratively. ii) Ours w/o Budget Controller,     target LLMs. Distribution Alignment allows small
+which directly employs ITPC with the same com-        LMs to generate distributions that more closely re-
+pression ratio for all components. iii) Ours w/o      semble those of target LLMs, resulting in a further
+Dynamic Compression Ratio, which uses the same        improvement of 0.56 on GSM8K.
+compression ratio for all components. iv) Ours
+w/ Random Selection in Budget Controller, which       5.5 Discussion
+randomly selects demonstrations or sentences for
+demonstration-level prompt compression. v) Ours       Different Target LLMs Here we test our method
+w/o Distribution Alignment, which removes the         with Claude-v1.3 as the target LLM to demon-
+distribution alignment module of our approach and     strate its generalizability across different black-box
+directly use the pre-trained LLaMA-7B as the small    LLMs in addition to the GPT series models. Due
+language model. vi) Ours w/ Remove Stop Words,        to the limitation of API cost, we only consider the
+which removes the stop words in original prompts      scenarios with one-shot constraint and half-shot
+using NLTK7. Table 3 shows the results.               constraint. Similarly, we employe Alpaca-7B as
+                                                      the small language model for the challenges in col-
+   Comparing Ours with w/o Iterative Token-level      lecting alignment data. As shown in Table 4, our
+Prompt Compression, we observe a significant de-      method can achieve improvements over the simple
+cline in Exact Match when the conditional depen-      prompt by 0.8 and 1.7 EM points with compression
+dence between compressed tokens is not consid-        ratios of 5x and 14x, respectively.
+
+    7https://www.nltk.org/                                                             EM Tokens 1/
+
+                                                            Ours in 1-shot constraint 83.51 439 5x
+
+                                                            Ours in half-shot constraint 82.61 171 14x
+
+                                                            Simple Prompt              81.8 691 3x
+
+                                                      Table 4: Ours method on GSM8K using Claude-v1.3.
+Different Small LMs We further test our ap-              Generation Token Length  400                        GSM8K
+proach with different small language models: we
+fine-tune the GPT2-small on the Alpaca dataset and                                                           BBH
+use it as the small LM for our system. As shown in
+Table 5, the results obtained by Alpaca finetuned                                 300                        ShareGPT
+GPT2-small are weaker than those obtained by
+Alpaca-7B with a performance drop of 2.06, 0.99,                                                             Arxiv
+and 1.06 EM points at different compression ratios.
+This is due to the significant distribution discrep-                              200
+ancy between the small LM and the target LLM.
+Even with distribution alignment, it is still diffi-                              100
+cult to directly estimate the target LLM using the
+distribution from the small language model. Sim-                                       5  10     15                 20
+ilar observations have been reported in Li (2023).                                        Compression Ratio
+However, benefiting from the proposed budget con-
+troller and the iterative token-level prompt com-        Figure 2: The distribution of generated token lengths at
+pression algorithm, our approach achieves satisfac-      varying compression ratios (1/).
+tory results in difficult tasks such as reasoning even
+with the less powerful GPT2-Small as the small           Lingua: the number of tokens involved in computa-
+language model.                                          tion and the end-to-end latency.
+
+                                     EM Tokens 1/           The overall computation of our system is the
+                                                         sum of the prompt compression and the following
+Ours with GPT2 in 1-shot constraint  77.02 447 5x        inference. This can be formulated as:
+
+Ours with GPT2 in half-shot constraint 76.42 173 14x       = ( +  / + /) · small + / · LLMs, (9)
+
+Ours with GPT2 in quarter-shot constraint 76.27 128 18x  where small and LLMs represent the per token com-
+                                                         putation load of the small LM and LLM, respec-
+Table 5: Our method on GSM8K with GPT2-Alpaca as         tively. ,  /, and / are the numbers of to-
+the small language model.                                ken inferences for the budget controller, the per-
+                                                         plexity calculation of tokens to compress in ITPC,
+The Generation Results of Compressed Prompt              and the conditioned perplexity calculation of com-
+Appendix E displays several compressed prompts           pressed results in ITPC (using KV cache), respec-
+along with following generation texts. It is evident     tively. Assuming that the small LM has the same
+that the compressed prompts can still guide the gen-     system optimizations as the LLMs, such as the
+eration of multi-step reasoning outcomes similar to      use of FasterTransformer8 and quantization tech-
+the original ones. In contrast, prompts compressed       niques, we can estimate the ratio between small
+using Selective-Context exhibit errors in reason-        and LLMs based on model parameters: small 
+ing logic. This highlights the effectiveness of our      7/175LLMs = 1/25LLMs. When  = 5, we have
+method in preserving crucial semantic information          0.264 · LLMs  1/4 · LLMs. That is, we
+while retaining reasoning capabilities.                  can achieve nearly 4x savings in computational re-
+                                                         sources when using the smaller LM with a prompt
+   As depicted in Figure 2, we also analyze the re-      compression rate of 5x.
+lationship between the compression ratio and the
+length of the corresponding generated texts. It can      1/                               1x 2x              5x     10x
+be observed that as the compression ratio increases,
+the text length produced by target LLMs tends to         End-to-End w/o LLMLingua 8.6 -                      -               -
+decrease, albeit with varying degrees across differ-
+ent datasets. This indicates that prompt compres-        End-to-End w/ LLMLingua - 4.9(1.7x) 2.3(3.3x) 1.3(5.7x)
+sion not only saves computational resources in the
+input but also contributes to computational savings      LLMLingua                        - 0.8              0.3             0.2
+in the generation stage.
+                                                                                  Table 6: Latency (s) comparison on GSM8K.
+Overhead of LLMLingua We explore two key
+factors to study the computation overhead of LLM-           Table 6 shows the end-to-end latency of different
+                                                         systems on a V100-32G GPU with a compression
+                                                         rate from 1x to 10x. We can see that LLMLingua
+                                                         has a relatively small computation overhead and
+                                                         can achieve a speedup ranging from 1.7x to 5.7x.
+
+                                                             8https://github.com/NVIDIA/FasterTransformer
+Recovering the Compressed Prompt using                           demonstrates the compatibility and adaptability of
+LLMs Appendix D shows some examples re-                          our approach in various LLMs settings.
+stored from the compressed prompts by using GPT-
+49. It is evident that LLMs can effectively compre-              6 Conclusion
+hend the semantic information in the compressed
+prompts, even if it might be challenging for humans.             We introduce a coarse-to-fine algorithm for prompt
+Additionally, we notice that how much information                compression, named LLMLingua, which is based
+GPT-4 can recover depends on the compression                     on the small LM's PPL for black-box LLMs. Our
+ratio and the small language model we use. For                   approach consists of three modules: Budget Con-
+instance, in Figure 4, the prompt compressed using               troller, Iterative Token-level Compression, and
+Alpaca-7B is restored to its complete 9-step rea-                Alignment. We validate the effectiveness of our
+soning process, while in Figure 5, the prompt com-               approach on 4 datasets from different domains, i.e.,
+pressed with GPT2-Alpaca can only be restored to                 GSM8K, BBH, ShareGPT, and Arxiv-March23,
+a 7-step reasoning process, with some calculation                demonstrating that our method achieves state-of-
+errors.                                                          the-art performance across all datasets, with up
+                                                                 to 20x compression with only a 1.5 point perfor-
+Compare with Generation-based Methods We                         mance drop. Moreover, we observe that LLMs
+do not develop our approach based on LLM gen-                    can effectively restore compressed prompts, and
+eration primarily for three reasons: i) The content              prompt compression contributes to a reduction in
+and length of the generated text are uncontrollable.             generated text length. Our approach holds substan-
+Uncontrollable length requires more iterations to                tial practical implications, as it not only reduces
+satisfy the constraint of the compression ratio. Un-             computational costs but also offers a potential solu-
+controllable content leads to low overlap between                tion for accommodating longer contexts in LLMs.
+the generated text and the original prompt, par-                 The method of compressing prompts has the po-
+ticularly for complex prompts with multi-step in-                tential to enhance downstream task performance
+ference, which may lose significant amounts of                   by compressing longer prompts and to improve the
+reasoning paths or even generate completely unre-                LLMs's inference efficiency by compressing the
+lated demonstrations. ii) The computational cost                 KV cache.
+is high. Small language models struggle to handle
+such complex tasks, and using models like GPT-4                  Limitations
+for compression would further increase computa-
+tional overhead. Moreover, even powerful genera-                 There are also some limitations in our approach.
+tion models like GPT-4 struggle to retain effective              For instance, we might observe a notable per-
+information from prompts as shown in Table 2.                    formance drop when trying to achieve exces-
+iii) The compressed prompts obtained from genera-                sively high compression ratios such as 25x-30x
+tion models are complete and continuous sentences,               on GSM8K, as shown in Figure 3.
+usually resulting in a lower compression ratio com-
+pared to our coarse-to-fine method.                              Exact Match  78.85                      Ours
+                                                                                70                       Random Selection
+Compare with Prompt Engineering methods                                         60                       GPT4-Generation
+Our method is orthogonal to Prompt Engineering                                  50                       Selective-Context
+methods, such as prompt retrieval and prompt or-                                     5                   Ours w/ GPT2
+dering. Our work focuses on compressing well-
+designed prompts, and it performs well on com-                                          10 15 20 25 30
+plex and fine-tuned prompts like GSM8K. More-                                             Compression Ratio
+over, the perplexity-based demonstration filtering
+method used in our budget controller can also be                 Figure 3: The performance of various prompt com-
+applied to scenarios such as prompt retrieval. This              pression methods at different compression ratios (1/)
+                                                                 on GSM8K. The dashed line corresponds to the Exact
+    9An intriguing observation is that GPT-3.5-Turbo struggles   Match score obtained from the full-shot prompt.
+to reconstruct compressed prompts, while GPT-4 has demon-
+strated an ability to do so. This contrast in performance could
+suggest that recovering compressed prompts is an emergent
+ability that arises in more advanced language models.
+   It is shown that as the compression ratio in-          Tim Dettmers, Mike Lewis, Younes Belkada, and Luke
+creases especially around 25x-30x, all methods as            Zettlemoyer. 2022. GPT3.int8(): 8-bit matrix mul-
+well as ours will experience a substantial perfor-           tiplication for transformers at scale. In Advances in
+mance drop. In comparison with other methods,                Neural Information Processing Systems.
+this performance drop derived from our approach
+is significantly shifted to much higher compression       Elias Frantar and Dan Alistarh. 2023. SparseGPT: Mas-
+ratios. We owe this to the Budget Controller and             sive language models can be accurately pruned in
+the Iterative Token-level Prompt Compression al-             one-shot. In International Conference on Machine
+gorithm, which enable our method to maintain the             Learning.
+original prompt information even at some extreme
+compression ratios. The upper limit of the compres-       Elias Frantar, Saleh Ashkboos, Torsten Hoefler, and Dan
+sion ratio for different prompts varies, depending           Alistarh. 2023. OPTQ: Accurate quantization for
+on factors such as prompt length, task type, and the         generative pre-trained transformers. In The Eleventh
+number of sentences involved.                                International Conference on Learning Representa-
+                                                             tions.
+   Additionally, there may be subtle differences
+between the tokenizers used by the small language         Yao Fu, Litu Ou, Mingyu Chen, Yuhao Wan, Hao
+model and the black-box LLM, which may result                Peng, and Tushar Khot. 2023a. Chain-of-thought
+in an underestimation of the prompt's token length.          hub: A continuous effort to measure large language
+                                                             models' reasoning performance. ArXiv preprint,
+References                                                   abs/2305.17306.
+
+2023. Sharegpt. https://sharegpt.com/.                    Yao Fu, Hao Peng, Ashish Sabharwal, Peter Clark, and
+                                                             Tushar Khot. 2023b. Complexity-based prompting
+Udit Arora, William Huang, and He He. 2021. Types            for multi-step reasoning. In The Eleventh Interna-
+   of out-of-distribution texts and how to detect them.      tional Conference on Learning Representations.
+   In Proceedings of the 2021 Conference on Empiri-
+   cal Methods in Natural Language Processing, pages      Tao Ge, Jing Hu, Li Dong, Shaoguang Mao, Yan Xia,
+   10687-10701, Online and Punta Cana, Dominican             Xun Wang, Si-Qing Chen, and Furu Wei. 2022.
+   Republic. Association for Computational Linguistics.      Extensible prompts for language models. ArXiv
+                                                             preprint, abs/2212.00616.
+Daniel Bolya, Cheng-Yang Fu, Xiaoliang Dai, Peizhao
+   Zhang, Christoph Feichtenhofer, and Judy Hoffman.      Tao Ge, Jing Hu, Xun Wang, Si-Qing Chen, and Furu
+   2023. Token merging: Your vit but faster. In The          Wei. 2023. In-context autoencoder for context com-
+   Eleventh International Conference on Learning Rep-        pression in a large language model. ArXiv preprint,
+   resentations.                                             abs/2307.06945.
+
+Harrison Chase. 2022. LangChain.                          Henry Gilbert, Michael Sandborn, Douglas C Schmidt,
+                                                             Jesse Spencer-Smith, and Jules White. 2023. Seman-
+Alexis Chevalier, Alexander Wettig, Anirudh Ajith, and       tic compression with large language models. ArXiv
+   Danqi Chen. 2023. Adapting language models to             preprint, abs/2304.12512.
+   compress contexts. ArXiv preprint, abs/2305.14788.
+                                                          Saurabh Goyal, Anamitra Roy Choudhury, Saurabh
+Wei-Lin Chiang, Zhuohan Li, Zi Lin, Ying Sheng,              Raje, Venkatesan T. Chakaravarthy, Yogish Sabhar-
+   Zhanghao Wu, Hao Zhang, Lianmin Zheng, Siyuan             wal, and Ashish Verma. 2020. Power-bert: Accel-
+   Zhuang, Yonghao Zhuang, Joseph E. Gonzalez, Ion           erating BERT inference via progressive word-vector
+   Stoica, and Eric P. Xing. 2023. Vicuna: An open-          elimination. In Proceedings of the 37th International
+   source chatbot impressing gpt-4 with 90%* chatgpt         Conference on Machine Learning, ICML 2020, 13-18
+   quality.                                                  July 2020, Virtual Event, volume 119 of Proceedings
+                                                             of Machine Learning Research, pages 3690-3699.
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian,              PMLR.
+   Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias
+   Plappert, Jerry Tworek, Jacob Hilton, Reiichiro        Edward J Hu, yelong shen, Phillip Wallis, Zeyuan Allen-
+   Nakano, et al. 2021. Training verifiers to solve math     Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu
+   word problems. ArXiv preprint, abs/2110.14168.            Chen. 2022. LoRA: Low-rank adaptation of large
+                                                             language models. In International Conference on
+Grégoire Delétang, Anian Ruoss, Paul-Ambroise                Learning Representations.
+   Duquenne, Elliot Catt, Tim Genewein, Christo-
+   pher Mattern, Jordi Grau-Moya, Li Kevin Wenliang,      Gyuwan Kim and Kyunghyun Cho. 2021. Length-
+   Matthew Aitchison, Laurent Orseau, et al. 2023. Lan-      adaptive transformer: Train once with length drop,
+   guage modeling is compression. ArXiv preprint,            use anytime with search. In Proceedings of the 59th
+   abs/2309.10668.                                           Annual Meeting of the Association for Computational
+                                                             Linguistics and the 11th International Joint Confer-
+                                                             ence on Natural Language Processing (Volume 1:
+                                                             Long Papers), pages 6501-6511, Online. Association
+                                                             for Computational Linguistics.
+Sehoon Kim, Sheng Shen, David Thorsley, Amir Gho-         Mirac Suzgun, Nathan Scales, Nathanael Schärli, Se-
+   lami, Woosuk Kwon, Joseph Hassoun, and Kurt               bastian Gehrmann, Yi Tay, Hyung Won Chung,
+   Keutzer. 2022. Learned token pruning for transform-       Aakanksha Chowdhery, Quoc V Le, Ed H Chi, Denny
+   ers. In Proceedings of the 28th ACM SIGKDD Con-           Zhou, , and Jason Wei. 2022. Challenging big-bench
+   ference on Knowledge Discovery and Data Mining,           tasks and whether chain-of-thought can solve them.
+   pages 784-794.                                            ArXiv preprint, abs/2210.09261.
+
+Yucheng Li. 2023. Unlocking context constraints of        Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann
+   llms: Enhancing context efficiency of llms with self-     Dubois, Xuechen Li, Carlos Guestrin, Percy Liang,
+   information-based content filtering. ArXiv preprint,      and Tatsunori B. Hashimoto. 2023. Stanford alpaca:
+   abs/2304.12102.                                           An instruction-following llama model. https://
+                                                             github.com/tatsu-lab/stanford_alpaca.
+Chin-Yew Lin. 2004. ROUGE: A package for auto-
+   matic evaluation of summaries. In Text Summariza-      Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten
+   tion Branches Out, pages 74-81, Barcelona, Spain.         Bosma, brian ichter, Fei Xia, Ed H. Chi, Quoc V Le,
+   Association for Computational Linguistics.                and Denny Zhou. 2022. Chain of thought prompt-
+                                                             ing elicits reasoning in large language models. In
+Ilya Loshchilov and Frank Hutter. 2019. Decoupled            Advances in Neural Information Processing Systems.
+   weight decay regularization. In 7th International
+   Conference on Learning Representations, ICLR 2019,     David Wingate, Mohammad Shoeybi, and Taylor
+   New Orleans, LA, USA, May 6-9, 2019. OpenRe-              Sorensen. 2022. Prompt compression and contrastive
+   view.net.                                                 conditioning for controllability and toxicity reduction
+                                                             in language models. In Findings of the Association
+Kimberly T Mai, Toby Davies, and Lewis D Griffin.            for Computational Linguistics: EMNLP 2022, pages
+   2022. Self-supervised losses for one-class textual        5621-5634, Abu Dhabi, United Arab Emirates. As-
+   anomaly detection. ArXiv preprint, abs/2204.05695.        sociation for Computational Linguistics.
+
+Ali Modarressi, Hosein Mohebbi, and Moham-                Qianhui Wu, Huqiang Jiang, Haonan Yin, Börje F. Karls-
+   mad Taher Pilehvar. 2022. AdapLeR: Speeding up            son, and Chin-Yew Lin. 2023. Multi-level knowledge
+   inference by adaptive length reduction. In Proceed-       distillation for out-of-distribution detection in text.
+   ings of the 60th Annual Meeting of the Association        In Proceedings of the 61th Annual Meeting of the
+   for Computational Linguistics (Volume 1: Long Pa-         Association for Computational Linguistics (Long Pa-
+   pers), pages 1-15, Dublin, Ireland. Association for       pers).
+   Computational Linguistics.
+                                                          Guangxuan Xiao, Ji Lin, Mickael Seznec, Julien De-
+Jesse Mu, Xiang Lisa Li, and Noah Goodman. 2023.             mouth, and Song Han. 2023. Smoothquant: Accu-
+   Learning to compress prompts with gist tokens.            rate and efficient post-training quantization for large
+   ArXiv preprint, abs/2304.08467.                           language models. In International Conference on
+                                                             Machine Learning.
+Kishore Papineni, Salim Roukos, Todd Ward, and Wei-
+   Jing Zhu. 2002. Bleu: a method for automatic evalu-    Can Xu, Qingfeng Sun, Kai Zheng, Xiubo Geng,
+   ation of machine translation. In Proceedings of the       Pu Zhao, Jiazhan Feng, Chongyang Tao, and Daxin
+   40th Annual Meeting of the Association for Compu-         Jiang. 2023. Wizardlm: Empowering large lan-
+   tational Linguistics, pages 311-318, Philadelphia,        guage models to follow complex instructions. ArXiv
+   Pennsylvania, USA. Association for Computational          preprint, abs/2304.12244.
+   Linguistics.
+                                                          Nan Yang, Tao Ge, Liang Wang, Binxing Jiao, Daxin
+Richard Clark Pasco. 1976. Source coding algorithms          Jiang, Linjun Yang, Rangan Majumder, and Furu
+   for fast data compression. Ph.D. thesis, Citeseer.        Wei. 2023. Inference with reference: Lossless ac-
+                                                             celeration of large language models. ArXiv preprint,
+Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu,           abs/2304.04487.
+   Jie Zhou, and Cho-Jui Hsieh. 2021. Dynamicvit: Ef-
+   ficient vision transformers with dynamic token spar-   Zhilin Yang, Zihang Dai, Yiming Yang, Jaime G. Car-
+   sification. In Advances in Neural Information Pro-        bonell, Ruslan Salakhutdinov, and Quoc V. Le. 2019.
+   cessing Systems.                                          Xlnet: Generalized autoregressive pretraining for
+                                                             language understanding. In Advances in Neural In-
+Jorma J Rissanen. 1976. Generalized kraft inequality         formation Processing Systems 32: Annual Confer-
+   and arithmetic coding. IBM Journal of research and        ence on Neural Information Processing Systems 2019,
+   development, 20(3):198-203.                               NeurIPS 2019, December 8-14, 2019, Vancouver, BC,
+                                                             Canada, pages 5754-5764.
+Claude E Shannon. 1951. Prediction and entropy
+   of printed english. Bell system technical journal,     Lei Zhang, Yuge Zhang, Kan Ren, Dongsheng Li, and
+   30(1):50-64.                                              Yuqing Yang. 2023. Mlcopilot: Unleashing the
+                                                             power of large language models in solving machine
+Ilya Sutskever. 2023. A theory of unsupervised               learning tasks. ArXiv preprint, abs/2304.14979.
+   learning. https://simons.berkeley.edu/talks/
+   ilya-sutskever-openai-2023-08-14.
+Tianyi Zhang, Varsha Kishore, Felix Wu, Kilian Q.         A.2 Other Implementation Details
+   Weinberger, and Yoav Artzi. 2020. Bertscore: Evalu-
+   ating text generation with BERT. In 8th International  All experiments were conducted using a Tesla
+   Conference on Learning Representations, ICLR 2020,     V100 (32GB). We trained the GPT2-Alpaca model
+   Addis Ababa, Ethiopia, April 26-30, 2020. OpenRe-      on the Alpaca dataset12 for eight epochs using
+   view.net.                                              a learning rate of 1e-4 and the AdamW opti-
+                                                          mizer (Loshchilov and Hutter, 2019). The training
+Wangchunshu Zhou, Yuchen Eleanor Jiang, Ryan Cot-         process took approximately 150 minutes to com-
+   terell, and Mrinmaya Sachan. 2023. Efficient prompt-   plete. We use tiktoken13 and GPT-3.5-Turbo model
+   ing via dynamic in-context learning. ArXiv preprint,   to count all the tokens.
+   abs/2305.11170.
+
+A Experiment Details                                      B Economic Cost
+
+A.1 Dataset Details                                             GSM8K BBH ShareGPT Arxiv
+
+GSM8K A widely used math reasoning dataset                Original 5.2 12.8 0.7 1.3
+comprising 8,000 problems, including a 1,300 prob-
+lems test set that assesses models' capabilities in       Ours  0.5 4.8 0.3 0.2
+arithmetic reasoning and formulating mathematical
+steps using language (Cobbe et al., 2021). For this       Table 7: The inference costs($) for various datasets
+dataset, we employ the complex multi-step CoT             using GPT-3.5-Turbo.
+prompt (Fu et al., 2023b)10 as the original prompt.
+                                                             Table 7 displays the estimated inference costs
+BBH A suite of language and symbolic reason-              for various datasets, according to the pricing of
+ing tasks, consisting of 6,500 problems across 23         GPT-3.5-Turbo. Our approach showcases signifi-
+subsets, specifically designed to evaluate chain-of-      cant savings in computational resources and mon-
+thought prompting. In our experiment, we adopt            etary expenditures, with cost reductions of $4.7,
+the 3-shot CoT prompt11 as the original prompts,          $8.0, $0.4, and $0.8 observed in the GSM8K, BBH,
+following the approach described by Suzgun et al.         ShareGPT, and Arxiv datasets, respectively.
+(2022).
+                                                          C Instructions used in GPT-4 Generation
+ShareGPT A conversation dataset from
+ShareGPT.com platform (sha, 2023) which in-               The instructions we used in the GPT-4 Generation
+cludes users sharing conversations with ChatGPT           are shown below:
+in different languages and in various scenarios
+(e.g., coding, chitchat, writing assistant, etc.). We       1. Could you please rephrase the paragraph to
+use a dataset of 575 samples provided by Li (2023)              make it short, and keep 5% tokens?
+as our test set. We use all dialogues except the
+final round as the prompt and generate results with         2. Condense the passage to retain only 5% of its
+GPT-3.5-Turbo as the reference.                                 original tokens, while preserving its meaning.
+
+Arxiv-March23 A dataset consisting of latest                3. Short the sentences to 200 tokens.
+academic papers created in March 2023 from the              4. Trim the text down to 200 tokens in total.
+arXiv preprint repository. We use 500 data items            5. Please provide a concise summary of the given
+collected by Li (2023) as the test set. Due to the
+excessive length of some articles, we take the first            examples in several sentences, ensuring that
+five sections of each article and truncate each sec-            all reasoning information is included.
+tion to 10,000 characters. Then, we concatenate             6. Summarize the provided examples in a few
+these sections to form the original prompt and use              sentences, maintaining all essential reasoning
+GPT-3.5-Turbo to generate the summary as the ref-               aspects.
+erence.                                                     7. Remove redundancy and express the text con-
+                                                                cisely in English, ensuring that all key in-
+  10https://github.com/FranxYao/chain-of-thought-hub            formation and reasoning processes are pre-
+  11https://github.com/suzgunmirac/BIG-Bench-Hard               served.
+
+                                                            12https://github.com/tatsu-lab/stanford_alpaca
+                                                            13https://github.com/openai/tiktoken
+  8. Eliminate repetitive elements and present the
+      text concisely, ensuring that key details and
+      logical processes are retained.
+
+  9. Follow these steps to shorten the given text
+      content: 1. First, calculate the amount of
+      information contained in each sentence, and
+      remove sentences with less information. 2.
+      Next, further condense the text by removing
+      stop words, unnecessary punctuation, and re-
+      dundant expressions. Refine the content while
+      ensuring that all key information is retained.
+      Let's do it step by step.
+
+ 10. To shorten the given text, follow these steps:
+      a) Determine the information value of each
+      sentence and remove those with lower value.
+      b) Further reduce the text by removing stop
+      words, unneeded punctuation, and superflu-
+      ous expressions, while making sure to keep
+      all vital information intact. Let's do it step by
+      step.
+
+D Recovering Compressed Prompts with
+     Large Language Model
+
+In this section, we showcase several examples of
+employing black-box LLMs to reconstruct com-
+pressed prompts. Specifically, we have selected
+three compressed prompts with varying compres-
+sion ratios, produced by distinct small language
+models, on different datasets. These prompts, ac-
+companied by guiding instructions, will serve as
+input for the GPT-4 model.
+
+E Cases Study
+
+We present various cases from multiple datasets,
+encompassing compressed prompts, outcomes de-
+rived from original prompts, outcomes derived
+from compressed prompts, and results achieved
+utilizing the selective-context approach.
+    Original Prompt(9-steps Chain-of-Thought):
+    Question: Sam bought a dozen boxes, each with 30 highlighter pens inside, for $10 each box. He
+    rearranged five of these boxes into packages of six highlighters each and sold them for $3 per
+    package. He sold the rest of the highlighters separately at the rate of three pens for $2. How much
+    profit did he make in total, in dollars?
+
+    Let's think step by step
+    Sam bought 12 boxes x $10 = $120 worth of highlighters.
+    He bought 12 * 30 = 360 highlighters in total.
+    Sam then took 5 boxes × 6 highlighters/box = 30 highlighters.
+    He sold these boxes for 5 * $3 = $15
+    After selling these 5 boxes there were 360 - 30 = 330 highlighters remaining.
+    These form 330 / 3 = 110 groups of three pens.
+    He sold each of these groups for $2 each, so made 110 * 2 = $220 from them.
+    In total, then, he earned $220 + $15 = $235.
+    Since his original cost was $120, he earned $235 - $120 = $115 in profit.
+    The answer is 115
+    Compressed Prompt:
+    : Sam bought a dozen boxes each 30 highl pens inside, $10 each. He reanged five of boxes into of
+    six each $3 per. He sold the thelters separately at the of three $2. much make total,
+    Lets think step
+    bought boxes x0 oflters
+    He 2 3ters in
+    Sam then boxes 6lters/box 0ters
+    He sold these boxes 5
+    Afterelling these boxes there 36030lters
+    ese00 of three
+    sold groups2 each so made *2 $20 from
+    In total, he015
+    Since his he $ - $120 = $115 in profit.
+    The answer is 115
+    Recovered Compressed Prompt(9-steps Chain-of-Thought):
+    Question: Sam purchased a dozen boxes, each containing 30 highlighter pens, for $10 each. He
+    rearranged five of these boxes to have six pens each and sold them for $3 per box. He then sold
+    the remaining highlighters individually in groups of three for $2 each. Let's calculate the total profit.
+
+    Initially, Sam bought 12 boxes with 30 highlighters each, which equals 360 highlighters.
+    He spent $10 per box, so his total cost was $120.
+    Sam then rearranged 5 boxes to have 6 highlighters per box, which equals 30 highlighters. He sold
+    these boxes for $3 each, making $15.
+    After selling these boxes, he had 330 highlighters left (360 - 30). He sold these in groups of three,
+    which equals 110 groups. He sold each group for $2, making $220 from this.
+
+    In total, Sam made $235 ($15 + $220). Since his initial cost was $120, he earned a
+    profit of $115 ($235 - $120).
+
+    The answer is $115.
+
+Figure 4: Recovering the compressed prompt(1/=17x, Alpaca-7B as small language model) from GSM8K using
+GPT-4.
+    Compressed Prompt:
+    Question: Sam a dozen boxes with 30ighter pens, each Heanged into of3 the separately the of
+    three. much total, in
+    's think step bought boxes $120l
+    bought 12 30 = 360
+    Sam took boxes 6ighters for $15
+    these boxes were 360 - =ighters
+    These form 330 = 110 of three these so made * $220 from them.
+    In total, then, he earned $220 + $15 = $235.
+    Since his original cost was $120, he earned $235 - $120 = $115 in profit.
+    The answer is 115
+    Recovered Compressed Prompt(7-steps Chain-of-Thought):
+    Question: Sam bought a dozen boxes with 30 lighters each. He arranged them into groups of three
+    and sold them separately. In total, he spent $120 on the lighters. How much profit did he make?
+    Step 1: Sam bought 12 boxes * 30 lighters each = 360 lighters in total.
+    Step 2: Sam took 6 boxes of lighters and sold them for $15.
+    Step 3: The remaining lighters are 360 - 6 boxes * 30 lighters each = 330 lighters.
+    Step 4: These 330 lighters form groups of three, so he made 110 groups * $2 per group = $220
+    from them.
+    Step 5: In total, he earned $220 + $15 = $235.
+    Step 6: Since his original cost was $120, he earned $235 - $120 = $115 in profit.
+    The answer is $115.
+
+Figure 5: Recovering the compressed prompt (1/=19x, GPT2-Alpaca as small language model) from GSM8K
+using GPT-4.
+
+    Original Prompt:
+    Questions that involve enumerating objects and asking the model to count them.
+    Q: I have a blackberry, a clarinet, a nectarine, a plum, a strawberry, a banana, a flute, an orange,
+    and a violin. How many fruits do I have?
+    A: Let's think step by step.
+    We first identify the fruits on the list and include their quantity in parentheses:
+   - blackberry (1)\n - nectarine (1)\n - plum (1)\n - strawberry (1)\n - banana (1)\n - orange (1)
+    Now, let's add the numbers in parentheses: 1 + 1 + 1 + 1 + 1 + 1 = 6. So the answer is 6.
+    Compressed Prompt:
+    Questions that involve enumerating objects and asking the model to count them.
+    : a blackberry, a a ne a a a a, many have
+    :'s think
+    We first theruits the list and include their in
+   - (-
+    's the numbers in parentheses:1 + 1 = 6. So the answer is 6.
+    Recovered Compressed Prompt:
+    Question: In a basket, there is a blackberry, an apple, a pear, a plum, a peach, and an orange. How
+    many fruits are in the basket?
+    Let's think step by step. We first identify the fruits in the list and include their individual count in
+    parentheses: a blackberry (1), an apple (1), a pear (1), a plum (1), a peach (1), and an orange (1).
+    Now, let's add the numbers in parentheses: 1 + 1 + 1 + 1 + 1 + 1 = 6. So the answer is 6. There are
+    6 fruits in the basket.
+
+Figure 6: Recovering the compressed prompt(1/=7x, Alpaca-7B as small language model) from BBH using
+GPT-4.
+Compressed Prompt:
+Follow the given examples and answer the question.
+: Sam bought a dozen boxes each 30 highl pens inside, $10 each. He reanged five of boxes into of
+six each $3 per. He sold the thelters separately at the of three $2. much make total,
+Lets think step
+bought boxes x0 oflters
+He 2 3ters in
+Sam then boxes 6lters/box 0ters
+He sold these boxes 5
+Afterelling these boxes there 36030lters
+ese00 of three
+sold groups2 each so made *2 $20 from
+In total, he015
+Since his he $ - $120 = $115 in profit.
+The answer is 115
+
+Q: Toula went to the bakery and bought various types of pastries. She bought 3 dozen
+donuts which cost $68 per dozen, 2 dozen mini cupcakes which cost $80 per dozen, and 6 dozen
+mini cheesecakes for $55 per dozen. How much was the total cost?
+Reference Answer(4-steps):
+The total charge for the doughnuts was 3 x $68 = $«3*68=204»204.
+The total charge for the mini cupcakes was 2 x $80 = $«2*80=160»160.
+The total charge for the mini cheesecakes was 6 x $55 = $«6*55=330»330.
+Therefore the total amount Toula paid for the pastries was $204 + $160 + $330 =
+$«204+160+330=694» 694 .
+The Generation of Compressed Prompt(4-steps):
+Toula bought 3 dozen donuts which cost $68 per dozen. So, she spent 3 x 68 = $204 on donuts.
+She also bought 2 dozen mini cupcakes which cost $80 per dozen. So, she spent 2 x 80 = $160 on
+mini cupcakes.
+Finally, she bought 6 dozen mini cheesecakes for $55 per dozen. So, she spent 6 x 55 = $330 on
+mini cheesecakes.
+Therefore, the total cost was 204 + 160 + 330 = $694.
+The answer is 694 .
+The Generation of Selective-Context:
+A: Toula bought 3 x 12 = «3*12=36»36 donuts.
+Then, the total cost of the donuts is 36 x $68 = $«36*68=2448»2448.
+How many mini cupcakes did Toula buy in total?
+She bought 2 x 12 = «2*12=24»24 mini cupcakes.
+So, the total cost of the mini cupcakes is 24 x $80 = $«24*80=1920»1920.
+How many mini cheesecakes did Toula buy in total?
+She bought 6 x 12 = «6*12=72»72 mini cheesecakes.
+Thus, the total cost of the mini cheesecakes is 72 x $55 = $«72*55=3960»3960.
+Therefore, the total cost of all the pastries is $2448 + $1920 + $3960 =
+$«2448+1920+3960=8328»8328. Answer: 8328 .
+
+               Figure 7: Cases study on GSM8K math reasoning dataset in half-shot constraint.
+Compressed Prompt:
+Evaluate a random boolean function expressed as a word problem.
+Q: Question: Fidel tells the truth.
+Jerry saysidel tells truth.
+Vina says Jerry
+Mill saysina
+Raymond saysent
+(3)ina says Jerry
+() saysina
+) saysent
+We know from ( that Raymond truth.
+So the answer is Yes.
+Q: Question: Raymond tells the truth. Sal says Raymond lies. Alexis says Sal lies. Helene says
+Alexis lies. Elanor says Helene lies. Does Elanor tell the truth?
+A: Let's think step by step.
+The Generation of Full-shot Prompt(5-steps):
+(1) Raymond tells the truth. So, we know that Raymond tells the truth.
+(2) Sal says Raymond lies. Since we know from (1) that Raymond tells the truth, if Sal says
+Raymond lies, then Sal lies.
+(3) Alexis says Sal lies. Since we know from (2) that Sal lies, if Alexis says Sal lies, then Alexis
+tells the truth.
+(4) Helene says Alexis lies. Since we know from (3) that Alexis tells the truth, if Helene says
+Alexis lies, then Helene lies.
+(5) Elanor says Helene lies. Since we know from (4) that Helene lies, if Elanor says Helene lies,
+then Elanor tells the truth.
+Now, the question asks: Does Elanor tell the truth? We know from (5) that Elanor tells the truth.
+So the answer is   .
+The Generation of Compressed Prompt(5-steps):
+1. Raymond tells the truth.
+2. Sal says Raymond lies. This means Sal lies.
+3. Alexis says Sal lies. This means Alexis tells the truth.
+4. Helene says Alexis lies. This means Helene lies.
+5. Elanor says Helene lies. This means Elanor tells the truth.
+So the answer is   .
+The Generation of Selective-Context:
+1. Raymond says Millicent lies. If Raymond tells the truth, then Millicent lies. If Raymond lies,
+then Millicent tells the truth. We don't know which one is true.
+2. Millie says Kristian lies. If Millie tells the truth, then Kristian lies. If Millie lies, then Kristian
+tells the truth. We don't know which one is true.
+3. Michaela says Kristian lies. If Michaela tells the truth, then Kristian lies. If Michaela lies, then
+Kristian tells the truth. We don't know which one is true.
+4. Osvaldo says Raymond tells the truth. If Osvaldo tells the truth, then Raymond tells the truth. If
+Osvaldo lies, then Raymond lies. We don't know which one is true.
+5. Jamey is not mentioned in any of the previous statements, so we don't know if he tells the truth
+or not.
+Now let's move on to the second question.
+
+         Figure 8: Cases study on web_of_lies of BBH reasoning dataset in quarter-shot constraint.
+Compressed Prompt:
+Please provide the example of the radiation beam spectrum in the TOPAS format, and I will learn
+from it.
+The beam energy spectrum is composed of 12 energy levels with corresponding weights.
+dv:So/SARRPbeam/BeamEnergySpectrumValues: Lists the energy values in the spectrum,
+separated by tabs.
+From the provided data, we have the following energy values and corresponding weights:
+Energy (V)Weight202.15E-0520.12.29E-0520.22.43E0520.32.580520.42.74052.52.9152.63.0
+952.7.29052.8.49E-0520.93.71E05213.94E-0521.14.15E05Please let me know if you have any
+questions or would like me to assist you further with this data.
+Now I'll give you a table with the spectrum of an ElektaAC and I want you to transform it to the
+topas format:
+Please provide the table with the spectrum of the Elekta LINAC, and I will transform it into theAS
+format for you.
+E (MeV) Elekta (6 MV)
+0.25 0.173E--04(1.5%)\n .5 .100E03(0.5%)\n .75 .110E03(.5%)\n 1 0.952E--04(0.5%)\n 1.25
+.827E04(.5\n .5 .721E04(.\n . .63E04(.\n 2 .55E04(.%)\n . .493E04(0.5%)\n 2.5 .437E04(.6\n
+2.5 .386E04(.6\n 3 .34E4(.6\n . .30E4(.6\n . .27E4(.7\n 3.7 0.240E--04(.7\n 4 .21E04(.7\n .
+.18E(.8\n . .16E(.8\n .14E(.9\n 5 .121E04(.9\n 5.2 .101E4(1.0\n . .81E0(.1\n . .64E.2\n 6 .45E.4\n
+.0.300E--05(1.8\n 6.5 .15E0(.4\n .7 .73E0(.4\n 7 .29E0(.0\n . .88E0(.\n .18E--07(19.8%)\n 7.75
+0.277E--08(50.0%)\n 8 0.159E--08(70.8%)
+The Generation of Full-shot Prompt:
+Thank you for providing the table with the Elekta LINAC spectrum. Here's the TOPAS format for
+the same:
+# Spectrum
+
+s:...Type      "Discrete"      0.5       0.75         1        1.25        1.5       1.75         2
+dv:...Values        0.25       2.5       2.75         3        3.25        3.5       3.75         4
+                    2.25       4.5       4.75         5        5.25        5.5       5.75         6
+uv:...Weights       4.25       6.5       6.75         7        7.25        7.5       7.75         8
+                    6.25   0.100E-03  0.110E-03  0.952E-04  0.827E-04  0.721E-04  0.635E-04  0.557E-04
+                           0.437E-04  0.386E-04  0.345E-04  0.302E-04  0.270E-04  0.240E-04  0.210E-04
+                0.173E-04  0.164E-04  0.142E-04  0.121E-04  0.101E-04  0.817E-05  0.645E-05  0.455E-05
+                0.493E-04  0.156E-05  0.734E-06  0.294E-06  0.882E-07  0.188E-07  0.277E-08  0.159E-08
+                0.186E-04
+                0.300E-05
+
+I hope this helps. Let me know if you have any questions or if you need further assistance.
+The Generation of Compressed Prompt:
+Thank you for providing the table of the EletaAC spectrum. Here's how it can be formatted in the
+TOPAS format:
+# Spectrum
+
+s:...Type      "Discrete"    1.5        2       3.2             4          5          6          7
+dv:...Values      0.25       7.5      7.75       8
+uv:...Weights     7.25     .10E-0     .11E1    .950            .82      .63E-0      .55E0      .4943
+                           .30E0       .27     .24E0          .16E0    .714E52      .64E0     6.45E0
+                173E04     .15E0      .73E0  .294E-06       .882E-07   .188E-07   .277E-08   .159E-08
+                 .345E0
+                 .30E0
+
+Please let me know if you have any questions or if you need further assistance with this data.
+The Generation of Selective-Context:
+I'm sorry, but I cannot see the table you are referring to. Can you please provide me with the table
+so I can assist you in transforming it into the TOPAS format?
+
+               Figure 9: Cases study on ShareGPT conversation dataset in 2x constraint.
+Compressed Prompt:
+Redshift drift in a universe with structure II: Light rays propagated through aian Nbody simulation
+
+koksbang@cp3.sdk
+CP3-Orins,mark,, Mmark
+
+Theshiftift is computed alongs propagating through aulated universe on the Newtonian
+Nbody simulation code GGET2 with a perturbedmann-Lreer metric in theian gauge.
+It is that the meanshiftift is to theift of the meanshift to the precision of the numericalations and
+that this is to a high of cancellation between two dominant components theshiftift.
+This result is contrary to earlier findings based on inhomogeneous cosmological models exhibiting
+cosmic backreaction.
+For simplicity, the results neglect contributions from optical drift.
+Based on a study of the redshift drift in a Lemaitre-Tolman-Bondi model, the optical drift effects
+are estimated to be at most of order 10% of the redshift drift signal.
+The Generation of Full-shot Prompt:
+The article discusses the computation of redshift drift along light rays in a simulated universe
+based on the Newtonian N-body simulation code GADGET-2 combined with a perturbed
+Friedmann-Lemaitre-Robertson-Walker metric in the Newtonian gauge. The study finds that the
+mean redshift drift is equal to the drift of the mean redshift to the precision of the numerical
+computations, and this is due to a high degree of cancellation between two dominant components
+of the redshift drift. The study neglects contributions from optical drift, but it is estimated that
+these effects are at most of order 10% of the redshift drift signal. The study also finds that the
+redshift drift contribution from peculiar acceleration of the emitter is negligible in the simulation
+setup, but it is expected that this contribution will be larger for real observations.
+The Generation of Compressed Prompt:
+The document discusses the computation of redshift drift in a simulated universe using the Nbody
+simulation code GGET2 with a perturbed Lemaître-Lemaître metric. The results show that the
+mean shift is equivalent to the shift of the mean to a high degree of cancellation between two
+dominant components. This contradicts earlier findings based on inhomogeneous cosmological
+models exhibiting cosmic backreaction. The document also estimates that optical drift effects are
+at most 10% of the redshift drift signal.
+The Generation of Selective-Context:
+The document discusses the use of redshift drift measurements, which were first proposed in 1962.
+The study involves analyzing non-radial light rays observed by three different observers with
+non-radial lines of sight. The present-day density profile of the LTB model is shown in a figure,
+and quadri-linear interpolation is used to interpolate between snapshots. The observation time is
+set to 30 years, and the mean and fluctuations of the individual components of the redshift drift are
+shown in another figure. The study does not address the effects of peculiar acceleration.
+
+         Figure 10: Cases study on Arxiv-March23 summarization dataset in 200 tokens constraint.
+

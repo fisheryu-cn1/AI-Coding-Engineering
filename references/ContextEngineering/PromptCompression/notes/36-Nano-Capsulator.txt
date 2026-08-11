@@ -1,0 +1,722 @@
+                                                                                                 Prompt:                         LLMs    Potter's mother?
+                                                                                                                                  Costs      Lily Potter
+
+                                        Learning to Compress Prompt in Natural Language Formats
+
+                                                                                                                                 Costs
+
+                                          Yu-Neng Chuang            Tianwei Xing Prompt:                         Chia-Yuan Chang
+                                           Rice University  Samsung Research America                                                     Lily Potter
+                                        ynchuang@rice.edu                                                        Texas           A&M UniversitQy:
+                                                               t.xing@samsung.com                                                                  Who  is  Harry
+                                                                                                                                  Black-box
+                                                                                                  Compress       cychanLgL@Mts amu.edu Potter's mother?
+
+                                            Zirui Liu                 Xun Chen Prompt:                                 XCioastsHu Lily Potter
+                                         Rice University    Samsung Research America                              Rice University
+                                        zl105@rice.edu                                                           xia.hu@rice.edu
+                                                             xun.chen@samsung.com
+
+                                                              Abstract                           Q: What is Absolute Zero in  ?
+
+                                             Large language models (LLMs) are excel at           Prompt:                         LLMs
+                                             processing multiple natural language process-
+                                             ing tasks, but their abilities are constrained by                                           -459.67 
+                                             inferior performance with long context, slow
+arXiv:2402.18700v1 [cs.CL] 28 Feb 2024       inference speed, and the high cost of comput-         Prompt                        LLMs       Utility
+                                             ing the results. Deploying LLMs with precise        Compression                             Preservation
+                                             and informative context helps users process
+                                             large-scale datasets more effectively and cost-            Prompt:                          -459.67 
+                                             efficiently. Existing works rely on compress-
+                                             ing long prompt contexts into soft prompts.         Q: What is Absolute Zero in  ?
+                                             However, soft prompt compression encoun-
+                                             ters limitations in transferability across differ-  Figure 1: An example of successful prompt compres-
+                                             ent LLMs, especially API-based LLMs. To             sion with NL formats. The compressed NL-formatted
+                                             this end, this work aims to compress lengthy        prompt (green) aims to obtain a shorter length and main-
+                                             prompts in the form of natural language with        tain transferability and utility simultaneously than the
+                                             LLM transferability. This poses two chal-           original long prompt (red).
+                                             lenges: (i) Natural Language (NL) prompts
+                                             are incompatible with back-propagation, and         lengthy documents and affects their efficiency dur-
+                                             (ii) NL prompts lack flexibility in imposing        ing inference (Touvron et al., 2023; Brown et al.,
+                                             length constraints. In this work, we pro-           2020; Yang et al., 2023; Jin et al., 2024). As the
+                                             pose a Natural Language Prompt Encapsula-           demand for processing millions of tokens increases,
+                                             tion (Nano-Capsulator) framework compress-          it is progressively crucial to deploy LLMs that are
+                                             ing original prompts into NL formatted Cap-         adept at comprehending extended lengths while
+                                             sule Prompt while maintaining the prompt util-      minimizing budgetary requirements.
+                                             ity and transferability. Specifically, to tackle
+                                             the first challenge, the Nano-Capsulator is opti-      To help LLMs better process long context knowl-
+                                             mized by a reward function that interacts with      edge, recent advancements have focused on com-
+                                             the proposed semantics preserving loss. To ad-      pressing long prompt contexts into concise soft
+                                             dress the second question, Nano-Capsulator is       prompts. This approach effectively transforms the
+                                             optimized by a reward function featuring length     original extensive prompt into a manageable se-
+                                             constraints. Experimental results demonstrate       ries of short-length soft prompt tokens. Gener-
+                                             that the Capsule Prompt can reduce 81.4% of         ally, compression-oriented soft prompts are learned
+                                             the original length, decrease inference latency     with the guarantee of semantics through self-
+                                             up to 4.5×, and save 80.1% of budget over-          information (Chevalier et al., 2023), instruction
+                                             heads while providing transferability across di-    finetuning (Ge et al., 2023; Ren et al., 2023), and
+                                             verse LLMs and different datasets.                  the performance alignment via knowledge distilla-
+                                                                                                 tion (Wingate et al., 2022; Mu et al., 2023). How-
+                                        1 Introduction                                           ever, with the rapid evolution and the growth of
+                                                                                                 API-based accessibility of LLMs, soft prompts
+                                        Large Language Models (LLMs) have demon-                 pose significant limitations in terms of transfer-
+                                        strated substantial proficiency across a variety of      ability across different LLMs, implying that well-
+                                        natural language processing tasks. Despite their         trained soft prompts can only be effectively adapted
+                                        significant potential and broad adoption, LLMs are       to the specific LLMs for which they were designed.
+                                        fundamentally limited by the long context length         This situation creates a critical need to achieve
+                                        input, which impairs their capability to understand
+both transferability and utility effectively. A natu-    Prompt exhibits strong transferability across dif-
+ral question is raised: Can we compress lengthy          ferent LLMs and similar but unseen downstream
+prompts in a natural language format, yet still          datasets. This enables effective adaptation without
+preserve utility and ensure transferability among        retraining the prompt compressor.
+various LLMs?
+                                                            Our main contributions are concluded as follows:
+   Compressing extended prompts into a shorter,          First, we introduce and formalize Nano-Capsulator
+natural language (NL) format continues to be a           framework, which can effectively generate high-
+challenging and unresolved issue. As depicted in         quality Capsule Prompt with prominent transfer-
+Figure 1, effective prompt compression entails pre-      ability across multiple LLMs and unseen datasets
+serving essential semantic information in a con-         with similar downstream tasks. Second, we ef-
+strained length with successful performance preser-      fectively reduce the original prompts to 81.4%
+vation. However, unlike soft prompts, which can          of their initial length and transform them into
+be directly optimized with a fixed length, compress-     NL-formatted Capsule Prompt, which retains the
+ing prompts into shorter NL prompts is challenging       prompt's transferability and utility across various
+for several reasons: (i) NL prompts are incompati-       LLMs. Our compression mechanism significantly
+ble with back-propagation, as the gradient cannot        decreases up to 4.5× of the inference latency and
+backward to a discrete raw text; (ii) NL prompts         saves 80.1% of the budget overheads for input se-
+lack flexibility on imposing strict length constraints,  quences. Third, experimental results demonstrate
+where overly stringent limitations on generation         that Capsule Prompt can efficiently perform across
+length may lead to performance degradation. Thus,        diverse LLMs, which is applicable to both few-shot
+it is nontrivial to compress lengthy prompts into        demonstration CoT and input contextual prompts.
+shorter NL ones.
+                                                         2 Related Work
+   To tackle the aforementioned problems, we pro-
+pose a Natural Language Prompt Encapsulation             2.1 Soft Prompt Compression
+(Nano-Capsulator) framework to effectively com-
+press original prompts into a Capsule Prompt with        In the realm of prompt compression for LLMs,
+the aid of a rewarding technique. Our proposed           most of the existing work aims to compress the
+Nano-Capsulator aims to encapsulate long prompts         prompt into soft prompts. Soft prompts are train-
+into shorter ones under specific generation length       able vectors that are optimized in conjunction with
+constraints, maintaining performance through an          a designated LLM, which embeds the original con-
+explicit semantic preservation objective with re-        tent information of the long hard prompts into low-
+ward scores. Specifically, we compress our prompt        dimensional vectors.
+by employing a semantics-preserving summariza-
+tion, and then monitor the optimization process             The first line of work (Wingate et al., 2022) lever-
+using reward scores that reflect the remaining infor-    ages the knowledge distillation object to extract the
+mation relevant to the downstream task. Notably,         information from hard prompts to soft prompts.
+shorter Capsule Prompts, characterized by their          The compressed soft prompts are expected to cap-
+concise NL formatting, preserve transferability and      ture high-level concepts and preserve the fluency
+utility across diverse LLMs. Capsule Prompt en-          from the original hard prompts. The second line of
+ables two advantages: the preservation of prompt         work (Chevalier et al., 2023) employs the summa-
+transferability and utility across different LLMs,       rization capabilities of LLMs to condense lengthy
+and the reduction of inference time and budget           and complex prompts into soft prompts. The pro-
+overheads. Additionally, Nano-Capsulator can be          cess involves dividing the input prompts into mul-
+directly applied to unseen datasets without any fur-     tiple segments and sequentially compressing the
+ther training, provided these new datasets encom-        information from the original prompt into smaller
+pass downstream tasks with similar domains.              segments of soft prompts, where they assemble
+                                                         from these individual fragments of soft prompts to
+   To assess the effectiveness of Nano-Capsulator,       form the final soft prompts. Another work, Gist
+we conduct compression experiments with two dif-         Token (Mu et al., 2023), condenses instruction
+ferent prompt types: few-shot demonstration chain-       prompts into customized prefix soft prompts by
+of-thoughts (CoT) and passage prompts of reading         training a virtual soft prompt predictor.
+comprehension (i.e., content passages). Capsule
+                                                            Nevertheless, the transferability of soft prompt-
+                                                         based compression across diverse LLMs is con-
+strained, necessitating the re-training of soft        Algorithm 1 Algorithm of Nano-Capsulator
+prompts with each change in the specified LLMs.
+This means that the soft prompts generated are         Input: Original Long Prompt K, Compression Instructions
+specifically tailored to work only with that particu-       TRep and TSumm, and pre-trained frozen LLMs G(·), Sam-
+lar LLM, which falls short in maintaining transfer-         pled set of downstream task questions Q.
+ability across different LLMs, especially applied
+on API-based LLMs, such as Claude2 (Anthropic,         Output: NL-formatted Capsule Prompts C.
+2023) and PaLM (Chowdhery et al., 2023).                1: Initialize F (· | C ) and G(·) with pre-trained weights
+                                                        2: while not convergence do
+2.2 Context Distillation for Compression                3: Generate C from F (K | TRep, TSumm, C )
+                                                        4: Randomly sample a set of questions Q
+Besides directly compressing hard prompts into          5: Receive reward scores from Rcap(G(·), Q, C, K)
+soft prompt vectors, recent advancement (Li et al.,     6: F (· | C )  minimizing with LNano(·)
+2023; Jiang et al., 2023) involves computing the        7: end while
+self-information scores or perplexity of the given
+input context prompt to shorten the prompt length.     3.1.1 NL-formatted Prompt Compression
+This process includes filtering out words with
+lower scores from the input prompt, resulting in       We adopt an unsupervised training approach fea-
+a more concise input during the inference stage.       turing semantic preservation loss, motivating the
+The primary distinction between our work and           model to compress contexts while retaining simi-
+these recent studies is that they operate prompt       lar semantic content. In this work, we shorten the
+compression without considering any information        long prompts by summarizing their context and
+from downstream tasks, resulting in inferior per-      applying our proposed semantics loss LComp to en-
+formance while directly applying to downstream         sure maximal preservation of semantic meaning.
+tasks or transferring between similar but unseen       Here, semantics refers to the logical thinking pro-
+downstream datasets.                                   cess from the few-shot demonstration CoT and the
+                                                       beneficial content from context passages.
+3 Long Prompt Encapsulation
+                                                          Given the original prompt K = {k1, · · · kn} con-
+We systematically introduce the Nano-Capsulator        sisted of n tokens to the Capsule Prompt C =
+framework in this section. Figure 2 illustrates the    {c1, · · · cm} with m tokens, where n  m. Our
+overall pipeline of Nano-Capsulator. In particu-       semantics loss aims to ensure the maximal seman-
+lar, our pipeline initially compresses text into NL-   tics preservation by measuring the similarity be-
+formatted Capsule Prompt and concurrently opti-        tween the hidden state embedding of C and K of
+mizes their utility using the proposed rewarding       Nano-Capsulator F (· | C). To obtain the hidden
+method. The design of the NL-formatted compres-        state embedding of K, we instruct F (· | C) to
+sion aims to maintain prompt utility and preserve      replicate the input prompt K, which aids in better
+transferability among different LLMs.                  preserving and embedding the semantic meanings
+                                                       of K. Specifically, d-dimensional hidden state em-
+3.1 Prompt Encapsulation                               bedding of K and C can be generated by eK 
+                                                       PF (K | C , TRep) and eC  PF (C | C ; TSumm),
+The primary aim of Nano-Capsulator is to preserve      where TRep and TSumm denote a replicating instruc-
+the inherent utility of the original pre-compressed    tion and a summarizing instruction, respectively.
+text and ensure the compressed prompt closely          With the aid of TRep, we compel F (· | C) to repli-
+reaches the designated length constraint. Specif-      cate K under the model parameter C, ensuring
+ically, the prompt encapsulation mechanism in-         that eK  Rd accurately represents the embedding
+cludes two components to effectively generate          of K. Following the criterion, F (· | C) essentially
+Capsule Prompt: (1) NL-formatted prompt com-           minimizes the semantics loss as follows:
+pression and (2) prompt utility preservation. The
+learning of Nano-Capsulator involves integrating       LComp = EC Ddist(eK || eC )  (1)
+two components and optimizing them concurrently,
+thereby assuring the compressed prompts are suffi-     where Ddist(· || ·) can be any suitable distance mea-
+cient to preserve their inherent utility.              surement in metric space. In this work, we leverage
+                                                       mean square error as the distance function to mea-
+                                                       sure the similarity between eK and eC.
+
+                                                       3.1.2 Prompt Utility Preservation
+                                                       To impose a constraint on the generated length
+                                                       while preserving utility, we establish a reward func-
+               Long Prompt
+
+                                  Answer_Cap Answer_Long                           Long Prompt Questions
+
+Semantic Loss  Compression LLM    26  26                             Frozen                           Q: 22 + 4 =?
+    Eq. (1)    (Nano-Capsulator)                              Downstream LLM  Capsulate Prompt
+
+                                  Reward Score Eq. (2)
+
+                               Capsulate Prompt
+
+Figure 2: The illustration of Nano-Capsulator training framework. Nano-Capsulator compress the long prompt with
+the action of semantic (Equation 1) and utility preservation (Equation 2). Questions are sampled from the training
+set to develop the reward scores for utility preservation.
+
+tion Rcap(·) featuring a strict cut-off mechanism             Capsulator. The fundamental principle of LNano(·)
+(·) for restricting the generated length of Capsule           is to impose penalties when shorter versions of
+Prompt. The high-level idea of the reward func-               Capsule Prompt exhibit inferior performance. This
+tion is to calculate the score changes of the down-           implies that if a Capsule Prompt receives a low
+stream task question based on leveraging the origi-           reward score from Equation 2, its semantic loss
+nal prompt K and the Capsule Prompt C. Notably,               will be composed by a high penalty value, resulting
+the reward function employs a truncation strategy             in a substantial semantic loss value as punishment
+to limit the C to a predetermined length before               during the training phase of Nano-Capsulator.
+proceeding to compute the scores using the reward
+function. In this manner, the Capsule Prompt that             3.2 Algorithm of Nano-Capsulator
+surpasses the specified length threshold could be
+assigned a lower reward score as a result of the              The framework of Nano-Capsulator is detailed in
+cut-off mechanism.                                            Algorithm 1. Nano-Capsulator adheres to Equa-
+                                                              tion 1 for the preservation of semantic meaning and
+   Formally, given K and C along with arbitrary               integrates the rewarding function from Equation 2
+pre-trained frozen LLMs G(·) and a sampled set of             to maintain the utility of compressed NL-formatted
+downstream task questions Q, the reward function              prompts. The two elements are then aligned, as
+Rcap(·) can be defined as follows:                            depicted in Equation 3, and optimized simultane-
+                                                              ously with the goal of obtaining compressed NL-
+Rcap = EQ I{ G (Ci)  Qi || G Ki  Qi }                         formatted prompts of high utility. In the inference
+                                                         (2)  phase, Nano-Capsulator is solely required to pro-
+                                                              duce the compressed version of Capsule Prompt
+where I(· || ·) denotes an arbitrary reward metric            from the provided long input prompt.
+for yielding the reward score., and  represents
+concatenation of prompts and questions. In this               4 Experiments
+study, we calculate the reward scores using the
+mean square error between the hidden state embed-             In this section, we conduct experiments to evaluate
+ding from G(·). It's noteworthy that I(· || ·) can            the performance of Nano-Capsulator, aiming to
+be replaced by other metrics, such as accuracy and            answer the following three research questions:
+GPT4Eval Scores (Liu et al., 2023), facilitating its
+potential application to API-based LLMs.                      · RQ1: How does Nano-Capsulator perform in
+                                                                terms of the efficacy and transferability among
+3.1.3 Compression with Reward                                   different LLMs and datasets?
+
+Upon receiving the reward scores from Rcap as per             · RQ2: How do the two components of Nano-
+Equation 2, we synchronize these scores with the                Capsulator contribute to the compression perfor-
+semantic loss LComp to maintain utility. Formally,              mance for utility preservation?
+the ultimate objective function of Nano-Capsulator
+can be indicated as:                                          · RQ3: What are the inference latency and impact
+                                                                factors of Capsule Prompt?
+         LNano = LComp(·|C )  Rcap(·|) (3)
+
+where  denotes the frozen model parameters of
+G(·) and C is the trainable parameters of Nano-
+4.1 Dataset                                            then test them on unseen datasets that the mod-
+                                                       els have not previously encountered with the same
+We conduct compression experiments with two dif-       downstream tasks. The considered compression
+ferent prompt types: few-shot CoT and passage          settings and implementation details are shown as
+prompts of reading comprehension. The details of       follows. Two types of prompt compression tasks
+the datasets are provided as follows:                  are focused on.
+
+Few-shot CoT Dataset. We choose two reasoning          Few-shot CoT Compression Task. For the few-
+datasets to evaluate the proposed framework.           shot CoT compression task, we randomly compile
+                                                       seven examples from the CSQA dataset and eight
+· CommonsenseQA (Talmor et al., 2019): The             from the GSM8K dataset following (Wei et al.,
+  CommonsenseQA (CSQA) dataset is a publicly           2022), all selected from their respective training
+  accessible collection of multiple choice questions   sets, to construct the few-shot CoT. During the
+  with 1221 samples for the commonsense reason-        training phase, a total of 1,000 CoT samples are
+  ing task. CSQA presents questions characterized      then gathered to serve as the training data for Nano-
+  by intricate semantics, typically demanding rea-     Capsulator. During the inference stage, we aim
+  soning grounded in pre-existing knowledge.           to compress the manual few-shot CoT proposed
+                                                       in (Wei et al., 2022), where the demonstrations in
+· GSM8K (Cobbe et al., 2021): The GSM8K is             manual CoT are eliminated from any training set.
+  a dataset containing 1319 samples of graduate        The primary evaluation metric used in both CSQA
+  school math questions. Each question is collected    and GSM8K datasets is accuracy, implying that the
+  from the Math World Problem Repository (Roy          model scores only when it provides answers that
+  and Roth, 2015) with a numerical answer.             exactly match the expected responses.
+
+Reading Comprehension Dataset.                         Reading Comprehension Compression Task. For
+                                                       the reading compression task, we aim to compress
+· MultiRC (Khashabi et al., 2018; DeYoung              the reading paragraphs from the question-answer
+  et al.): MultiRC (Multi-Sentence Reading Com-        triplets. Due to the limitation of GPU memory, we
+  prehension) comprises a collection of brief para-    eliminate the paragraphs that exceed 2k tokens in
+  graphs paired with multi-sentence questions,         TriviaQA from the LongBench dataset, resulting
+  where the answers can be derived from the para-      in an average length of 900 tokens, while MultiRC
+  graph's content. The dataset obtains 24029 sam-      remains to utilize the all paragraphs in the dataset.
+  ples for training, 3214 samples for validating,      Throughout the training phase, we select 2,000
+  and 4848 samples for testing.                        question-answer-paragraph triplets in the MultiRC
+                                                       dataset to serve as training data and leverage all
+· TriviaQA LongBench (Joshi et al., 2017): Triv-       training data in the TriviaQA-Long dataset. Our
+  iaQA LongBench (TriviaQA-Long) is a reading          framework is evaluated on the entire set of testing
+  comprehension dataset featuring 300 question-        data, using accuracy as the metric of assessment.
+  answer-evidence triples collected from the Long-
+  bench dataset. It includes question-answer pairs     Implementation Details. In primary experiments,
+  created by trivia enthusiasts, along with indepen-   we utilize Vicuna-7B (Chiang et al., 2023) as
+  dently sourced evidence documents, offering ro-      the initial compression model F (· | C) in Nano-
+  bust supervision for responding to the questions.    Capsulator. The pre-trained LLMs G(·) is given
+                                                       as Vicuna-7B with frozen weights. We train Nano-
+4.2 Experiment Settings                                Capsulator using Vicuna-7B and then assess the
+                                                       generated Capsule Prompt with various LLMs
+In this part, we introduce the experimental set-       other than Vicuna-7B, in order to evaluate its trans-
+tings and metrics for evaluating Nano-Capsulator.      ferability. To reduce memory consumption dur-
+Two distinct types of transferability evaluations are  ing training, we utilize LoRA1 and train the Nano-
+taken into account. To verify the model transfer-      Capsulator using two NVIDIA A40 GPUs of 48GB
+ability, the compression models are trained on one     memory. We employ the Adam optimizer for the
+downstream LLM, and tested on different down-          fine-tuning process, with a learning rate set at 5e-6
+stream LLMs. The evaluation is performed on the
+same dataset, with a division of 70% allocated for         1PEFT: https://github.com/huggingface/peft
+training and validation and 30% designated as the
+testing set. To assess data transferability, we train
+the compression models using one seen dataset and
+                             CSQA              |        GSM8K                 |    MultiRC       | TriviaQA-Long
+
+                     Manual  Zero-shot  Ours Manual     Zero-shot       Ours Original Ours            Original Ours
+
+Vicuna-13B            60.4      44.6    58.8      34.4     25.3         31.9     57.3    57.1         86.0   83.5
+PaLM                  73.7      67.5                       56.8
+Claude2               76.6      69.4    75.5      62.8     52.7         59.5     72.7    72.2         78.9   78.8
+
+Length (# of Token)    831        -     74.6      85.6       -          84.9     59.4    58.2         95.0   90.1
+Compress Rate (%)       -         -                          -
+                                        154       751               231          378.39   95.66       915.7  171.61
+                                                                   69.3%            -    74.71%         -    81.25%
+                                        81.4%     -
+
+Table 1: Evaluation of Nano-Capsulator among different LLMs. The results show that Nano-Capsulator compress
+up to 81.4% of the original long prompt and save up to 80.1% of the expense on requesting for LLM API calls.
+
+                     Claude2 (Anthropic, 2023)
+
+Cost($)       Original Capsule Prompt Saved             Accuracy   0.8 Original Prompt
+
+CSQA                 15.03   3.30              -77.9%              0.6                   w/ Training
+GSM8K                5.22    1.88              -63.9%              0.4 w/o Training
+MultiRC              45.91   13.01             -71.6%
+TrivaQA-Long         2.14    0.42              -80.1%              0.2 Vicuna-13B
+
+Table 2: API cost comparison of Capsule Prompt and                                                    Claude2
+original prompt, where Capsule Prompt save up to
+80.1% of the original cost.                             Figure 3: Evaluation of transferability on Nano-
+                                                        Capsulator across unseen datasets.
+
+under the gradient clipping of 0.8, depending on the    Appendix C. In terms of utility preservation, Nano-
+datasets. The instructions that leverage for prompt     Capsulator retains the original performance on the
+encapsulation TRep and TSumm are listed in Table 6      CSQA and GSM8k datasets mostly among three
+from Appendix F.                                        LLMs. Remarkably, Nano-Capsulator maintains a
+                                                        performance level almost identical to that achieved
+4.3 Main Results (RQ1)                                  with non-compressed prompts in MultiRC datasets.
+                                                        The significant compression rate achieved can ad-
+Model Transferability. To assess the effective-         vantageously impact the model by allowing for a
+ness and transferability, we compress the origi-        higher tolerance in batch inference, accompanied
+nal input prompts into the Capsule Prompt by            by reduced latency and cost.
+Nano-Capsulator. We then evaluate the transfer-
+ability and utility of these compressed prompts         Dataset Transferability. We previously assessed
+across three different LLMs not included in the         the effectiveness of Nano-Capsulator within the
+pre-training of Nano-Capsulator: Vicuna-13B (Chi-       same datasets, where the testing set was derived
+ang et al., 2023), PaLM (Chowdhery et al., 2023),       from the same training domain. In this section, we
+and Claude2 (Anthropic, 2023). The main findings        investigate the transferability of Nano-Capsulator
+are presented in Table 1. In the table, "Manual"        across unseen datasets (i.e., not in training data)
+refers to the manually created few-shot CoT pro-        with the same downstream tasks. We train Nano-
+posed by (Wei et al., 2022), "Zero-shot" denotes        Capsulator on the MultiRC dataset (seen dataset)
+the zero-shot CoT followed (Kojima et al., 2022),       and test on BoolQ (Clark et al., 2019) (unseen
+and "Original" indicates the original paragraphs        dataset) without any further training, where BoolQ
+used in the reading comprehension tasks.                is also a reading comprehension dataset, under
+                                                        Vicuna-13B and Claude2. The results are demon-
+   In the primary experiment, we establish a com-       strated in Figure 3. We see a competitive perfor-
+pression constraint limiting to a maximum of 150        mance with only a slight accuracy drop compared
+tokens for the CSQA, MultiRC, and TriviaQA-             to the training version of Capsule Prompt. While
+Long datasets and a maximum of 300 tokens for           Capsule Prompt yields better performance with
+the GSM8K dataset, where 150 tokens are not suf-        training, the results indicate that Nano-Capsulator
+ficient for preserving the logic of GSM8K dataset.      possesses a great property of data transferability.
+We observe that the Nano-Capsulator obtains up
+to 81.4% of the compression rate and saves up           4.4 Contributions of Utility Preservation
+to 80.1% of the Claude2 API cost compared to                  (RQ2)
+the original input prompts, as displayed in Ta-
+ble 2. The cost of PaLM API can be found in             In this section, we explore the effectiveness of
+                                                        components from Nano-Capsulator. Specifically,
+0.7                       0.600                         0.9   Zero-shot Summ 0.9
+
+0.6                       0.575                               Capsule Prompt
+
+0.5                       0.550                         0.8                                                                           0.8
+
+                          0.525
+Accuracy0.4                                                                                                                                 Zero-shot Summ
+                                        Accuracy0.500   0.7                                                                           0.7   Capsule Prompt
+                                                                                  Accuracy0.3
+                                                                                                                         Accuracy
+0.2                       0.475
+
+0.1       Zero-shot Summ  0.450 Zero-shot Summ          0.6                                                                           0.6
+          Capsule Prompt  0.425  Capsule Prompt
+0.0 Vicuna-13B Claude2
+                          0.400 Vicuna-13B Claude2      0.5 150 200 250 0.5 150 200 250
+                                                              Length                                                                        Length
+
+Figure 4: Comparison results of Capsule Prompt and      Figure 6: Impact of prompt length on Vicuna-13B (left)
+Zero-shot Summarization on GSM8K dataset (left) and     and Claude2 (right) on TriviaQA dataset.
+MultiRC dataset (right).
+
+0.9                       1.0                           0.75 MultiRC (Selective) 0.75                                                       CSQA (Random)
+                                                        0.70  MultiRC (Ours)                                                                CSQA (Ours)
+                                                              CSQA (Selective) 0.70
+0.8                       0.8                           0.65  CSQA (Ours)
+
+                                                        0.60
+Accuracy
+                                      Accuracy
+
+                                                                                     Accuracy
+                                                                                                                            Accuracy
+GPT-3.5-Turbo 0.7 0.6 Original Prompt                   0.55                                                                          0.65
+                                 w/ Reward
+0.6       Capsule Prompt  0.4    w/o Reward             0.50 0.45 0.60
+
+0.5
+
+0.4                       0.2                           0.40 200 400 600 0.55 200 400 600
+
+0.3 CSQA  GSM8K 0.0 Vicuna-13B   Claude2                      Length                                                                        Length
+
+Figure 5: Ablation studies of comparison with Capsule   Figure 7: The comparison results of Capsule Prompt
+Prompt and GPT-35-Turbo Summarization on CSQA           and text dropping methods, including Selective Context
+dataset and GSM8K dataset (left); and of the contribu-  (left) and random demonstration elimination (right).
+tion of Reward Function from Equation 2 (right).
+
+we conduct ablation studies from two perspectives.      "w/o reward" denotes a Nano-Capsulator trained
+First, we evaluate the efficacy of semantic preserva-   without the reward function. We further present
+tion. We compare Nano-Capsulator with in-context        case studies of Capsule Prompt on GSM8K to
+zero-shot summarization generated by Vicuna-7B,         showcase the logic preservation, as illustrated in
+as Vicuna-7B is the initial model weight of Nano-       Figure 10 from Appendix E. These studies clearly
+Capsulator for prompt compression. The results are      demonstrate that Capsule Prompt retains more se-
+demonstrated in Figure 4 with the comprehensive         mantic meanings by preserving complete logical
+comparison of three LLMs, including Vicuna-13B          structures, suggesting that the utility of prompts is
+and Claude2. We observe that Capsule Prompt             better maintained.
+yielded by Nano-Capsulator outperforms in all sce-
+narios, which means that our Nano-Capsulator can        4.5 Exploration of Impact Factors (RQ3)
+significantly preserve more semantic information
+and preserve prompt utility. Additionally, we assess    In this section, we explore our proposed compres-
+the performance by directly employing GPT-3.5-          sion mechanism in greater detail, examining vari-
+Turbo to summarize the provided prompts. Figure 5       ous factors that influence its performance.
+(left) illustrates that Nano-Capsulator maintains a
+higher level of prompt utility compared to GPT-3.5-     Impact of Capsule Prompt Length. In the main
+Turbo, resulting in enhanced performance on both        experiment, the length constraint is fixed to 150 or
+the CSQA and GSM8K tasks.                               300 tokens for the prompt compression. We fur-
+                                                        ther explore how the compression rate affects the
+   Secondly, we carry out ablation studies to es-       preservation of utility. The results are displayed
+tablish the effectiveness of the reward function        in Figure 6, obtained from experiments conducted
+in Nano-Capsulator. These studies are conducted         using the TriviaQA dataset with Vicuna-13B and
+on Vicuna-13B and Claude2 using the TriviaQA-           Claude2. We observe that the length of Capsule
+Long dataset. As shown in Figure 5 (right), the         Prompt can impact its utility on different LLMs.
+results indicate a degradation in performance for       While longer prompts might capture more useful
+downstream tasks when the reward function is            information for downstream tasks, they can also
+not utilized. Note that "w/ reward" means Nano-         introduce certain noise or misinformation to the
+Capsulator trained with the reward function, while      LLMs. This can result in suboptimal performance
+                                                        when specific LLMs interact with the compressed
+400Latency (ms.)       120                              350                                                                              30
+300                                   Latency (ms.)100  300                                                                              25
+200                                                                                 Latency (ms.)80250                                   20
+100                                                                                                                       Latency (ms.)6020015
+      Capsule Prompt    40   Capsule Prompt             150   Capsule Prompt                                                             10   Capsule Prompt
+  02  Original Prompt   20   Original Prompt            100   Original Prompt                                                             5   Original Prompt
+                                                         50                                                                               04
+      4Batch Size 6      02  4Batch Size 6                    8Batch Size 16                                                                  8Batch Size 16
+                                                          04
+
+Figure 8: Inference Latency of Vicuna-13B on CSQA       Figure 9: Inference Latency of OPT-2.7B on CSQA
+dataset (left) and TrivaQA-Long dataset (right), where  dataset (left) and TrivaQA-Long dataset (right), where
+ indicates out of memory.                                indicates out of memory.
+
+prompts. The situation can be observed from the         GPU, while OPT-2.7B remains its inherent version.
+results of Capsule Prompt and Zero-shot Summ            As demonstrated in Figure 8 and Figure 9, we ob-
+Prompt, where the length of 150 outperforms other       serve that Nano-Capsulator framework achieves
+length settings under Claude2 and the length of         much lower computational latency compared to the
+200 outperforms other length settings Vicuna-13B.       case while inputting the original prompt on both
+We notice that the desired length settings of Nano-     LLMs. Specifically, Capsule Prompt obtains up
+Capsulator can be observed from the performance         to 98% of its original performance while reducing
+of the Zero-shot Summ Prompt, as they share simi-       2.1×  4.5× of execution latency. As depicted in
+lar performance trends.                                 Figure 9, Capsule Prompt is capable of being ac-
+                                                        commodated within OPT-2.7B under a larger batch
+Impact of Discrete Text Elimination. In addition        size, whereas the use of the original longer prompt
+to compressing prompts using Nano-Capsulator,           leads to an out-of-memory issue (i.e., when batch
+we acknowledge that prompt length can also be           size = 16). Additionally, we notice that Capsule
+reduced by employing methods like random drop-          Prompt achieves considerable benefits in speeding
+ping or rule-based selection. To this end, we have      up the inference process as the batch size increases.
+conducted studies comparing the performance of          Under OPT-2.7B, Capsule Prompt accelerates the
+straightforward text dropping with our proposed         process by up to 4.4×, and under Vicuna-13B, it
+framework. We consider two baseline methods un-         achieves a speed increase of 4.2× compared to the
+der Claude2: a naive random demonstration elimi-        original input prompt. This indicates that Capsule
+nation on the CSQA dataset and Selective Context        Prompt allows for a larger batch size while reduc-
+as described in (Li et al., 2023), in which Selec-      ing the time required for the inference process.
+tive Context eliminated the word according to the
+self-information values, on both the CSQA and           5 Conclusion
+MultiRC datasets. The outcomes of these compar-
+isons are showcased in Figure 7. We observe that        Our work introduces Natural Language Prompt En-
+Capsule Prompt outperforms the other two base-          capsulation (Nano-Capsulator), a framework for
+lines. Particularly, Capsule Prompt achieves better     effectively compressing long prompts for LMs
+performance when the length is similar to the base-     while preserving essential information. Nano-
+lines. This again demonstrates the effectiveness of     Capsulator alleviates the context length limitations
+Capsule Prompt in preserving the utility.               of LLMs, enhancing processing efficiency and
+                                                        cost-effectiveness. Our results show that Nano-
+4.6 Latency of Nano-Capsulator (RQ3)                    Capsulator reduces prompt lengths by 81.4%, de-
+                                                        creases inference latency by up to 4.5×, and cuts
+The configuration of the computational infrastruc-      budget overheads by 80.1% with almost identical
+ture is given in Appendix A. We conducted the           accuracy and relevance. This demonstrates its sig-
+efficiency experiments on two publicly available        nificant potential for improving LLM efficiency
+LLMs: OPT-2.7B (Zhang et al., 2022) and Vicuna-         across various applications that utilize long input
+13B (Chiang et al., 2023), under different batch        documents. Future research will focus on refining
+size settings with the generated length of 200 to-      Nano-Capsulator for broader domain applications
+kens. Due to the limited GPU memory, we set             and exploring its usage in data-intensive fields.
+Vicuna-13B as bfloat16 to accommodate a single
+References                                                    Supervised Challenge Dataset for Reading Compre-
+                                                              hension. arXiv e-prints, page arXiv:1705.03551.
+Anthropic. 2023. Claude.
+                                                           Daniel Khashabi, Snigdha Chaturvedi, Michael Roth,
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie                 Shyam Upadhyay, and Dan Roth. 2018. Looking
+   Subbiah, Jared D Kaplan, Prafulla Dhariwal, Arvind         beyond the surface:a challenge set for reading com-
+   Neelakantan, Pranav Shyam, Girish Sastry, Amanda           prehension over multiple sentences. In Proceedings
+   Askell, et al. 2020. Language models are few-shot          of North American Chapter of the Association for
+   learners. Advances in neural information processing        Computational Linguistics (NAACL).
+   systems, 33:1877-1901.
+                                                           Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yu-
+Alexis Chevalier, Alexander Wettig, Anirudh Ajith,            taka Matsuo, and Yusuke Iwasawa. 2022. Large lan-
+   and Danqi Chen. 2023. Adapting language                    guage models are zero-shot reasoners. Advances in
+   models to compress contexts. arXiv preprint                neural information processing systems, 35:22199-
+   arXiv:2305.14788.                                          22213.
+
+Wei-Lin Chiang, Zhuohan Li, Zi Lin, Ying Sheng,            Yucheng Li, Bo Dong, Chenghua Lin, and Frank Guerin.
+   Zhanghao Wu, Hao Zhang, Lianmin Zheng, Siyuan              2023. Compressing context to enhance inference
+   Zhuang, Yonghao Zhuang, Joseph E. Gonzalez, Ion            efficiency of large language models. arXiv preprint
+   Stoica, and Eric P. Xing. 2023. Vicuna: An open-           arXiv:2310.06201.
+   source chatbot impressing gpt-4 with 90%* chatgpt
+   quality.                                                Yang Liu, Dan Iter, Yichong Xu, Shuohang Wang,
+                                                              Ruochen Xu, and Chenguang Zhu. 2023. G-eval:
+Aakanksha Chowdhery, Sharan Narang, Jacob Devlin,             Nlg evaluation using gpt-4 with better human align-
+   Maarten Bosma, Gaurav Mishra, Adam Roberts, Paul           ment, may 2023. arXiv preprint arXiv:2303.16634,
+   Barham, Hyung Won Chung, Charles Sutton, Sebas-            6.
+   tian Gehrmann, et al. 2023. Palm: Scaling language
+   modeling with pathways. Journal of Machine Learn-       Jesse Mu, Xiang Lisa Li, and Noah Goodman. 2023.
+   ing Research, 24(240):1-113.                               Learning to compress prompts with gist tokens.
+                                                              arXiv preprint arXiv:2304.08467.
+Christopher Clark, Kenton Lee, Ming-Wei Chang,
+   Tom Kwiatkowski, Michael Collins, and Kristina          Siyu Ren, Qi Jia, and Kenny Q Zhu. 2023. Context
+   Toutanova. 2019. Boolq: Exploring the surprising           compression for auto-regressive transformers with
+   difficulty of natural yes/no questions. arXiv preprint     sentinel tokens. arXiv preprint arXiv:2310.08152.
+   arXiv:1905.10044.
+                                                           Subhro Roy and Dan Roth. 2015. Solving general arith-
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian,               metic word problems. In Proceedings of the 2015
+   Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias             Conference on Empirical Methods in Natural Lan-
+   Plappert, Jerry Tworek, Jacob Hilton, Reiichiro            guage Processing. Association for Computational
+   Nakano, Christopher Hesse, and John Schulman.              Linguistics.
+   2021. Training verifiers to solve math word prob-
+   lems. arXiv preprint arXiv:2110.14168.                  Alon Talmor, Jonathan Herzig, Nicholas Lourie, and
+                                                              Jonathan Berant. 2019. CommonsenseQA: A ques-
+Jay DeYoung, Sarthak Jain, Nazneen Fatema Rajani,             tion answering challenge targeting commonsense
+   Eric Lehman, Caiming Xiong, Richard Socher, and            knowledge. In Proceedings of the 2019 Conference
+   Byron C. Wallace. Eraser: A benchmark to evaluate          of the North American Chapter of the Association for
+   rationalized nlp models.                                   Computational Linguistics: Human Language Tech-
+                                                              nologies, Volume 1 (Long and Short Papers), pages
+Tao Ge, Jing Hu, Xun Wang, Si-Qing Chen, and Furu             4149-4158, Minneapolis, Minnesota. Association for
+   Wei. 2023. In-context autoencoder for context com-         Computational Linguistics.
+   pression in a large language model. arXiv preprint
+   arXiv:2307.06945.                                       Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier
+                                                              Martinet, Marie-Anne Lachaux, Timothée Lacroix,
+Huiqiang Jiang, Qianhui Wu, Chin-Yew Lin, Yuqing              Baptiste Rozière, Naman Goyal, Eric Hambro,
+   Yang, and Lili Qiu. 2023. Llmlingua: Compressing           Faisal Azhar, et al. 2023. Llama: Open and effi-
+   prompts for accelerated inference of large language        cient foundation language models. arXiv preprint
+   models. arXiv preprint arXiv:2310.05736.                   arXiv:2302.13971.
+
+Hongye Jin, Xiaotian Han, Jingfeng Yang, Zhimeng           Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten
+   Jiang, Zirui Liu, Chia-Yuan Chang, Huiyuan Chen,           Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou,
+   and Xia Hu. 2024. Llm maybe longlm: Self-extend            et al. 2022. Chain-of-thought prompting elicits rea-
+   llm context window without tuning. arXiv preprint          soning in large language models. Advances in Neural
+   arXiv:2401.01325.                                          Information Processing Systems, 35:24824-24837.
+
+Mandar Joshi, Eunsol Choi, Daniel Weld, and Luke
+   Zettlemoyer. 2017. triviaqa: A Large Scale Distantly
+David Wingate, Mohammad Shoeybi, and Taylor                            PaLM (Chowdhery et al., 2023)
+   Sorensen. 2022. Prompt compression and con-
+   trastive conditioning for controllability and toxic-  Cost($)       Original Capsule Prompt Saved
+   ity reduction in language models. arXiv preprint
+   arXiv:2210.03162.                                     CSQA          0.156  0.034  -77.9%
+                                                         GSM8K         0.054  0.019  -63.9%
+Jingfeng Yang, Hongye Jin, Ruixiang Tang, Xiaotian       MultiRC       0.478  0.135  -71.6%
+   Han, Qizhang Feng, Haoming Jiang, Bing Yin, and       TrivaQA-Long  0.022  0.004  -80.1%
+   Xia Hu. 2023. Harnessing the power of llms in prac-
+   tice: A survey on chatgpt and beyond. arXiv preprint  Table 5: API cost comparison of Capsule Prompt and
+   arXiv:2304.13712.                                     original prompt on PaLM, where Capsule Prompt save
+                                                         up to 80.1% of the original cost.
+Susan Zhang, Stephen Roller, Naman Goyal, Mikel
+   Artetxe, Moya Chen, Shuohui Chen, Christopher De-     C API Cost of PaLM
+   wan, Mona Diab, Xian Li, Xi Victoria Lin, Todor Mi-
+   haylov, Myle Ott, Sam Shleifer, Kurt Shuster, Daniel  We here provide the API cost of PaLM during
+   Simig, Punit Singh Koura, Anjali Sridhar, Tianlu      the evaluation of Nano-Capsulator. We can ob-
+   Wang, and Luke Zettlemoyer. 2022. Opt: Open pre-      serve that Capsule Prompt generated by Nano-
+   trained transformer language models.                  Capsulator save up to 80.1% of its original cost
+                                                         on PaLM. The results further underscore the excel-
+Appendix                                                 lent cost-efficiency attributes of Capsule Prompt.
+
+A Computation Infrastructure                             D Training Costs of Nano-Capsulator
+
+For a fair comparison of testing algorithmic             In this section, we discuss the training time the
+throughput, the experiments are conducted based          memory cost of Nano-Capsulator in this section.
+on the following physical computing infrastructure       All datasets are trained using the initial weights
+in Table 3.                                              of Vicuna-7B. Training time and memory require-
+                                                         ments are different with the volume and types of
+Device Attribute              Spec                       training data. In our work, the training time for
+                                                         the few-shot CoT compression task is approxi-
+Computing infrastructure      GPU                        mately 8 hours, and for the reading comprehension
+GPU model                 Nvidia-A40                     compression task, it is about 4 hours. Once the
+GPU number                                               Nano-Capsulator completes the training process,
+GPU Memory                      1                        we can directly derive the compressed hard prompts
+                          46068 MB                       through a single forward pass of Nano-Capsulator.
+
+Table 3: Computing infrastructure for the experiments.   E The Case Studies of Capsule Prompt
+
+B Additional Experiments of Comparison                   We demonstrate the case study of Capsule Prompt
+     to Soft Prompt Baselines                            on the GSM8K and MultiRC dataset. The results,
+                                                         depicted in Figure 10 and Figure 11, show that
+To evaluate our proposed framework against exist-        Nano-Capsulator can better obtain the semantic
+ing soft prompt methods, we conduct experiments          meanings of math logic from the original CoT
+with AutoCompressors (Chevalier et al., 2023) on         prompt. We observe that in the absence of Nano-
+the GSM8K dataset, as shown in Table 4. Our              Capsulator, the Zero-shot Summarization approach
+Capsule Prompt is utilized for predictions using         struggles to compress long prompts effectively.
+the Llama-2-7B model, which is identical to the
+pre-trained model used by AutoCompressor. As             F Instruction Usage in Inference LLMs
+we can see, AutoCompressor does not preserve es-
+sential information in the compressed soft prompts,      We provide a list of the instruction utilized in train-
+leading to a considerable performance drop in the        ing our Nano-Capsulator framework in Table 6,
+GSM8K task.                                              including TRep replicating instruction and summa-
+                                                         rizing instruction TSumm.
+GSM8K AutoCompressors Ours
+
+Accuracy  3.79            19.7
+
+Table 4: Computing infrastructure for the experiments.
+                                                                        Original Prompt
+
+          Q: There are 15 trees in the grove. Grove workers will plant trees in the grove today. After they are done, there will be 21 trees.
+             How many trees did the grove workers plant today?
+             A: There are 15 trees originally. Then there were 21 trees after some more were planted. So there must have been 21 - 15 = 6. The
+             answer is 6.
+
+          Q: If there are 3 cars in the parking lot and 2 more cars arrive, how many cars are in the parking lot?
+             A:There are originally 3 cars. 2 more cars arrive. 3 + 2 = 5. The answer is 5.
+
+          Q: Leah had 32 chocolates and her sister had 42. If they ate 35, how many pieces do they have left in total?
+             A: Originally, Leah had 32 chocolates. Her sister had 42. So in total they had 32 + 42 = 74. After eating 35, they had 74 - 35 = 39.
+             The answer is 39.
+
+          Q: Jason had 20 lollipops. He gave Denny some lollipops. Now Jason has 12 lollipops. How many lollipops did Jason give to
+             Denny?
+             A: Jason started with 20 lollipops. Then he had 12 after giving some to Denny. So he gave Denny 20 - 12 = 8. The answer is 8.
+
+          Q: Shawn has five toys. For Christmas, he got two toys each from his mom and dad. How many toys does he have now?
+             A: Shawn started with 5 toys. If he got 2 toys each from his mom and dad, then that is 4 more toys. 5 + 4 = 9. The answer is 9.
+
+          Q: There were nine computers in the server room. Five more computers were installed each day, from monday to thursday. How
+             many computers are now in the server room?
+             A: There were originally 9 computers. For each of 4 days, 5 more computers were added. So 5 * 4 = 20 computers were added. 9
+             + 20 is 29. The answer is 29."
+
+          Q: Michael had 58 golf balls. On tuesday, he lost 23 golf balls. On wednesday, he lost 2 more. How many golf balls did he have at
+             the end of wednesday?
+             A: Michael started with 58 golf balls. After losing 23 on tuesday, he had 58 - 23 = 35. After losing 2 more, he had 35 - 2 = 33 golf
+             balls. The answer is 33.
+
+          Q: Olivia has $23. She bought five bagels for $3 each. How much money does she have left?
+             A: Olivia had 23 dollars. 5 bagels for 3 dollars each will be 5 x 3 = 15 dollars. So she has 23 - 15 dollars left. 23 - 15 is 8. The
+               answer is 8.
+
+                                                                        Capsule Prompt
+
+           There were 15 trees in the grove, and grove workers planted 6 more trees, so there are now 21 trees in the grove.
+           In the parking lot, there were 3 cars, and 2 more cars arrived, so there are now 5 cars in the parking lot.
+           Leah and her sister had 32 and 42 chocolates, respectively, and they ate 35 chocolates, so they have 39 chocolates left in total.
+           Jason had 20 lollipops and gave 8 lollipops to Denny, so he now has 12 lollipops.
+           Shawn had 5 toys and got 2 toys each from his mom and dad, so he now has 9 toys.
+           There were 9 computers in the server room, and 20 more computers were installed, so there are now 29 computers in the server
+
+             room.
+           Michael had 58 golf balls and lost 23 on tuesday and 2 more on wednesday, so he has 33 golf balls left.
+           Olivia had $23 and bought 5 bagels for $3 each, so she has $8 left.
+
+                                                             Zero-shot Summarization Prompt
+
+          Grove workers planted 6 trees in the grove.
+          There are now 5 cars in the parking lot.
+          Leah and her sister have 39 pieces of chocolates left in total.
+          Jason gave Denny 8 lollipops.Shawn has 9 toys now.
+          There are 29 computers in the server room.
+          Michael had 33 golf balls at the end of wednesday.
+          Olivia has 8 dollars left.
+
+Figure 10: A case study on GSM8K dataset. The results are the Capsule Prompt and in-context summarization
+prompt generated Vicuna-7B, following the settings in RQ2.
+
+Compression Tasks  TRep (Replicating Instruction)       TSumm (Summarizing Instruction)
+Few-shot CoT       Repeat the following main input.
+                                                        Please summarize each question-answer pair in one sen-
+Reading Comprehension Repeat the following main input.  tence within less than {word count} words. Make sure
+                                                        not to repeat the input question-answer pair.
+
+                                                        Please summarize the passage within less than {word
+                                                        count} words. Make sure not to repeat the passage.
+
+                   Table 6: Instructions used in training Nano-Capsulator.
+                                                                         Original Prompt
+
+          The day was just breaking , as I left the tower ; though it was still too dark in the house to be able to see without a light , and I
+             took one of the study candles with me on my ' round . By the time I had finished the ground floor , the daylight was creeping in
+             , wanly , through the barred windows . My search had shown me nothing fresh . Everything appeared to be in order , and I was
+             on the point of extinguishing my candle , when the thought suggested itself to me to have another glance ' round the cellars . I
+             had not , if I remember rightly , been into them since my hasty search on the evening of the attack . For , perhaps , the half of a
+             minute, I hesitated . I would have been very willing to forego the task -- as , indeed , I am inclined to think any man well might
+             -- for of all the great , awe - inspiring rooms in this house , the cellars are the hugest and weirdest . Great , gloomy caverns of
+             places , unlit by any ray of daylight . Yet , I would not shirk the work . I felt that to do so would smack of sheer cowardice .
+             Besides , as I reassured myself , the cellars were really the most unlikely places in which to come across anything dangerous ;
+             considering that they can be entered , only through a heavy oaken door , the key of which , I carry always on my person.
+
+                                                                        Capsule Prompt
+
+          The narrator left the tower and took a candle with them to search the ground floor. The daylight was creeping in through the
+             barred windows by the time the narrator finished searching the ground floor. The narrator hesitated to search the cellars but
+             decided to do so because they did not want to be seen as cowardly and because the cellars were the most unlikely place to find
+             anything dangerous.
+
+                                                              Zero-shot Summarization Prompt
+
+          The narrator left the tower and took a candle with them, searching the ground floor of the house. The daylight was creeping in
+             through the barred windows, but the search showed nothing new. The narrator hesitated before deciding to search the cellars,
+             which were large and eerie, but ultimately decided to face their fear and complete the task.
+
+Figure 11: A case study on MultiRC dataset. The results are the Capsule Prompt and in-context summarization
+prompt generated Vicuna-7B, following the settings in RQ2.
+

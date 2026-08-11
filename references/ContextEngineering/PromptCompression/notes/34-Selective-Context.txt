@@ -1,0 +1,508 @@
+                                        Unlocking Context Constraints of LLMs: Enhancing Context Efficiency of
+                                                     LLMs with Self-Information-Based Content Filtering
+
+                                        Yucheng Li 1
+
+arXiv:2304.12102v1 [cs.CL] 24 Apr 2023                          Abstract                                Figure 1. LLMs are able to answer correctly with less informative
+                                                                                                        content deleted.
+                                              Large language models (LLMs) have received sig-
+                                              nificant attention by achieving remarkable perfor-         Context: Large Languages Models (LLMs) {trained on
+                                              mance across various tasks. However, their fixed           massive corpora of texts} have shown their ability to per-
+                                              context length poses challenges when processing            form new tasks from textual instructions or from a few
+                                              long documents or maintaining extended conver-             examples, which resulting in a line of work that focuses on
+                                              sations. This paper proposes a method called               further scaling these models. These efforts are based on
+                                              Selective Context that employs self-information            the assumption {that more parameters will lead to better
+                                              to filter out less informative content, thereby en-        performance.}
+                                              hancing the efficiency of the fixed context length.
+                                              We demonstrate the effectiveness of our approach           Query: What's the assumption behind?
+                                              on tasks of summarisation and question answer-
+                                              ing across different data sources, including aca-          GPT: Further scaling Large Language Models will lead to
+                                              demic papers, news articles, and conversation tran-        better performance on a wide range of tasks.
+                                              scripts.
+                                                                                                        information deleted. This might be because LLMs can infer
+                                        1. Introduction                                                 the missing information based on the contextual clues and
+                                                                                                        prior knowledge acquired from their pre-training. As a
+                                        Large language models (LLMs) have demonstrated remark-          result, we argue that optimizing the use of context length
+                                        able power and impressive generalisation abilities across       by filtering out less informative content is possible without
+                                        a wide range of natural language processing tasks, as well      sacrificing performance.
+                                        as real-life applications (Brown et al., 2020; Touvron et al.,
+                                        2023; Bubeck et al., 2023). However, a major limitation         In this paper, we propose Selective Context, which filters out
+                                        of LLMs is their fixed context length. As LLMs have no          less informative content to reduce the cost of a given con-
+                                        memory outside their context window, it poses a significant     text, thereby making better use of the fixed context length
+                                        challenge when tackling tasks that involve processing long      in LLMs. Selective Context employs a base language model
+                                        documents or engaging in extended conversations (Dong           to compute self-information for lexical units (sentences,
+                                        et al., 2023). Increasing the context length for LLMs, partic-  phrases, or tokens) in a context and use it to evaluate their in-
+                                        ularly those based on Transformer, is very expensive due to     formativeness. By selectively retaining content with higher
+                                        the quadratic growth of memory and computation associated       self-information, our method provides a more compact and
+                                        with the 2-D attention matrix (Vaswani et al., 2017). These     efficient context representation for LLMs to process without
+                                        limitations highlight the need for more efficient solutions     compromising their performance on various tasks.
+                                        to utilize the limited context in tasks that require extended
+                                        context.                                                        To evaluate the effectiveness of our proposed method, we
+                                                                                                        tested Selective Context on three data sources: arxiv papers,
+                                        Fortunately our experiments reveal that LLMs do not need        BBC news articles, and conversation transcripts with four
+                                        all content in a document or the entire conversation history    different NLP tasks: summarisation, question answering,
+                                        to answer users' queries. As shown in Figure 1, LLMs are        original context reconstruction and conversation. Our results
+                                        able to generate the expected answer even with relevant         demonstrate that Selective Context significantly enhances
+                                                                                                        the efficiency of LLMs, allowing them to handle long docu-
+                                            1University of Surrey, UK. Correspondence to: Yucheng Li    ments and extended conversations with only minor sacrifices
+                                        <yucheng.li@surrey.ac.uk>.                                      in generation quality.
+
+                                                                                                        The key contributions of our paper: (1) We introduce Se-
+              Selective Context: Enhancing Context Efficiency of LLMs
+
+lective Context, a novel approach to context filtering that     3. Method
+maximises the utility of fixed context length in LLMs. (2)
+We provide extensive evaluations of the proposed method.        In this section, we present the details of our proposed
+(3) Our results demonstrate the effectiveness of Selec-         method, Selective Context, which optimizes the use of con-
+tive Context in reducing the cost of context in LLMs.           text length in LLMs by filtering out less informative content.
+Code and data can be found in https://github.com/               The main idea is to compute the self-information for lex-
+liyucheng09/Selective_Context.                                  ical units (such as sentences, phrases, or tokens) within a
+                                                                given context and utilise it to evaluate their informativeness.
+2. Self-Information                                             We first compute the self-information for each token in the
+                                                                context, then merge tokens and their self-information based
+Self-information, also known as surprisal or information        on lexical units such as phrases or sentences. The overall
+content, is a fundamental concept in information theory that    approach consists of the following steps:
+quantifies the amount of information conveyed by an event
+(Shannon, 1948). In the context of language modelling, the      3.1. Computing Self-Information
+event here is one step of generation (i.e., a token). It is
+defined as the negative log likelihood of the token:            Given a context C = x0, x1, ..., xn, where xi denotes a
+                                                                token, we use a base language model M to compute the
+                                                                self-information for each token xt as fellow:
+
+I(x) = - log2 P (xt|x0, x1, ..., xt-1)  (1)
+
+where I(x) represents the self-information of token x and       I(xi) = - log2 P (xi|x0, x1, ..., xi-1)  (8)
+P (x) denotes its output probability.
+                                                                The base language model here should be causal language
+In the information theory, self-information measures the        model, such as GPT-2, OPT, and LLaMA.
+level of surprise or uncertainty associated with an event;
+rare events convey more information and thus have higher        3.2. Merging into Lexical Units
+self-information, while common events convey less infor-
+mation and have lower self-information. In the context of       If the content filtering of selective context is directly per-
+language modelling, self-information can be used to assess      formed on the token level, it might lead to very disjoint
+the informativeness of lexical units, e.g., words, phrases,     context. Therefore except token level filtering, we also con-
+or sentences, to see which pieces of information are more       duct the filtering procedure in phrase and sentence level. We
+likely to be novel or important for understanding the context.  call a basic unit in our filtering a lexical unit, which could
+                                                                be a token, a phrase or a sentence in our setting.
+Self-information is usually not directly used in NLP. Instead,
+terms closely related such as entropy and perplexity are        To enable selective context works on phrases and sentences,
+widely used in language model optimisation and evaluation.      we should merge tokens and their self-information into lexi-
+                                                                cal units. For each lexical unit u = (xt, ..., xt+), we can
+            1                                                   calculate its self-information by sum the self-information of
+H(S) = N tI(xt) (2)                                             its individual tokens according to the additivity property of
+                                                                self-information:
+P P (S) = 2H(S)                         (3)
+
+where the entropy H(S) of the sentence S = (x0, ..., xn) is            
+the average self-information of words in the sentence, and
+perplexity P P (S) of the sentence can be calculated with       I(u) = I(xi)                             (9)
+entropy.
+                                                                       i=t
+The property of self-information that is especially relevant
+to our method is the additivity.                                Sentence tokenizer is employed to obtain sentence level
+                                                                lexical units. And we use spacy1 to merge tokens into nouns
+I(x0, x1) = - log2 P (x0, x1)           (4)                     phrases. We do not merge verb phrases as it might produce
+                                                                super long phrases.
+
+= - log2 P (x0)P (x1|x0)                (5)                     3.3. Selective Retention of Informative Context
+
+= - log2 P (x0) - log2 P (x1|x0) (6)                            With the self-information of each lexical unit computed, we
+                                                                can now evaluate their informativeness. Instead of using a
+= I(x0)I(x1)                            (7)
+                                                                    1https://spacy.io/api/pipeline-functions#
+It means we can calculate the self-information of a lexical     merge_noun_chunks
+unit by simply sum self-information of tokens in it.
+           Selective Context: Enhancing Context Efficiency of LLMs
+
+Original:  INTRODUCTION Continual Learning ( CL ) , also known as Lifelong Learning , is
+
+a promising learning paradigm to design models that have to learn how to perform multiple tasks across
+
+different environments over their lifetime [ To uniform the language and enhance the readability of the paper we
+
+adopt the unique term continual learning ( CL ) . ] . Ideal CL models in the real world should be deal with domain shifts ,
+
+researchers have recently started to sample tasks from two different datasets.For instance, proposed to train and evaluate
+
+a model on Imagenet first and then challenge its performance on the Places365 dataset . considers more scenarios
+
+, starting with Imagenet or Places365 , and then moving on to the VOC/CUB/Scenes datasets . Few works propose
+
+more advanced scenarios built on top of more than two datasets.
+
+Filtered:  INTRODUCTION Continual Learning ( a promising learning paradigm to design models have to
+
+how across over To uniform the language and enhance adopt the unique term continual learning Ideal CL models in
+
+should deal domain shifts researchers recently started sample tasks two different datasets For instance proposed to
+
+train and evaluate on Imagenet first challenge Places365 considers more scenarios starting Imagenet or Places365
+
+the VOC/CUB/Scenes datasetsFew works propose more advanced scenarios built top more than two datasets
+
+           Figure 2. A visualisation of self-information based content filter. The paragraph is from a very recent paper.
+
+fixed threshold or retaining a fixed number of top k lexical   Table 1. Statistics of the three datasets. #Sent, #Phrase, #Token are
+units, we recommend to use a percentile-based filtering        averaged per document.
+approach to adaptively select the most informative content.
+                                                                 Dataset   #Doc  #Sent  #Phrase                            #Token
+First, we rank the lexical units based on their self-
+information values in descending order. Then, we com-            Arxiv      408  28.20  514.55                             864.85
+pute the p-th percentile of self-information values among        ShareGPT   470  27.35  389.42                             689.32
+all lexical units.                                               BBC        294  25.63  523.96                             732.54
+
+     Ip = np.percentile([I(u0), .., I(uk)], p) (10)            including politics, business, sports, and technology. We use
+                                                               the full content of each news article in our experiments.
+Next, we selectively retain lexical units with self-
+information values greater than or equal to the p-th per-      Arxiv Articles: A dataset consisting of latest academic
+centile, constructing a filtered context C :                   papers created in March 2023 from the arXiv preprint repos-
+                                                               itory. These papers span various scientific disciplines, such
+           C = Ui | I(Ui)  Ip, 1  i  n  (11)                   as computer science, physics, and mathematics. As Arxiv
+                                                               articles can be quite long, we only process the first two
+The percentile-based filtering is a more flexible approach     sections for each Arxiv paper in our experiments.
+to retain the most informative content depending on the
+distribution of self-information values in the given context.  Conversations from ShareGPT.com: ShareGPT.com is a
+In Figure 2, we present an example on phrase level where       platform where ChatGPT users share their surprising and
+p is set to 50, which means half of phrases are filtered       interesting conversation with ChatGPT. This datasets con-
+out. In this case, the context after processed by selective    sists of conversations in different languages and in various
+context only remains 57.2% tokens, which saves 42.7% of        scenarios (e.g., coding, chitchat, writing assistant, etc.). We
+context length. We will discussion how LLMs perform on         use ShareGPT dataset for the conversation task in our exper-
+the processed context in the next section.                     iments.
+
+4. Experiments                                                 Statistics in detail are presented in Table 1. Note that to
+                                                               avoid data contamination, we only collect latest data to
+4.1. Datasets                                                  ensure they are created after the knowledge cut off of Chat-
+                                                               GPT. Data samples from the BBC News and Arxiv datasets
+We evaluate Selective Context on three datasets from differ-   were all created after March 2023. And conversations on
+ent domains:                                                   SharedGPT.com are clearly created after the release of Chat-
+                                                               GPT (gpt-3.5-turbo).
+BBC News: A dataset containing news articles collected
+from the British Broadcasting Corporation (BBC) published      4.2. Tasks and Metrics
+in March 2023. This dataset covers a wide range of topics,
+                                                               We evaluate Selective Context on four different tasks:
+
+                                                               Original Context Reconstruction: Given a compressed
+Selective Context: Enhancing Context Efficiency of LLMs
+
+context produced by Selective Context, this task aims to         based on the GPT-3.5-turbo architecture. ChatGPT is
+evaluate whether models are able to reconstruct the original     a Instruct-tuned language model further improved by RLHF
+context. This task assesses how well the filtered context re-    with 175 billion parameters. The base language model of
+tains the essential information from the original context. In    ChatGPT seems to be code-davinci-0022 and more
+our experiments, the compressed contexts are used as input,      previously davinci which can be found in (Brown et al.,
+and the original contexts are used as reference answers.         2020). We compare the performance of ChatGPT with and
+                                                                 without applying Selective Context to understand its impact
+Summarisation: Given a context, the task is to generate          on the efficiency and accuracy of the model.
+a concise and informative summary that captures the main
+points of the document. This task aims to evaluate whether       Curie: Curie is one of the variant of the GPT-3 family
+the content filtering affects the overall understanding of mod-  with 6.7B of parameters, a smaller version of casual lan-
+els on compressed contexts. In our experiments, the input        guage model davinci. We employ the Curie as the base
+and output are the compressed context and the summaries          model M in Selective Context to calculate self-information.
+generated based on the compressed contexts. Summaries            Technically, we shall use the same base model of ChatGPT
+based on the original contexts are treated as the reference      to do content filtering, but our analysis found that the filter-
+answers.                                                         ing results of curie and davinci are nearly identical, so
+                                                                 for the sake of cost, we choose curie instead.
+Question Answering (QA): Given a document and a set of
+questions, the task is to generate answers based on the infor-   We access the two model via web API provided on the
+mation available in the document. This task aims to evaluate     OpenAI platform3.
+models' fine-grained understanding toward a context. We
+first generate questions and answers based on the original       4.4. Experimental Settings
+context, where these answers are treated as reference an-
+swers. And then ask LLMs to answer these questions with          We compare different settings to evaluate the effectiveness
+selective context.                                               and analysis trade-offs of Selective Context.
+
+Conversation: This task is only for the ShareGPT dataset.        Baseline Comparison: We compare Selective Context with
+Given a conversation history and a user query, the task is to    the original context (without any content reduction) and
+generate response to the query based on previous conversa-       Random Context, a baseline approach filtering out the same
+tion. This task aims to evaluate whether selective context       amount of data but does so randomly.
+affect the capability of LLMs on conversation. Specifically,
+we ask LLMs to answer users' last query of ShareGPT              Reduction Ratios: We experiment with different content
+conversation instances with selective context applied on         reduction ratios in Selective Context: 0.2, 0.35, 0.5, 0.65,
+previsou conversation history.                                   and 0.8. These ratios determine the proportion of content to
+                                                                 be filtered out, allowing us to study the trade-off between
+We employ four metrics to assess the performance of our          efficiency and performance as the amount of retained infor-
+models on the tasks: BLEU, METEOR, ROUGE, and                    mation varies.
+BERTScore. BLEU (Papineni et al., 2002) calculates n-
+gram precision, which is the proportion of n-grams in the        Lexical Units: Lexical units are the basic element of con-
+generated text that are also present in the reference text.      tent reduction in Selective Context. It can be sentence,
+METEOR (Banerjee & Lavie, 2005) take additional fea-             phrases, or tokens. But due to the usage limitation of Ope-
+tures such as synonymy, stemming and word order into con-        nAI web API ($120 per month), we only test the content
+sideration, which leads to more comprehensive evaluation.        filtering on phrase level. It doesn't means self-information
+ROUGE (Lin, 2004) focus on how much of the important             based content filtering is not feasible on sentence and token
+information in the reference text is present in the generated    level. We will includes experiments on these two level in
+summary. BERTScore (Zhang et al., 2019) is a more re-            the next version.
+cent metric that leverages contextualised embeddings from
+pre-trained language models like BERT, computing the co-         Self-Information Computation: Here, we also focus
+sine similarity between the generated text and reference text    only on sentence-wise self-information calculating, due
+embeddings to capture semantic similarity more effectively       to the API access limitation as well. Sentence-wise self-
+than traditional n-gram-based metrics.                           information computing means to calculate tokens' self-
+                                                                 information sentence by sentence, instead of letting LLMs
+4.3. Models                                                      to process the entire context in one run. Same with lexical
+
+There are two main models were used in our experiments:              2https://platform.openai.com/docs/
+                                                                 model-index-for-researchers
+ChatGPT: We test Selective Context on ChatGPT, which is
+                                                                     3https://platform.openai.com/docs/
+                                                                 api-reference
+                         Selective Context: Enhancing Context Efficiency of LLMs
+
+Table 2. Comparing Selective Context with different context reduction ratio to the Original context, on Summarisation and QA task. The
+performance drop are shown in parentheses.
+
+Method    Task              BLEU     METEOR          rouge1     ROUGE          rougeL     Precision   BERTScore               F1
+Original
+SC-0.2    Summarisation        .274         .481        .570       rouge2         .416          .912        Recall          .911
+SC-0.35   QA                   .529         .664        .690                      .664          .941                        .940
+SC-0.5    Conversation         .238         .343        .451          .321        .332          .878          .911          .877
+SC-0.65   Avg.                 .347         .496        .571          .581        .471          .910          .939          .909
+SC-0.8                                                                .249                                    .878
+          Summarisation  .251 (.02)  .475 (.01)   .563 (.01)          .383  .402 (.01)  .910 (.002)           .909  .909 (.002)
+          QA             .426 (.10)  .601 (.06)   .638 (.05)                .605 (.06)  .933 (.008)                 .931 (.009)
+          Conversation   .208 (.03)  .305 (.04)   .419 (.03)    .305 (.02)  .307 (.02)  .873 (.005)   .909 (.002)   .867 (.010)
+          Avg.           .295 (.05)  .460 (.04)   .540 (.03)    .502 (.08)  .438 (.03)  .905 (.005)   .929 (.010)   .902 (.007)
+                                                                .230 (.02)                            .862 (.015)
+          Summarisation  .212 (.06)  .442 (.04)   .533 (.04)    .346 (.04)  .363 (.05)  .905 (.007)   .900 (.009)   .903 (.008)
+          QA             .337 (.19)  .531 (.13)   .578 (.11)                .539 (.13)  .925 (.017)                 .921 (.019)
+          Conversation   .179 (.06)  .290 (.05)   .400 (.05)    .265 (.06)  .285 (.05)  .871 (.007)   .902 (.009)   .866 (.012)
+          Avg.           .243 (.10)  .421 (.08)   .504 (.07)    .420 (.16)  .396 (.07)  .900 (.010)   .918 (.021)   .897 (.013)
+                                                                .198 (.05)                            .861 (.016)
+          Summarisation  .170 (.10)  .397 (.08)   .500 (.07)    .294 (.09)  .331 (.09)  .900 (.012)   .894 (.015)   .896 (.015)
+          QA             .237 (.29)  .434 (.23)   .487 (.20)                .447 (.22)  .912 (.029)                 .907 (.033)
+          Conversation   .132 (.11)  .254 (.09)   .360 (.09)    .226 (.10)  .254 (.08)  .867 (.012)   .893 (.018)   .858 (.020)
+          Avg.           .179 (.17)  .362 (.13)   .449 (.12)    .321 (.26)  .344 (.13)  .893 (.018)   .903 (.036)   .887 (.023)
+                                                                .163 (.09)                            .850 (.028)
+          Summarisation  .114 (.16)  .335 (.15)   .447 (.12)    .237 (.15)  .281 (.13)  .893 (.019)   .882 (.027)   .886 (.025)
+          QA             .157 (.37)  .336 (.33)   .394 (.30)                .353 (.31)  .899 (.042)                 .893 (.047)
+          Conversation   .109 (.13)  .227 (.12)   .331 (.12)    .168 (.15)  .225 (.11)  .864 (.014)   .880 (.031)   .853 (.024)
+          Avg.           .127 (.22)  .299 (.20)   .391 (.18)    .227 (.35)  .287 (.18)  .885 (.025)   .888 (.051)   .877 (.032)
+                                                                .139 (.11)                            .843 (.034)
+          Summarisation  .063 (.21)  .259 (.22)   .380 (.19)    .178 (.21)  .231 (.19)  .884 (.028)   .870 (.039)   .873 (.038)
+          QA             .117 (.41)  .272 (.39)   .326 (.36)                .289 (.37)  .890 (.051)                 .883 (.057)
+          Conversation   .030 (.21)  .142 (.20)   .227 (.22)    .114 (.21)  .154 (.18)  .849 (.029)   .863 (.048)   .832 (.046)
+          Avg.           .070 (.28)  .224 (.27)   .311 (.26)    .172 (.41)  .225 (.25)  .874 (.036)   .876 (.063)   .863 (.047)
+                                                                .081 (.17)                            .816 (.061)
+                                                                .122 (.26)                            .852 (.057)
+
+units, we will includes experiments testing self-information    when 35% of the content is reduced, with BERT scores
+based on the entire context in the next version.                around 0.9 and ROUGE-1 scores over 0.5.
+
+We use generation temperature of 0.7 in our experiments.        The results start to lose control as the reduction ratio rises
+                                                                to 0.5, where the average BLEU score drops 0.17 and the
+5. Results                                                      average ROUGE-1 drops 0.12. However, the performance
+                                                                of Selective Context on summarisation and conversation
+5.1. Comparison to Baselines                                    tasks are still acceptable, considering the decrease on BLEU
+                                                                and ROUGE-1 is below 0.1. When 65% of the context is re-
+We first compare the performance of Selective Context with      duced, the performance of summarisation decreases to 0.114
+different context reduction ratios to the original context on   on BLEU, 0.447 on ROUGE-1, and 0.886 on BERTScore.
+summarisation and QA tasks, as shown in Table 2. The            A reduction ratio of 0.8 tends to be less valuable, as the cor-
+performance drop due the context reduction is shown in          rectness of answers might not be guaranteed. In summary,
+parentheses.                                                    the results suggest that Selective Context is very effective in
+                                                                preserving key information during context reduction, and is
+As demonstrated in the table, using Selective Context only      able to significantly reduce the context cost while preventing
+leads to a marginal drop when the reduction ratio is set        big performance loss.
+to 0.2 or 0.35, despite it significantly reducing the context
+cost. The BLEU score drops by only 0.05 when 20% of the         We then compare Selective Context to the random filtering
+content is reduced. And the number is even smaller when         baseline, and the results are presented in Figure 3. Our
+it comes to ROUGE-1, where the drop is just 0.03. This          initial observation reveals that LLMs are quite robust to con-
+indicate a high level of consistency between answers given      text reduction. With the random filtering approach, LLMs
+selective contexts and original contexts when the reduction     can achieve over 0.25 BLEU score when 20% of content
+ratio is 0.2. Selective Context also yields impressive results  is randomly reduced and over 0.5 ROUGE-1 when 35% of
+Selective Context: Enhancing Context Efficiency of LLMs
+
+Figure 3. Performance of Selective Context compared to the random filtered baselines.
+
+Figure 4. Performance of Selective Context on different NLP tasks
+
+content is randomly reduced. Our proposed method, Se-           From the results of the Original Context Reconstruction
+lective Context, is even more effective, reaching around        task (RC), we found that Selective Context allows LLMs to
+0.3 BLEU score and over 0.55 ROUGE-1 score when the             recover most of the key points in the original context when
+reduction ratio is set to 0.35.                                 the reduction ratio is set to 0.2 or 0.35, as demonstrated by a
+                                                                rather high ROUGE-1 score of 0.65 and a BERTScore over
+When Selective Context reduces 50% of content, the perfor-      0.9. Based on that, it is safe to reduce 35% of content via
+mance begins to drop dramatically on BLEU. Nevertheless,        Selective Context, which will only leads to minor informa-
+the ROUGE-1 and BERT scores remain strong. The rate of          tion loss. However, the performance starts to drop as the
+performance drop for the random baseline slows between          reduction ratio increases to 0.5, indicating that partial key
+the reduction ratios of 0.5 and 0.65, indicating that the ran-  information is inevitably lost during the context reduction
+dom baseline has already lost a considerable amount of          procedure (ROUGE-1: 0.59, BERTScore: 0.88). The per-
+key information after reducing 50% of content. In contrast,     formance decreases dramatically when the reduction ratio
+Selective Context does not exhibit this tendency.               is set to 0.8, where we only receive a BLEU score of 0.03
+                                                                and ROUGE-1 of 0.37.
+When the reduction ratio is set to 0.8, both approaches show
+similar results, demonstrating that LLMs struggle to handle     By comparing the four curves, we found that the summari-
+context with 80% information loss. Overall, our results         sation and conversation task seems to be less affected by
+show that Selective Context can effectively maximise the        context reduction. From reduction ratio of 0.2 to 0.8, the
+utility of fixed context length in LLMs while maintaining       BERTScore of summarisation task only show little decrease.
+strong performance on various tasks.                            On BLEU and ROUGE-1 metrics, the fluctuation of sum-
+                                                                marisation are also the smallest. The conversation task show
+5.2. Tasks                                                      the same tendency. On the contrary, reconstruction and QA
+                                                                tasks are significantly influenced by content reduction. This
+In this part, we examine the performances of Selective Con-     might be because summarisation and conversation tasks
+text on the three different NLP tasks: summarisation, ques-     focus on overall context understanding, whereas QA and
+tion answering, and original context reconstruction. The        reconstruction tasks require more fine-grained information.
+results are as shown in 4.
+Selective Context: Enhancing Context Efficiency of LLMs
+
+Figure 5. Performance of Selective Context on different data sources.
+
+As a result, we should be careful when we apply Selective       performance on various tasks. Our extensive evaluations
+Context for tasks like QA as it might reduce trivial details    on arxiv papers, BBC news articles, and conversation tran-
+which is required for some queries. In summary, we observe      scripts showed that Selective Context can significantly en-
+that Selective Context is quite effective and useful in reduc-  hance the efficiency of LLMs, enabling them to handle long
+ing context cost and can ensure a decent performance when       documents and extended conversations more effectively.
+reduction ratio is equal to or below than 0.5.
+                                                                References
+5.3. Data Sources
+                                                                Banerjee, S. and Lavie, A. Meteor: An automatic metric
+We also compare how Selective Context perform on differ-           for mt evaluation with improved correlation with human
+ent data sources, shown in Figure 5. The performance on            judgments. In Proceedings of the acl workshop on in-
+ShareGPT is rather lower than the others, but as they are          trinsic and extrinsic evaluation measures for machine
+used for different tasks, so we cannot compare their absolute      translation and/or summarization, pp. 65-72, 2005.
+numbers directly. But we are able to recognise that Selective
+Context works well on arxiv data as long as reduction ratio     Brown, T., Mann, B., Ryder, N., Subbiah, M., Kaplan, J. D.,
+is equal or lower than 0.35. A considerable performance            Dhariwal, P., Neelakantan, A., Shyam, P., Sastry, G.,
+decrease is found on arxiv as reduction ratio rises to 0.5,       Askell, A., et al. Language models are few-shot learners.
+which show that the optimal threshold for arxiv data might        Advances in neural information processing systems, 33:
+be between 0.35 and 0.5. For news data, we find the steep         1877-1901, 2020.
+performance decrease is between reduction ratio 0.5 to 0.65,
+for which we seems to be able to use more aggressive con-       Bubeck, S., Chandrasekaran, V., Eldan, R., Gehrke, J.,
+text reduction on news data. For conversation tasks, the           Horvitz, E., Kamar, E., Lee, P., Lee, Y. T., Li, Y.,
+performance appears stable up to an 80% context reduction,         Lundberg, S., et al. Sparks of artificial general intel-
+suggesting that we could potentially have much longer con-         ligence: Early experiments with gpt-4. arXiv preprint
+versations using selective context beyond the fixed context        arXiv:2303.12712, 2023.
+length of LLMs.
+                                                                Dong, Z., Tang, T., Li, L., and Zhao, W. X. A survey on
+5.4. Case Study                                                    long text modeling with transformers. arXiv preprint
+                                                                   arXiv:2302.14502, 2023.
+To have a more straightforward impression of how Selective
+Context reduce context cost, we present several cases in the    Lin, C.-Y. Rouge: A package for automatic evaluation
+Appendix.                                                          of summaries. In Text summarization branches out, pp.
+                                                                  74-81, 2004.
+6. Conclusion
+                                                                Papineni, K., Roukos, S., Ward, T., and Zhu, W.-J. Bleu:
+In this paper, we introduced Selective Context to maximise         a method for automatic evaluation of machine transla-
+the utility of fixed context length in LLMs. We demon-             tion. In Proceedings of the 40th annual meeting of the
+strated the effectiveness of our method by filtering out less     Association for Computational Linguistics, pp. 311-318,
+informative content, providing a more compact and efficient        2002.
+context representation for LLMs without sacrificing their
+                                                                Shannon, C. E. A mathematical theory of communication.
+                                                                  The Bell system technical journal, 27(3):379-423, 1948.
+                                            Selective Context: Enhancing Context Efficiency of LLMs
+
+Touvron, H., Lavril, T., Izacard, G., Martinet, X., Lachaux,
+   M.-A., Lacroix, T., Rozie`re, B., Goyal, N., Hambro, E.,
+  Azhar, F., et al. Llama: Open and efficient foundation lan-
+   guage models. arXiv preprint arXiv:2302.13971, 2023.
+
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones,
+   L., Gomez, A. N., Kaiser, L., and Polosukhin, I. At-
+   tention is all you need. Advances in neural information
+   processing systems, 30, 2017.
+
+Zhang, T., Kishore, V., Wu, F., Weinberger, K. Q., and Artzi,
+  Y. Bertscore: Evaluating text generation with bert. arXiv
+   preprint arXiv:1904.09675, 2019.
+                                           Selective Context: Enhancing Context Efficiency of LLMs
+
+                               Figure 6. Selective Context with reduction ratio of 0.5 on conversation transcripts.
+human: Poly Ether Ether Ketone
+gpt: Poly Ether Ether Ketone (PEEK ) is a high-performance engineering thermoplastic that is known for
+its excellent mechanical, thermal, and chemical properties . PEEK is a semi-crystalline polymer that is characterized by
+its high strength, stiffness, and toughness, as well as its excellent resistance to heat, chemicals, and abrasion.PEEK is
+widely used in various industries, including aerospace, automotive, medical, and oil and gas.It is used in applications
+that require high-performance materials, such as structural components, bearings, seals, and electrical insulation.One of
+the unique properties of PEEK is its ability to withstand high temperatures.It has a melting point of around 343°C (649°
+F) and can operate at temperatures up to 250°C (482°F) for long periods of time without losing its mechanical properties
+. PEEK is also highly resistant to chemicals and can withstand exposure to harsh environments without degrading . It is
+resistant to most organic solvents , acids , and bases , and can be used in applications where other plastics would fail
+. Overall , PEEK is a versatile material that offers excellent mechanical, thermal, and chemical properties , making it an
+ideal choice for a wide range of high-performance applications.
+human: Application in Membrane manufacturing
+gpt: PEEK is also used in membrane manufacturing due to its unique properties . Membranes made from PEEK offer
+excellent chemical resistance and durability , making them suitable for use in a variety of applications , including
+water treatment , gas separation , and biomedical applications . In water treatment , PEEK membranes are used to filter
+out impurities, including bacteria and viruses, from water.These membranes are highly effective at removing impurities
+and can be used in a variety of water treatment applications, including desalination, wastewater treatment, and drinking
+water purification . In gas separation , PEEK membranes are used to separate gases based on their molecular size
+and shape . These membranes are highly effective at separating gases and can be used in a variety of applications ,
+including air separation, natural gas processing, and hydrogen purification.In biomedical applications, PEEK membranes
+are used as implantable devices , including cardiovascular implants , orthopedic implants , and drug delivery systems
+. PEEK is a biocompatible material that is well - tolerated by the human body and does not cause adverse reactions
+or rejection . Overall , PEEK is a versatile material that is well - suited for use in membrane manufacturing due to
+its excellent chemical resistance, durability, and biocompatibility.
+human: Properties of PEEK required for Membrane Manufacturing
+gpt: There are several properties of PEEK that make it an ideal material for membrane manufacturing , including
+: Chemical resistance : PEEK has excellent resistance to a wide range of chemicals , including acids , bases , and
+organic solvents . This property makes it ideal for use in applications where the membrane may come into contact with
+harsh chemicals.Thermal stability: PEEK is highly stable at high temperatures, making it ideal for use in applications
+where the membrane may be exposed to elevated temperatures during use, cleaning, or sterilization.Mechanical strength:
+PEEK is a highly durable material that exhibits excellent mechanical properties, including high tensile strength, stiffness
+, and toughness.This makes it ideal for use in applications where the membrane may be subjected to mechanical stress or
+deformation.Biocompatibility: PEEK is a biocompatible material that is well-tolerated by the human body and does not
+cause adverse reactions or rejection.This makes it ideal for use in biomedical applications, including implantable devices
+. Hydrophobicity : PEEK is a hydrophobic material that resists the absorption of water and other liquids . This property
+makes it ideal for use in applications where the membrane needs to remain dry or maintain its structure in the presence
+of liquids . Overall , the combination of these properties makes PEEK an ideal material for membrane manufacturing ,
+particularly in applications where durability, chemical resistance, and thermal stability are critical.
+human: 2 / 2Membrane Manufacturing Processes using PEEK
+gpt: There are several membrane manufacturing processes that use PEEK , including : Phase inversion : This
+is a widely used membrane manufacturing process that involves the formation of a polymer solution , followed by
+casting or extrusion into a flat or tubular membrane shape . The membrane is then immersed in a nonsolvent bath to
+induce phase separation , resulting in a porous structure . PEEK can be used in this process by dissolving it in
+a suitable solvent and then casting or extruding it into a membrane shape.Electrospinning: This process involves the use
+of an electrostatic field to draw out a polymer solution into nanofibers, resulting in a highly porous membrane structure
+. PEEK can be used in this process by dissolving it in a suitable solvent and then electrospinning it
+into a nanofiber membrane . Thermally induced phase separation : This process involves the formation of
+a polymer solution , which is then heated to induce phase separation and create a porous membrane structure
+. PEEK can be used in this process by dissolving it in a suitable solvent and then heating it to induce
+phase separation . Polymer blending : This process involves blending PEEK with other polymers to create
+a membrane with specific properties . For example , blending PEEK with polyvinylidene fluoride ( PVDF ) can create
+a membrane with enhanced mechanical strength and chemical resistance . Overall , PEEK can be used in a variety of
+membrane manufacturing processes to create membranes with specific properties, including porosity, mechanical strength
+, and chemical resistance.The specific manufacturing process used will depend on the desired properties of the membrane
+and the intended application.
+                                           Selective Context: Enhancing Context Efficiency of LLMs
+
+                                      Figure 7. Selective Context with reduction ratio of 0.5 on BBC News.
+University of Edinburgh student Romy Ulvestad died at her parents' London home four days after her 21st birthday .
+She had killed herself after staff failed to provide additional support, despite repeated warnings that she was struggling
+with her mental health.Now her mother is adding her support to a campaign for the UK government to create legal duty
+of care for students . The university , which apologised for failing Romy , said it had improved the support it offers
+since her death . Libby Kitson , Romy's mother , has joined calls for Westminster to change the law to better protect
+students , and hopes the Scottish government will follow suit . The petition to the UK government is being supported by
+25 bereaved families, who have come together and set up The LEARN Network.It reached more than 127,000 signatures
+before the deadline at midnight on Mothers' Day , meaning Parliament will consider the subject for debate . Speaking
+to BBC Scotland , Ms Kitson said she did not know that her daughter was struggling with her mental health when she
+returned to London during the Covid lockdown in 2020."Her father and I had no idea about her mental health struggles
+but they had been well - flagged to people at the University of Edinburgh who could have done something about it ,
+" she said . " I sent Romy to off to university to study classics , which would be a pivotal point for the rest of her life
+. What I did n't expect to do was send her off to university to die . " Romy , a classics student and part-time model ,
+died in April 2020 , more than a year after she communicated with the university about her struggles by requesting
+a "special circumstances" application to resit her exams without penalty . Ms Kitson said : " We want there to be
+a legal duty of care within all higher education institutions , and I think some people , including our government , seem
+to think there is some legal requirement in place but there really is n't . " You want to know that if your child is
+suffering with any kind of mental health issues , or is overwhelmed by university life , there are people there who
+are trained and skilled to help deal with it . " And if they really , really are in a state of crisis you would want to
+be informed . " Libby Kitson hopes the Scottish government will legislate after the UK government Campaigners from
+ForThe100 want a change in law to ensure higher education institutions have a legal duty of care towards their students
+, as schools already do . The Department of Education has said creating a legally enforced duty of care " would
+be a disproportionate response " . Ms Kitson said the campaign was not looking to provide a means for families to
+sue universities , but to prevent similar deaths . She said she did not want any other parent to have to go through
+the same situation . " We would hope that the Scottish Parliament would look at England and Wales and think '
+they 've led by example , we should follow suit ' , " she said . " A Scottish student's life is no less important . " A
+University of Edinburgh spokeswoman said it had been " shocked and deeply saddened by what happened " to
+Romy and " deeply sorry " for the gaps in support given to her . " Supporting our students' mental health and ensuring
+their wellbeing is our absolute priority , " she said . " Our support policies and practices are under regular review as
+we continue to focus and improve upon our mental health support provision and provide the best possible environment
+for our students . " Students at the university now have access to a "named-contact relationship " with staff trained
+in wellbeing and mental health , alongside other support services . The spokeswoman added : " We continue to engage
+with students through both the Students' Association and the Sports Union to identify how best we can shape and
+develop our services to support students most effectively . " We work closely with the three other universities in
+Edinburgh and NHS mental health colleagues to improve pathways into specialist mental health services for students
+. " The Department for Education previously responded to the petition by saying that higher education providers
+already had a "general duty of care not to cause harm to their students through their own actions " . A spokesperson
+said : " We acknowledge the profound and lasting impact a young person's suicide has upon their family and friends
+, and know among the petitioners there are those who have personal experience of these devastating, tragic events .
+"[However] we ... feel further legislation to create a statutory duty of care , where such a duty already exists , would be
+a disproportionate response." In a response to the petition, the Scottish government said: "We are determined to support
+the mental health of all students.Over the last three years we have invested £11.5m to introduce additional counsellors in
+colleges and universities".The BBC is not responsible for the content of external sites.
+

@@ -1,0 +1,628 @@
+                                            PCToolkit: A Unified Plug-and-Play Prompt Compression Toolkit of Large
+                                                                                Language Models
+
+                                                                      Jinyi Li1,3, Yihuai Lan1, Lei Wang2, Hao Wang1
+                                                            1The Hong Kong University of Science and Technology (Guangzhou)
+
+                                                                                2Singapore Management University
+                                                                              3South China University of Technology
+                                                                            {jinyili, haowang}@hkust-gz.edu.cn
+                                        Open-source repository: https://github.com/3DAgentWorld/Toolkit-for-Prompt-Compression
+                                                                   Supplementary video: https://youtu.be/_KarBVRmpT0
+
+arXiv:2403.17411v1 [cs.CL] 26 Mar 2024                           Abstract                        solution to tackle this challenge by condensing intri-
+                                                                                                 cate textual inputs into succinct prompts that encap-
+                                             Prompt compression is an innovative method          sulate crucial information. This approach enables
+                                             for efficiently condensing input prompts while      LLMs to function more efficiently within resource
+                                             preserving essential information. To facilitate     constraints, enhancing their performance (Wang
+                                             quick-start services, user-friendly interfaces,     et al., 2024). Moreover, by reducing the reliance
+                                             and compatibility with common datasets and          on extensive API calls, prompt compression not
+                                             metrics, we present the Prompt Compression          only improves the cost-effectiveness of leveraging
+                                             Toolkit (PCToolkit). This toolkit is a uni-         LLMs but also streamlines the computational pro-
+                                             fied plug-and-play solution for compressing         cesses involved in language understanding tasks.
+                                             prompts in Large Language Models (LLMs),            When compared to alternative strategies, prompt
+                                             featuring cutting-edge prompt compressors, di-      compression offers intuitive and adaptable tech-
+                                             verse datasets, and metrics for comprehensive       niques for addressing diverse scenarios (Naveed
+                                             performance evaluation. PCToolkit boasts a          et al., 2023; Zhao et al., 2023; Wan et al., 2023).
+                                             modular design, allowing for easy integration
+                                             of new datasets and metrics through portable           However, the deployment of prompt compres-
+                                             and user-friendly interfaces. In this paper, we     sion methods varies between different approaches.
+                                             outline the key components and functionalities      There is not yet a general toolkit that can invoke
+                                             of PCToolkit. We conducted evaluations of the       compressors of multiple types. Moreover, datasets
+                                             compressors within PCToolkit across various         and metrics are also essential for evaluating the
+                                             natural language tasks, including reconstruc-       performance of each compression method. Thus,
+                                             tion, summarization, mathematical problem-          with the aim of providing plug-and-play services,
+                                             solving, question answering, few-shot learning,     easy-customized interfaces and supporting com-
+                                             synthetic tasks, code completion, boolean ex-       mon datasets and metrics, we propose Prompt Com-
+                                             pressions, multiple choice questions, and lies      pression Toolkit (PCToolkit), a unified plug-and-
+                                             recognition.                                        play toolkit for Prompt Compression of LLMs,
+                                                                                                 making accessible and portable prompt compres-
+                                        1 Introduction                                           sion methods to a wider audience. Our plug-and-
+                                                                                                 play design enables users to deploy and use the
+                                        Given the performance limitations and computa-           toolkit without any further model trainings. Mean-
+                                        tional overhead of Large Language Models (LLMs)          while, users are also able to plug in their custom-
+                                        (Wang et al., 2024), how to effectively apply LLMs       trained models in PCToolkit.
+                                        to tasks involving lengthy textual inputs is a per-
+                                        sistent challenge. Various viable solutions have            Specifically, Figure 1 illustrates the comprehen-
+                                        emerged to address this issue, encompassing tech-        sive architecture of PCToolkit. Key features of
+                                        niques such as length extrapolation (Chen et al.,        PCToolkit include:
+                                        2021; Shaw et al., 2018), attention approximation
+                                        (Winata et al., 2019; Wang et al., 2020), attention-        (i) State-of-the-art and reproducible methods.
+                                        free transformers (Gu et al., 2021; Orvieto et al.,      Encompassing a wide array of mainstream com-
+                                        2023), model compression (Lee et al., 2023; Ma           pression techniques, PCToolkit offers a unified in-
+                                        et al., 2023), and hardware-aware transformers           terface for various compression methods (compres-
+                                        (Dao et al., 2022; Liu and Abbeel, 2023).                sors). Notably, PCToolkit incorporates a total of
+                                                                                                 five distinct compressors, namely Selective Context
+                                           Prompt compression technology, a subset of            (Li et al., 2023), LLMLingua (Jiang et al., 2023a),
+                                        length extrapolation methods, presents a strategic
+
+                                             Corresponding author.
+
+                                                                                              1
+Datasets                  Compressors                                             Metrics
+  GSM8K                                                                              BLEU
+BBC News   SCRL               LLMLingua                                KiS
+   Arxiv                                                                           ROUGE-1
+ShareGPT   LongLLMLingua                                   Selective Context       ROUGE-2
+    BBH                                                                            ROUGE-L
+                              Runner                                             Bertscore-P
+LongBench                                                                        Bertscore-R
+Gigaword                      Compressor                                         Bertscore-F1
+ DUC2004                                                                         Edit distance
+                 Dataset                                   Text input
+    BNC
+Broadcast                     Metric
+
+  Google                      Results
+
+           Compressed prompt                               Score for evaluation
+
+Figure 1: Architecture of PCToolkit. The compressors module encompasses prompt compression methods that
+can be accessed through a unified interface with customizable parameters. The datasets module includes 10
+diverse datasets detailed in Table 2. The metrics module comprises four primary metrics utilized for evaluating the
+performance of various compressors. The runner module offers a generalized interface for executing evaluations or
+simply retrieving the compressed prompt generated by the compressors.
+
+LongLLMLingua (Jiang et al., 2023b), SCRL (Gha-            prompts (Pal, 2022).
+landari et al., 2022), and KiS (Laban et al., 2021).          ChainForge. This visual toolkit aids prompt en-
+
+   (ii) User-friendly interfaces for new compres-          gineering and enables on-demand hypothesis test-
+sors, datasets, and metrics. Facilitating portabil-        ing for text generation LLMs (Arawjo et al., 2023).
+ity and ease of adaptation to different environments,
+the interfaces within PCToolkit are designed to be            Promptotype. A platform for structured prompt
+easily customizable. This flexibility makes PC-            engineering, facilitating the development, testing,
+Toolkit suitable for a wide range of environments          and monitoring of customized LLM tasks1.
+and tasks.
+                                                              OpenPrompt. This toolkit supports prompt-
+   (iii) Modular design. Featuring a modular struc-        learning with pre-trained language models (PLMs),
+ture that simplifies the transition between different      offering efficiency, modularity, and extendibility.
+methods, datasets, and metrics, PCToolkit is or-           It allows the integration of different PLMs, task
+ganized into four distinct modules: Compressor,            formats, and prompting modules in a unified frame-
+Dataset, Metric and Runner module.                         work (Ding et al., 2022).
+
+2 Related Works                                               Despite the availability of aforementioned toolk-
+                                                           its, a toolkit specifically focusing on prompt com-
+Recent prompt-related toolkits have focused on             pression remains absent. By amalgamating insights
+prompt design intricacies and their influence on lan-      from existing works and incorporating state-of-the-
+guage model performance (Amatriain, 2024; Liu              art prompt compression techniques, our toolkit
+et al., 2021). These studies emphasize the signifi-        aims to equip researchers, developers, and prac-
+cance of tailored prompts in guiding language mod-         titioners with a versatile toolset for prompt com-
+els for accurate information retrieval, offering valu-     pression. This enhancement seeks to improve the
+able insights for prompt compression methodolo-            performance and affordability of large language
+gies. Various toolkits exist for prompt engineering        models across diverse applications.
+and optimization, such as Promptify, ChainForge,
+Promptotype, and OpenPrompt.                               3 Supported Compressors, Datasets and
+                                                               Metrics
+   Promptify. It is a toolkit tailored for prompt en-
+gineering, addressing NLP challenges with LLMs             Table 1 presents an overview of the supported tasks,
+and facilitating the generation of diverse NLP task        compressors, and datasets within PCToolkit. Each
+
+                                                               1https://www.promptotype.io/
+
+                                                        2
+Tasks                   Supported Compressors                    Supported Datasets
+Reconstruction          SC, LLMLingua, LongLLMLingua, SCRL, KiS  BBC, ShareGPT, Arxiv, GSM8K
+Mathematical promblems  SC, LLMLingua, LongLLMLingua, SCRL, KiS  GSM8K, BBH
+Boolean expressions     SC, LLMLingua, LongLLMLingua, SCRL, KiS  BBH
+Multiple choice         SC, LLMLingua, LongLLMLingua, SCRL, KiS  BBH
+Lies recognition        SC, LLMLingua, LongLLMLingua, SCRL, KiS  BBH
+                                                                 BBC, Arxiv. Gigaword, DUC2004,
+Summarization           SC, LLMLingua, LongLLMLingua, SCRL, KiS  BNC, Broadcast, Google
+                                                                 LongBench
+Question and Answer     LLMLingua, LongLLMLingua                 BBH
+                        SC, LLMLingua, LongLLMLingua, SCRL, KiS  LongBench
+Few-shot learning       LLMLingua, LongLLMLingua                 LongBench
+Synthetic tasks         LLMLingua, LongLLMLingua                 LongBench
+Code completion         LLMLingua, LongLLMLingua                 LongBench
+                        LLMLingua, LongLLMLingua
+
+Table 1: An overview of PCToolkit, including different evaluation tasks, compressors and datasets.
+
+component are described in detail in Section 4           plicity (Laban et al., 2021).
+Toolkit Design. Evaluation of all compression
+methods across various datasets for different tasks      3.2 Datasets
+is depicted in Table 6, with results to be discussed
+in Section 5 Evaluation.                                 Table 2 shows all datasets supported in PCToolkit.
+                                                            GSM8K. GSM8K (Cobbe et al., 2021) contains
+3.1 Compressors
+                                                         8.5K high-quality linguistically diverse word prob-
+PCToolkit integrates 5 state-of-the-art prompt com-      lems in elementary school mathematics. Each item
+pression methods in total: Selective Context (Li         contains a problem and its solution.
+et al., 2023), LLMLingua (Jiang et al., 2023a),
+LongLLMLingua (Jiang et al., 2023b), SCRL (Gha-             BBC News, Arxiv articles and ShareGPT. Li
+landari et al., 2022) and KiS (Laban et al., 2021).      et al. (2023) provided the three datasets. BBC
+These compressors are plug-and-play implemented,         News provides news articles from BBC, which is
+therefore can be invoked directly.                       a typical context of human daily lives. Arxiv ar-
+                                                         ticles provides scientific articles that represents a
+   Selective Context. Selective Context improves         formal context. ShareGPT contains contexts that is
+the context efficiency of LLMs in inference by           collected from human-AI conversations, which is a
+removing redundant content measured by self-             normal communication context.
+information (Shannon, 1948).
+                                                            Big Bench Hard (BBH). BBH (Suzgun et al.,
+   LLMLingua. LLMLingua involves a budget                2022) is a diverse evaluation suite that focuses on a
+controller to maintain semantic integrity under high     suite of 23 challenging tasks from BIG-Bench that
+compression ratios. LLMLingua compresses in-             were found to be beyond the capabilities of current
+formation within prompts by capitalizing on the          language models.
+compression-like characteristics of LLMs (Jiang
+et al., 2023a).                                             LongBench. LongBench (Bai et al., 2023) is
+                                                         the first benchmark for bilingual, multitask and
+   LongLLMLingua. LongLLMLingua came into                comprehensive assessment of long context under-
+stage with an enhancement on dealing with the            standing capabilities of large language models.
+inherent challenge of the lost in the middle issue       LongBench has six different task scenarios includ-
+(Liu et al., 2023), which is a phenomenon that per-      ing single-document question & answer, multi-
+formance of LLM can degrade significantly when           document question & answer, summarization, few-
+models must access relevant information in the           shot learning, synthetic tasks and code completion.
+middle of long contexts (Jiang et al., 2023b).
+                                                            Gigaword, BNC, DUC2004, Broadcast and
+   SCRL. SCRL is a reinforcement learning-based          Google. Ghalandari et al. (2022) provided the five
+approach designed to remove or retain tokens             datasets. While Gigaword (Rush et al., 2015) and
+according to the probabilities (Ghalandari et al.,       DUC2004 (Over and Yen., 2004) contain abstrac-
+2022).                                                   tive ground truth summaries, the remaining three
+                                                         datasets (Filippova and Altun, 2013; Clarke and
+   KiS. KiS is an approach of unsupervised text          Lapata, 2008) have token-level extractive ground
+simplification, which learns to balance a reward         truth summaries.
+across three properties: fluency, salience and sim-
+
+                                                      3
+Datasets          Supporting Compressors                  Supporting Metrics
+BBH                             All                       Accuracy
+Gigaword                        All                       ROUGE, Token-F1
+BNC                             All                       ROUGE, Token-F1
+DUC2004                         All                       ROUGE, Token-F1
+Broadcast                       All                       ROUGE, Token-F1
+Google                          All                       ROUGE, Token-F1
+GSM8K                           All                       Accuracy, BLEU, ROUGE, BERTScore
+BBC News                        All                       BLEU, ROUGE, BERTScore
+Arxiv articles                  All                       BLEU, ROUGE, BERTScore
+ShareGPT                        All                       BLEU, ROUGE, BERTScore
+                                                          Accuracy, BLEU, ROUGE, BERTScore, Edit-
+LongBench       LLMLingua, LongLLMLingua                  distance
+
+Table 2: Datasets and corresponding compressors and metrics supported in PCToolkit.
+
+3.3 Metrics                                                  Compressors. pctoolkit.compressors mod-
+                                                          ule in PCToolkit encompasses five state-of-the-art
+PCToolkit provides different metrics, including           compression methods tailored for prompt optimiza-
+BLEU, ROUGE, BERTScore, Edit distance and                 tion. All compressors can be invoked through a
+Accuracy. The first four metrics are used to com-         unified interface shown in Section 4.2.
+pare the difference between two strings, while Ac-
+curacy judges the results provided by LLM with               Datasets. pctoolkit.datasets module boasts
+the ground truth answer.                                  a diverse collection of over ten datasets, each metic-
+                                                          ulously curated to cover a wide array of natural lan-
+   BLEU. Proposed by Papineni et al. (2002), Bilin-       guage tasks. As shown in Table 3, from tasks like
+gual Evaluation Understudy (BLEU) is a metric             reconstruction, summarization, question answering,
+used to evaluate machine-translated text by com-          to more specialized domains such as code comple-
+paring it to reference translations (Papineni et al.,     tion and lies recognition, the datasets in PCToolkit
+2002; Li et al., 2023).                                   offer a comprehensive testing ground for assessing
+                                                          the efficacy of prompt compression techniques.
+   ROUGE. Proposed by Lin (2004), Recall-
+Oriented Understudy for Gisting Evaluation                   Metrics. pctoolkit.metrics module plays a
+(ROUGE) is a set of metrics used for evaluating           crucial role in quantifying the performance of the
+the quality of summaries produced by automatic            compression methods across different tasks. All
+summarization systems (Lin, 2004; Li et al., 2023;        metrics needed can be easily contained inside a list
+Bai et al., 2023).                                        that tells the Runner which metrics are required
+                                                          measuring.
+   BERTScore. Proposed by Zhang* et al. (2020),
+BERTScore evaluates text similarity using contex-            Runners. pctoolkit.runners module serves
+tual embeddings from BERT (Devlin et al., 2019).          as the engine that drives the evaluation process,
+It measures the similarity between reference and          orchestrating the interaction between the compres-
+candidate sentences, providing a score between 0          sion methods, datasets, and evaluation metrics. Re-
+and 1, where 1 indicates perfect semantic similarity      searchers and practitioners can seamlessly execute
+(Zhang* et al., 2020; Li et al., 2023).                   experiments, compare results, and analyze the per-
+                                                          formance of different compression techniques us-
+   Edit distance. Edit distance (Levenshtein dis-         ing the Runner component. This streamlined work-
+tance) is popularly used in code generation eval-         flow ensures efficient experimentation and evalu-
+uation (Svyatkovskiy et al., 2020; Yujian and Bo,         ation of prompt compression strategies within the
+2007). Edit Distance is a metric used to quantify         toolkit.
+the difference between two sequences of strings
+(Bai et al., 2023).                                          By integrating these components, PCToolkit of-
+                                                          fers a comprehensive and user-friendly platform for
+4 Toolkit Design                                          prompt compression and evaluation, empowering
+                                                          researchers and practitioners to optimize prompts
+4.1 Modular Design                                        for enhanced model performance in natural lan-
+                                                          guage processing tasks.
+As shown in Figure 1, PCToolkit is designed with
+a modular architecture, consisting of Compressor,
+Dataset, Metrics and Runner.
+
+                                                       4
+Algorithms            Metrics                                                   Datasets
+                      BLEU
+Selective Context   ROUGE L      GSM8K   BBC News  ShareGPT        Arxiv  Gigaword DUC2004         BNC           Broadcast    Google
+(Long)LLMLingua    Bertscore P     0.56      0.32  0.37(+0.12)     0.29                            0.54          0.45         0.45
+SCRL               Bertscore R     0.78      0.17  0.25(-0.02)     0.12   0.24            0.24     0.69          0.81         0.41
+KiS                Bertscore F1    0.34      0.02  0.27            0.05                            0.55          0.45         0.45
+Selective Context                  0.52      0.02  0.07            0.00   0.20            0.21     0.50          0.45         0.33
+(Long)LLMLingua                    0.82      0.69  0.70(+0.33)     0.57                            0.58          0.57         0.51
+SCRL                               0.90      0.50  0.56(+0.17)     0.42   0.26            0.25     0.82          0.90         0.57
+KiS                                0.53      0.27  0.58            0.24                            0.41(-0.38)   0.41(-0.41)  0.36(-0.34)
+Selective Context                  0.73      0.31  0.32            0.08   0.17            0.20     0.60          0.58         0.45
+(Long)LLMLingua                    0.96      0.89  0.90            0.93                            0.89          0.88         0.92
+SCRL                               0.98      0.86  0.89            0.88   0.19            0.14     0.97          0.98         0.96
+KiS                                0.68      0.81  0.87            0.85                            0.86          0.82         0.91
+Selective Context                  0.95      0.83  0.81            0.80   0.21            0.17     0.93          0.93         0.95
+(Long)LLMLingua                    0.97      0.91  0.92            0.92                            0.90          0.90         0.87
+SCRL                               0.98      0.89  0.91            0.90   0.21(-0.02) 0.13(-0.09)  0.94          0.96         0.89
+KiS                                0.70      0.88  0.92            0.86                            0.85          0.83         0.85
+Selective Context                  0.95      0.93  0.90            0.84   0.17            0.16     0.91          0.90         0.89
+(Long)LLMLingua                    0.97      0.90  0.91(+0.02)     0.92                            0.89          0.89         0.89
+SCRL                               0.98      0.88  0.90(+0.05)     0.89   0.86            0.86     0.96          0.97         0.93
+KiS                                0.69      0.84  0.89            0.85                            0.85(+0.09)   0.82(+0.03)  0.88(+0.11)
+                                   0.95      0.88  0.85            0.82   0.88            0.89     0.92          0.91         0.92
+
+                                                                          0.86            0.86
+
+                                                                          0.87            0.89
+
+                                                                          0.83            0.84
+
+                                                                          0.83            0.85
+
+                                                                          0.82            0.82
+
+                                                                          0.84            0.86
+
+                                                                          0.85            0.85
+
+                                                                          0.85            0.87
+
+                                                                          0.84            0.84
+
+                                                                          0.85            0.87
+
+Table 3: Performance measured for reconstruction and summarization tasks in PCToolkit. (Long)LLMLingua
+means we considered LLMLingua and LongLLMLingua together, since for small scale datas, these two compressors
+showed very slight differences. Numbers in parenthesis are the difference between the original results provided by
+former experiments and our results.
+
+4.2 Unified Interface                                              compressor = PromptCompressor(
+                                                                   type='SCCompressor', device='cuda')
+In PCToolkit, a unified interface for invoking                     dataset_name = 'arxiv'
+prompt compression methods is provided. In the                     dataset = load_dataset(dataset_name)
+following example, we show how to simply invoke
+the compressing methods within few lines.                          run(compressor=compressor ,
+                                                                   dataset=dataset ,
+from pctoolkit.compressors import                                  metrics=load_metrics , ratio=0.1)
+       PromptCompressor
+                                                                      Currently, the supporting datasets calls are im-
+compressor = PromptCompressor(                                     plemented inside run. Users can also following
+type='SCCompressor', device='cuda')                                the format in run to adapt their own datasets or
+
+test_prompt = "test prompt"                                        metrics.
+ratio = 0.3
+result = compressor.compressgo(                                    5 Evaluation
+test_prompt , ratio)
+print(result)                                                      Compression ratio. Following Li et al. (2023),
+
+   Different parameters for compressors can be in-                 we define the compression ratio to be the ratio of
+cluded inside compressgo.
+                                                                   reduced context length comparing with the original
+   For simple compression task, one compressor is
+selected. Following the example given above, an                    context      length.   That     is,  ratio    =  1-  Lc    where        Lc
+original prompt is input to the compressor, and the                                                                     LO
+compressor outputs the target compressed prompt.                   represents the length of compressed context and Lo
+For datasets evaluation, one datasets and multiple
+metrics are selected, along with the compressor                    represents the length of original context. Compres-
+chosen, these three parts are deployed in Runner.
+The Runner will provide the evaluation results ac-                 sion ratio is an essential parameter that measures
+cording to the metrics list, which includes all met-
+rics expected. The following example shows how                     how much deletion is needed for a prompt.
+to modularistically use PCToolkit.
+                                                                   5.1 Short Context Tasks
+from pctoolkit.runners import run
+from pctoolkit.datasets import                                     We conducted evaluations using different datasets
+                                                                   as outlined in Table 1 and assessed them across var-
+       load_dataset                                                ious metrics. The results, presented in Table 3, uti-
+from pctoolkit.metrics import                                      lized metrics like BLEU, ROUGE, and BERTScore
+                                                                   for testing tasks that do not have a definitive an-
+       load_metrics                                                swer, such as reconstruction and summarization.
+                                                                   Following the methodologies of Li et al. (2023) and
+                                                                   Jiang et al. (2023a), GPT-3.5-Turbo was employed
+
+                                                                5
+Compressors    SingleDoc    MultiDoc       Summ.         LongBench3               Code         AVG       Ratio
+                                                       FewShot Synth.                                    0.66
+LLMLingua      0.30(-0.01)  0.34(-0.04)  0.22(-0.04)                           0.37(-0.16)  0.33(-0.04)  0.66
+LongLLMLingua  0.41(+0.01)  0.39(-0.07)  0.22(-0.05)  0.63(-0.04) 0.11(+0.03)  0.42(-0.13)  0.47(-0.02)  0.80
+LLMLingua      0.26(+0.04)  0.36(+0.04)  0.22(-0.03)  0.63(-0.08) 0.75(+0.22)  0.36(-0.21)  0.32(-0.03)  0.80
+LongLLMLingua  0.38(-0.01)  0.39(-0.03)  0.22(-0.05)  0.60(-0.01) 0.10(0.00)   0.37(-0.2)   0.43(-0.05)
+                                                      0.62(-0.07) 0.60(+0.04)
+
+Table 4: Performance measured in LongBench datasets. Numbers in parenthesis are the difference between the
+original results provided by former experiments and our results. We evaluated each task by the metric provided by
+LongBench.
+
+as a frozen LLM for reconstruction tasks. It re-         Compressors           Dataset                   Accuracy
+ceived compressed prompts from the compressors           Baseline              BBH Boolean
+and generated reconstructed prompts, which were          Selective Context     Expression                   0.51
+then compared with the compressed ones. For sum-         (Long)LLMLingua                                 0.54(+0.03)
+marization tasks, the frozen LLM provided a pair         SCRL                  BBH Movie                 0.54(+0.03)
+of summaries, one from the original context and          KiS                   Recommendation            0.54(+0.03)
+the other from the compressed context. These pairs       Baseline                                        0.54(+0.03)
+of summaries were evaluated using the specified          Selective Context     BBH Web of Lies
+metrics. In our experiment, datasets like GSM8K,         (Long)LLMLingua                                    0.33
+BBC News, and ShareGPT were designated for               SCRL                  GSM8K
+reconstruction tasks, while the rest were assigned       KiS                                             0.63(+0.30)
+to summarization tasks.                                  Baseline                                        0.67(+0.34)
+                                                         Selective Context                               0.59(+0.26)
+   For tasks with precise answers, such as mathe-        (Long)LLMLingua                                 0.48(+0.15)
+matical problems, metrics like accuracy and edit         SCRL
+distance are commonly used. As shown in Table 5,         KiS                                                0.89
+we tested all compression methods across various         Baseline
+task types. The GSM8K dataset includes mathemat-         Selective Context                               0.39(-0.50)
+ical problems, while BBH encompasses a diverse           (Long)LLMLingua                                 0.62(-0.27)
+range of tasks. For instance, the Boolean Expres-        SCRL                                            0.31(-0.58)
+sion task requires the LLM to provide answers to         KiS                                             0.41(-0.48)
+specific logical expressions; the Movie Recommen-
+dation task tasks the LLM with selecting the most                                                           0.29
+suitable movie from a list based on a given descrip-
+tion; and the Web of Lies task involves the LLM                                                          0.09(-0.20)
+determining if a particular character is lying.                                                          0.25(-0.04)
+                                                                                                         0.05(-0.24)
+5.2 Long Context Tasks                                                                                   0.13(-0.16)
+
+For datasets that contains longer contexts, we eval-     Table 5: Performance measured in BBH & GSM8K
+uate LLMLingua and LongLLMLingua on them.                datasets. Our baseline is the performance without using
+With specified questions, LongLLMLingua per-             any compression methods. Numbers in parenthesis are
+formed much better than LLMLingua. Results are           the difference between the baseline results and each
+shown in Table 4. The evaluation settings are dif-       results with different compressors.
+ferent from original ones, as the authors of LLM-
+Lingua mentioned on GitHub2, they used the com-          6 Conclusion and Future work
+pletion mode of GPT-3.5-turbo, which is recently
+disabled by OpenAI. Thus, we used the chat mode          In conclusion, we introduced PCToolkit, an open-
+instead, which caused a little deviation from the        source project designed for prompt compression
+original results.                                        and evaluation. This toolkit offers researchers
+                                                         and practitioners a user-friendly and comprehen-
+    2https://github.com/microsoft/LLMLingua/blob/        sive resource, featuring five cutting-edge compres-
+main/Transparency_FAQ.md                                 sion methods and over ten diverse datasets encom-
+                                                         passing a wide range of natural language tasks.
+                                                         Through rigorous evaluations across various tasks
+                                                         such as reconstruction, summarization, mathemati-
+                                                         cal problem-solving, question answering, few-shot
+                                                         learning, and more, we demonstrated the effective-
+                                                         ness and versatility of the compression techniques
+                                                         integrated into PCToolkit.
+
+                                                            Our future endeavors focus on expanding PC-
+                                                         Toolkit with more compression methods, datasets,
+                                                         and evaluation metrics to further enhance its ca-
+                                                         pabilities for prompt compression and model opti-
+                                                         mization in natural language processing.
+
+                                                             3https://github.com/THUDM/LongBench
+
+                                                      6
+7 Broader Impact                                          References
+
+The findings and methodologies presented in this          Xavier Amatriain. 2024. Prompt design and engineer-
+study have broader implications for the field of             ing: Introduction and advanced methods. ArXiv,
+natural language processing (NLP) and the devel-             abs/2401.14423.
+opment of language models. By exploring and
+evaluating various compression techniques within          Ian Arawjo, Chelse Swoopes, Priyan Vaithilingam, Mar-
+the PCToolkit, we contribute to the ongoing ef-              tin Wattenberg, and Elena L. Glassman. 2023. Chain-
+forts to enhance the efficiency and performance of           forge: A visual toolkit for prompt engineering and
+large-scale language models. The insights gained             llm hypothesis testing. ArXiv, abs/2309.09128.
+from this research can potentially inform the de-
+sign of more streamlined and effective compression        Yushi Bai, Xin Lv, Jiajie Zhang, Hong Lyu, Jiankai
+methods, paving the way for advancements in NLP              Tang, Zhidian Huang, Zhengxiao Du, Xiao Liu, Ao-
+applications across diverse domains.                         han Zeng, Lei Hou, Yuxiao Dong, Jie Tang, and
+                                                             Juanzi Li. 2023. Longbench: A bilingual, multitask
+   Furthermore, the development of optimized com-            benchmark for long context understanding. ArXiv,
+pression methods could lead to more sustainable              abs/2308.14508.
+and eco-friendly practices in AI research and de-
+ployment. By reducing the computational re-               Pu-Chin Chen, Henry Tsai, Srinadh Bhojanapalli,
+sources required for training and inference, we              Hyung Won Chung, Yin-Wen Chang, and Chun-Sung
+may contribute to a more energy-efficient and cost-          Ferng. 2021. A simple and effective positional en-
+effective utilization of AI technologies.                    coding for transformers. In Proceedings of the 2021
+                                                             Conference on Empirical Methods in Natural Lan-
+8 Limitations                                                guage Processing, pages 2974-2988, Online and
+                                                             Punta Cana, Dominican Republic. Association for
+Despite the advancements made in this study, there           Computational Linguistics.
+are inherent limitations that should be acknowl-
+edged. One notable limitation is that the PCToolkit,      James Clarke and Mirella Lapata. 2008. Global infer-
+while effective in compressing prompts and enhanc-           ence for sentence compression : an integer linear
+ing model performance, may still face challenges             programming approach. J. Artif. Intell. Res., 31:399-
+in handling toxic or harmful content present in              429.
+NLP datasets. The toolkit's current capabilities
+may not extend to effectively filtering out such con-     Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian,
+tent, highlighting the ongoing need for robust ethi-         Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias
+cal guidelines and content moderation strategies in          Plappert, Jerry Tworek, Jacob Hilton, Reiichiro
+NLP research.                                                Nakano, Christopher Hesse, and John Schulman.
+                                                             2021. Training verifiers to solve math word prob-
+   Additionally, the generalizability of the com-            lems. arXiv preprint arXiv:2110.14168.
+pression techniques evaluated in this study may
+be limited to specific task domains or dataset char-      Tri Dao, Dan Fu, Stefano Ermon, Atri Rudra, and
+acteristics. Further research is needed to explore           Christopher Ré. 2022. Flashattention: Fast and
+the scalability and adaptability of these methods            memory-efficient exact attention with io-awareness.
+across a wider range of tasks and datasets to fully          In Advances in Neural Information Processing Sys-
+assess their utility and effectiveness in diverse ap-        tems, volume 35, pages 16344-16359. Curran Asso-
+plications.                                                  ciates, Inc.
+
+   Overall, while the PCToolkit offers valuable           Jacob Devlin, Ming-Wei Chang, Kenton Lee, and
+tools for prompt compression and model optimiza-             Kristina Toutanova. 2019. Bert: Pre-training of deep
+tion, researchers and practitioners are encouraged           bidirectional transformers for language understand-
+to remain vigilant about the broader impacts and             ing.
+limitations associated with the use of such tech-
+nologies in NLP research and development.                 Ning Ding, Shengding Hu, Weilin Zhao, Yulin Chen,
+                                                             Zhiyuan Liu, Haitao Zheng, and Maosong Sun. 2022.
+                                                             OpenPrompt: An open-source framework for prompt-
+                                                             learning. In Proceedings of the 60th Annual Meet-
+                                                             ing of the Association for Computational Linguistics:
+                                                             System Demonstrations, pages 105-113, Dublin, Ire-
+                                                             land. Association for Computational Linguistics.
+
+                                                          Katja Filippova and Yasemin Altun. 2013. Overcom-
+                                                             ing the lack of parallel data in sentence compression.
+                                                             In Proceedings of the 2013 Conference on Empiri-
+                                                             cal Methods in Natural Language Processing, pages
+                                                             1481-1491, Seattle, Washington, USA. Association
+                                                             for Computational Linguistics.
+
+                                                       7
+Demian Ghalandari, Chris Hokamp, and Georgiana                Xinyin Ma, Gongfan Fang, and Xinchao Wang. 2023.
+   Ifrim. 2022. Efficient unsupervised sentence com-             Llm-pruner: On the structural pruning of large lan-
+   pression by fine-tuning transformers with reinforce-          guage models. In Advances in Neural Information
+   ment learning. In Proceedings of the 60th Annual              Processing Systems, volume 36, pages 21702-21720.
+   Meeting of the Association for Computational Lin-             Curran Associates, Inc.
+   guistics (Volume 1: Long Papers), pages 1267-1280,
+   Dublin, Ireland. Association for Computational Lin-        Humza Naveed, Asad Ullah Khan, Shi Qiu, Muham-
+   guistics.                                                     mad Saqib, Saeed Anwar, Muhammad Usman, Nick
+                                                                 Barnes, and Ajmal S. Mian. 2023. A comprehen-
+Albert Gu, Karan Goel, and Christopher R'e. 2021. Effi-          sive overview of large language models. ArXiv,
+   ciently modeling long sequences with structured state         abs/2307.06435.
+   spaces. ArXiv, abs/2111.00396.
+                                                              Antonio Orvieto, Samuel L. Smith, Albert Gu, Anushan
+Huiqiang Jiang, Qianhui Wu, Chin-Yew Lin, Yuqing                 Fernando, Caglar Gulcehre, Razvan Pascanu, and
+   Yang, and Lili Qiu. 2023a. Llmlingua: Compressing             Soham De. 2023. Resurrecting recurrent neural net-
+   prompts for accelerated inference of large language           works for long sequences. ArXiv, abs/2303.06349.
+   models. In Conference on Empirical Methods in
+   Natural Language Processing.                               P Over and J Yen. 2004. Introduction to duc 2004: an in-
+                                                                 trinsic evaluation of generic news text summarization
+Huiqiang Jiang, Qianhui Wu, Xufang Luo, Dongsheng                systems. In Document Understanding Conference.
+   Li, Chin-Yew Lin, Yuqing Yang, and Lili Qiu. 2023b.
+   Longllmlingua: Accelerating and enhancing llms             Ankit Pal. 2022. Promptify: Structured output
+   in long context scenarios via prompt compression.             from llms. https://github.com/promptslab/
+   ArXiv, abs/2310.06839.                                        Promptify. Prompt-Engineering components for
+                                                                 NLP tasks in Python.
+Philippe Laban, Tobias Schnabel, Paul Bennett, and
+   Marti A. Hearst. 2021. Keep it simple: Unsupervised        Kishore Papineni, Salim Roukos, Todd Ward, and Wei-
+   simplification of multi-paragraph text. In Proceed-           Jing Zhu. 2002. Bleu: a method for automatic evalu-
+   ings of the 59th Annual Meeting of the Association for        ation of machine translation. In Proceedings of the
+   Computational Linguistics and the 11th International          40th Annual Meeting of the Association for Compu-
+   Joint Conference on Natural Language Processing               tational Linguistics, pages 311-318, Philadelphia,
+   (Volume 1: Long Papers), pages 6365-6378, Online.             Pennsylvania, USA. Association for Computational
+   Association for Computational Linguistics.                    Linguistics.
+
+Changhun Lee, Jungyu Jin, Taesu Kim, Hyungjun                 Alexander M. Rush, Sumit Chopra, and Jason Weston.
+   Kim, and Eunhyeok Park. 2023. Owq: Lessons                    2015. A neural attention model for abstractive sen-
+   learned from activation outliers for weight quanti-           tence summarization. In Proceedings of the 2015
+   zation in large language models. arXiv preprint               Conference on Empirical Methods in Natural Lan-
+   arXiv:2306.02272.                                             guage Processing, pages 379-389, Lisbon, Portugal.
+                                                                 Association for Computational Linguistics.
+Yucheng Li, Bo Dong, Chenghua Lin, and Frank Guerin.
+   2023. Compressing context to enhance inference ef-         C. E. Shannon. 1948. A mathematical theory of com-
+   ficiency of large language models. In Conference on           munication. The Bell System Technical Journal,
+   Empirical Methods in Natural Language Processing.             27(3):379-423.
+
+Chin-Yew Lin. 2004. Rouge: A package for automatic            Peter Shaw, Jakob Uszkoreit, and Ashish Vaswani. 2018.
+   evaluation of summaries. In Annual Meeting of the             Self-attention with relative position representations.
+   Association for Computational Linguistics.                    In North American Chapter of the Association for
+                                                                 Computational Linguistics.
+Hao Liu and Pieter Abbeel. 2023. Blockwise paral-
+   lel transformers for large context models. In Ad-          Mirac Suzgun, Nathan Scales, Nathanael Scharli, Se-
+   vances in Neural Information Processing Systems,              bastian Gehrmann, Yi Tay, Hyung Won Chung,
+   volume 36, pages 8828-8844. Curran Associates,                Aakanksha Chowdhery, Quoc V. Le, Ed Huai hsin
+   Inc.                                                          Chi, Denny Zhou, and Jason Wei. 2022. Challenging
+                                                                 big-bench tasks and whether chain-of-thought can
+Nelson F. Liu, Kevin Lin, John Hewitt, Ashwin Paran-             solve them. In Annual Meeting of the Association for
+   jape, Michele Bevilacqua, Fabio Petroni, and Percy            Computational Linguistics.
+   Liang. 2023. Lost in the middle: How language mod-
+   els use long contexts. Transactions of the Association     Alexey Svyatkovskiy, Shao Kun Deng, Shengyu Fu,
+   for Computational Linguistics, 12:157-173.                    and Neel Sundaresan. 2020. Intellicode compose:
+                                                                 code generation using transformer. Proceedings of
+Pengfei Liu, Weizhe Yuan, Jinlan Fu, Zhengbao Jiang,             the 28th ACM Joint Meeting on European Software
+   Hiroaki Hayashi, and Graham Neubig. 2021. Pre-                Engineering Conference and Symposium on the Foun-
+   train, prompt, and predict: A systematic survey of            dations of Software Engineering.
+   prompting methods in natural language processing.
+   ACM Computing Surveys, 55:1 - 35.
+
+                                                           8
+Zhongwei Wan, Xin Wang, Che Liu, Samiul Alam,
+   Yu Zheng, Jiachen Liu, Zhongnan Qu, Shen Yan,
+   Yi Zhu, Quanlu Zhang, Mosharaf Chowdhury, and
+   Mi Zhang. 2023. Efficient large language models: A
+   survey. ArXiv, abs/2312.03863.
+
+Sinong Wang, Belinda Z. Li, Madian Khabsa, Han Fang,
+   and Hao Ma. 2020. Linformer: Self-attention with
+   linear complexity. ArXiv, abs/2006.04768.
+
+Xindi Wang, Mahsa Salmani, Parsa Omidi, Xiangyu
+   Ren, Mehdi Rezagholizadeh, and Armaghan Eshaghi.
+   2024. Beyond the limits: A survey of techniques to
+   extend the context length in large language models.
+   ArXiv, abs/2402.02244.
+
+Genta Indra Winata, Samuel Cahyawijaya, Zhaojiang
+   Lin, Zihan Liu, and Pascale Fung. 2019. Lightweight
+   and efficient end-to-end speech recognition using
+   low-rank transformer. ICASSP 2020 - 2020 IEEE
+   International Conference on Acoustics, Speech and
+   Signal Processing (ICASSP), pages 6144-6148.
+
+Li Yujian and Liu Bo. 2007. A normalized levenshtein
+   distance metric. IEEE Transactions on Pattern Anal-
+   ysis and Machine Intelligence, 29(6):1091-1095.
+
+Tianyi Zhang*, Varsha Kishore*, Felix Wu*, Kilian Q.
+   Weinberger, and Yoav Artzi. 2020. Bertscore: Eval-
+   uating text generation with bert. In International
+   Conference on Learning Representations.
+
+Wayne Xin Zhao, Kun Zhou, Junyi Li, Tianyi Tang,
+   Xiaolei Wang, Yupeng Hou, Yingqian Min, Beichen
+   Zhang, Junjie Zhang, Zican Dong, Yifan Du, Chen
+   Yang, Yushuo Chen, Z. Chen, Jinhao Jiang, Ruiyang
+   Ren, Yifan Li, Xinyu Tang, Zikang Liu, Peiyu Liu,
+   Jianyun Nie, and Ji rong Wen. 2023. A survey of
+   large language models. ArXiv, abs/2303.18223.
+
+                                                              9
+A Appendix                                           A.3 Datasets Tested on Different Compressors
+
+A.1 Online Demonstration                             As shown in Table 6, we evaluated all compressors
+                                                     on different datasets supported by PCToolkit.
+PCToolkit online demonstration is avail-
+able on https://huggingface.co/spaces/                      Selective LLM- Long-
+JerryLiJinyi/Prompt-Compression-Toolbox.                    Con- Lingua LLM- SCRL KiS
+The guidance for online demonstration can be                text    Lingua
+found in Appendix A.2.
+                                                     GSM8K                        
+A.2 Guidance for Online Demonstration
+                                                     BBH                          
+As shown in Figure 2, follow the steps below to try
+our online demonstration.                            BBC     
+                                                     News
+   Step 1. Enter the original prompt.
+   Step 2. Choose a compressor. Due to the Hug-      Arxiv                        
+gingface Token issue, we cannot provide online
+demonstrations for LLMLingua and LongLLMLin-         ShareGPT                     
+gua compressors since they are based on LLaMA
+2, for which a Huggingface Token is needed.          Gigaword                     
+   Step 3. Enter the compression ratio. As men-
+tioned in section 4, the compression ratio is the    DUC2004                      
+proportion of context to be deleted. Compression
+ratio only works for Selective Context, LLMLingua    BNC                          
+and LongLLMLingua.
+   Step 4. If SCRL or KiS is chosen, max_length      Broadcast                    
+parameter is needed to be specified manually.
+Precisely, for SCRL, max_length represents the       Google                       
+length of context window, so it should be less
+than the length of original context. As for KiS,     Long-          
+max_length represents the maximum length of in-      Bench
+put context. So, for KiS, max_length should be
+longer than the original context.                    Table 6: Datasets tested on different compressors.
+
+Figure 2: Demonstration website.
+                 10
+

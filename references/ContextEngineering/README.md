@@ -51,6 +51,29 @@ references/ContextEngineering/
 
 > 新增文件名中的 `_vN` 表示 arXiv 版本号；论文优先级和下载校验信息见 [`../arxiv_2026-07_manifest.md`](../arxiv_2026-07_manifest.md)。
 
+### G 组：Prompt 压缩专题（独立子目录）
+
+为了避免主目录 PDF 数量膨胀，专门建立 [`PromptCompression/`](PromptCompression/) 子目录聚焦「**本地小模型前置处理、削减无效 Token、完善提示词完整性**」方向：
+
+| 子目录文件 | 主题 |
+|---|---|
+| `PromptCompression/31-LLMLingua.pdf` | 微软首代抽取式压缩（EMNLP-2023） |
+| `PromptCompression/32-Long-LLMLingua.pdf` | 问题感知长上下文压缩（ACL-2024） |
+| `PromptCompression/33-LLMLingua-2.pdf` | GPT-4 蒸馏 token 分类器（ACL-2024 Findings，重点） |
+| `PromptCompression/34-Selective-Context.pdf` | 自信息过滤基础范式（EMNLP-2023） |
+| `PromptCompression/35-Gist-Tokens.pdf` | 软提示压缩开山之作（NeurIPS-2023） |
+| `PromptCompression/36-Nano-Capsulator.pdf` | NL 格式胶囊改写（2024） |
+| `PromptCompression/37-SLM-Ambiguity.pdf` | SLM 显式解决提示词歧义（2026） |
+| `PromptCompression/38-Style-Compress.pdf` | 任务自适应风格压缩（2024） |
+| `PromptCompression/39-Context-Cascade-C3.pdf` | 多级 SLM 级联 20×–40× 压缩（2025） |
+| `PromptCompression/40-Cross-Lingual-Token-Arbitrage.pdf` | 跨语言边缘预处理中间件（2026） |
+| `PromptCompression/41-Telegraph-English.pdf` | 符号化结构化改写（2026） |
+| `PromptCompression/42-Prompt-Compression-Survey.pdf` | 领域全景综述（NAACL-2025） |
+| `PromptCompression/43-PCToolkit.pdf` | 即插即用统一工具箱（2024） |
+| `PromptCompression/44-Prompt-Compression-Empirical-Study.pdf` | ICLR-2025 Workshop 实测对比 |
+
+> 详见 [`PromptCompression/README.md`](PromptCompression/README.md) 与 [`PromptCompression/PromptCompression_参考资料清单.md`](PromptCompression/PromptCompression_参考资料清单.md)。其中 34/35 号的 arXiv ID 在外部参考清单中标注有误，已按 arXiv 官方页面校正（2304.04408 → 2304.12102；2304.03418 → 2304.08467）。
+
 
 
 ## 分组速查
@@ -63,6 +86,7 @@ references/ContextEngineering/
 | D 组 | 奠基性与扩展综述 | 18–19 |
 | E 组 | 2026 年 6 月新增：Agent 记忆与上下文管理 | 20–22 |
 | F 组 | 2026 年 7 月新增：仓库上下文、压缩与 Agent Skills | 23–30 |
+| G 组 | **Prompt 压缩专题（独立子目录）** | 31–44（见 `PromptCompression/`） |
 
 ## 使用建议
 

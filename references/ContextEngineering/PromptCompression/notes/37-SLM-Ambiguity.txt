@@ -1,0 +1,775 @@
+                                              Small Language Model Helps Resolve Semantic Ambiguity of LLM Prompt
+
+                                                  Zhenzhen Huang1, Chaoning Zhang1,*, Fachrina Dewi Puspitasari1, Jiaquan Zhang1,
+                                                                              Yitian Zhou1, Shuxu Chen2, Yang Yang1
+
+                                        1School of Computer Science and Engineering, University of Electronic Science and Technology of China,
+                                                                  2Department of Electronic Engineering, Kyung Hee University
+
+                                                                                              *Correspondence: chaoningzhang1990@gmail.com
+
+arXiv:2604.23263v1 [cs.CL] 25 Apr 2026                        Abstract                            et al., 2022; Zhou et al., 2026). As these models
+                                                                                                  are increasingly deployed in open-ended and in-
+                                             Large language models (LLMs) are increas-            teractive settings, user prompts have become the
+                                             ingly utilized in various complex reasoning          primary interface through which intent, constraints,
+                                             tasks due to their excellent instruction follow-     and assumptions are supplied to the model. How-
+                                             ing capability. However, the model's perfor-         ever, real-world prompts are often underspecified,
+                                             mance is highly dependent on the open-ended          ambiguous, and internally inconsistent. This con-
+                                             characteristics of the users' input prompt. Nat-     dition poses a fundamental challenge to reliable
+                                             ural prompts often do not follow proper syntac-      reasoning (Min et al., 2020; Ji et al., 2023).
+                                             tic rules, which creates ambiguous queries that
+                                             yield multiple interpretations. Such ambigu-            Semantic ambiguity in user prompts can signifi-
+                                             ous prompts confuse the model in choosing            cantly disrupt LLM reasoning by introducing mul-
+                                             the correct reasoning paths to answer questions.     tiple competing interpretations that the model must
+                                             Prior works address this challenge by applying       implicitly resolve during generation (Min et al.,
+                                             query editing during the LLM inference pro-          2020; Si et al., 2022). Such ambiguity often leads
+                                             cess without explicitly solving the root cause       to attention dispersion, unstable reasoning trajec-
+                                             of the ambiguity. To address this limitation, we     tories, and high variance across stochastic sam-
+                                             propose a pre-inference prompt optimization          ples (Dziri et al., 2022; Ribeiro et al., 2020). These
+                                             mechanism via explicit prompt disambiguation.        particularly happen in tasks that require reference
+                                             Particularly, we identify semantic risks in the      resolution, implicit assumption handling, or multi-
+                                             prompt, check their multi-perspective consis-        step logical consistency reasoning (Levesque et al.,
+                                             tency, and resolve any semantic conflicts that       2012; Zhou et al., 2020). As LLMs are trained to
+                                             arise. Finally, we organize the resolved am-         infer meaning rather than explicitly validate the
+                                             biguities in a logically structured manner as a      prompt, ambiguous inputs may follow spurious rea-
+                                             clean input to the LLM. By explicitly resolving      soning paths that are logically plausible but glob-
+                                             semantic ambiguity, our method can produce           ally inconsistent (Turpin et al., 2023; Creswell and
+                                             a more focused attention distribution to the se-     Shanahan, 2022). Recent studies on multimodal
+                                             mantically essential tokens. We also leverage        reasoning further suggest that such ambiguity can
+                                             small language models (SLMs) as the main             be amplified when aligning heterogeneous modali-
+                                             executor of prompt disambiguation to bene-           ties, where inconsistent semantic grounding leads
+                                             fit from their efficient computation. Through        to compounding reasoning errors across modali-
+                                             comprehensive experiments on multiple bench-         ties (Zheng et al., 2026). As a result, even strong
+                                             marks, we demonstrate that our method im-            instruction-following models can produce brittle
+                                             proves reasoning performance by 2.5 points           outputs when faced with ambiguous inputs, which
+                                             at a cost of only $0.02. Our study promotes          limits the model's reliability in reasoning-intensive
+                                             explicit prompt disambiguation as an effective       tasks.
+                                             prompt optimization method without disturbing
+                                             the internal mechanism of LLM inference.                Existing approaches largely address the chal-
+                                                                                                  lenge of prompt ambiguity through prompt engi-
+                                        1 Introduction                                            neering and prompt optimization. These include
+                                                                                                  chain-of-thought prompting (Wei et al., 2022), self-
+                                        Large language models (LLMs) have recently                consistency (Wang et al., 2022), semantic pars-
+                                        demonstrated remarkable capabilities in follow-           ing (Stengel-Eskin et al., 2023), and agent- or
+                                        ing instructions and performing complex reasoning
+                                        across a wide range of tasks, including question
+                                        answering, planning, and decision making (Wei
+
+                                                                                               1
+gradient-based prompt search (Yuksekgonul et al.,            · We propose DisambiguSLM, a prompt opti-
+2024; Wang et al., 2026b; Zhang et al., 2026c,b).               mization method that resolves the semantic
+While these techniques can improve average task                 ambiguity in the input prompt through the
+performance, they fundamentally rely on the LLM                 identification and resolution of risk points be-
+itself to internally resolve semantic ambiguity dur-            fore going through LLM inference.
+ing inference. As a result, they do not explicitly
+detect semantic risks, reconcile conflicting inter-          · Through extensive evaluation on various rea-
+pretations, or enforce input-level consistency. This            soning benchmarks, we demonstrate the effec-
+reliance on the LLM limits the methods' robust-                 tiveness of our method against strong state-of-
+ness under highly ambiguous inputs, which leads                 the-art methods in improving the reasoning
+to substantial output variance and increased com-               process of LLM.
+putational cost due to repeated large-model infer-
+ence (Wang et al., 2026a; Zhang et al., 2026b).           2 Related Work
+Consequently, prior methods treat ambiguity as a
+downstream reasoning issue (Tang et al., 2025) or         LLM Reasoning Paths and Stability. Recent stud-
+interaction mechanism (Pilault et al., 2023) rather       ies have investigated how LLMs form and fol-
+than an upstream input-quality problem, thus leav-        low reasoning paths during generation, revealing
+ing a gap for approaches that proactively resolve         that attention allocation and intermediate token
+semantic uncertainty before execution.                    trajectories play a crucial role in reasoning suc-
+                                                          cess (Wiegreffe and Pinter, 2019; Clark et al.,
+   To address this gap, we propose an upstream            2019; Wang et al., 2025). Works on reasoning,
+prompt optimization mechanism that resolves am-           faithfulness, and robustness show that LLMs often
+biguities in users' input prompts. We refer to our        generate answers through inconsistent or spurious
+method as DisambiguSLM. We utilize SLM for                reasoning paths, especially under ambiguous in-
+its good instruction following capability at a much       puts (Creswell and Shanahan, 2022; Turpin et al.,
+lower cost than the LLM as the main model (Sri-           2023; Li et al., 2026). Multi-path and tree-based
+vastava et al., 2025). SLM acts as an evaluator           reasoning frameworks, such as ReAct (Yao et al.,
+that examines the semantic fitness and clarity of         2022), Tree-of-Thought (Yao et al., 2023), and
+the prompt via three-stage refinement. Particularly,      Graph-of-Thought (Besta et al., 2024), explicitly
+it first identifies the semantic risk points present      explore multiple reasoning branches to improve re-
+in the prompt. The model then passes each risk            liability. While effective, these methods incur sub-
+point to the next stage, where the risk goes through      stantial inference overhead and still assume that the
+an interpretation consistency check and ambigu-           input semantics are fixed and well-formed (Zhang
+ity resolution. SLM then aggregates the resolved          et al., 2026a). Consequently, they address ambigu-
+risk points in a logically structured manner and uti-     ity implicitly through exploration rather than ex-
+lizes them as the supplementary representation to         plicitly stabilizing the semantic space beforehand.
+the original input prompt, as the semantically clear
+input to the LLM.                                         Prompt Optimization. Prompt optimization has
+                                                          been widely studied as a means of improving
+   By passing the input prompt to DisambiguSLM            LLM performance without model retraining. Early
+and sending the output to the LLM, we can in-             works, such as Chain-of-Thought (Wei et al.,
+crease the LLM's reasoning performance by about           2022) prompting, demonstrate that explicitly elic-
+8 points of accuracy against naïve prompting and 3        iting intermediate reasoning steps can signifi-
+points of accuracy against state-of-the-art prompt        cantly improve performance on complex reason-
+optimization methods. Our method presents the             ing tasks (Kojima et al., 2022). Subsequent ap-
+largest gain at ambiguous reasoning tasks, exhibit-       proaches extend this idea through self-consistent
+ing the benefit of DisambiguSLM in resolving se-          sampling (Wang et al., 2022), prompt ensem-
+mantic risks in the prompt. We list the contribution      bling (Hu et al., 2025; Zhang et al., 2024), and
+of our study as follows:                                  iterative refinement (Madaan et al., 2023; Han et al.,
+                                                          2024). More automated methods have been pro-
+   · To the best of our knowledge, we are the first       posed, including automatic prompt engineering
+      to introduce a pre-inference prompt optimiza-       (APE) (Zhou et al., 2022), optimization via rein-
+      tion method via explicit semantic disambigua-       forcement or gradient-based signals (Yuksekgonul
+      tion of the prompt.
+
+                                                       2
+et al., 2024), and agent-driven prompt search frame-      3.1 Problem Formulation.
+works such as PromptAgent (Wang et al., 2023) and
+OPRO (Yang et al., 2023). While these methods             We formulate LLM inference over an ambiguous
+improve average accuracy, they primarily focus            input prompt as follows. Given input query q,
+on optimizing surface-level prompt formulations           LLM PLLM aims to generate output text y where
+and rely on the LLM itself to internally resolve se-      y  PLLM (Y | Q). Q defines semantic represen-
+mantic ambiguity, often resulting in high variance        tation of the query, and Y represents semantic of
+under ambiguous or underspecified inputs. Recent          the generated text. Due to the expressiveness of
+retrieval-augmented optimization approaches fur-          users' input, Q may contain ambiguities and logi-
+ther attempt to refine prompt representations by          cal conflicts. For instance, "The boy saw the man
+reducing redundancy and improving retrieval align-        with the telescope" may yields multiple interpreta-
+ment, yet still depend on implicit disambiguation         tions, the man that uses a telescope is seen by the
+within the model (Guo et al., 2025; Ou et al., 2025).     boy or the boy is using a telescope to see the man.
+                                                          This may confuse the reasoning in LLM, and thus
+Semantic Ambiguity Resolution. Semantic ambi-             producing less satisfying answer. This stems from
+guity has long been studied in natural language pro-      high-entropy diffusion in the attention matrix AQ
+cessing, particularly in tasks such as word sense am-     that leads to the expansion of the inference path BQ.
+biguation, co-reference resolution, and pragmatic         We define this input semantic risk as a measure of
+inference (Navigli, 2009; Hobbs, 1978; Kehler and         the inference uncertainty of the LLM.
+Kehler, 2002). More recently, ambiguity-aware
+modeling has been explored in neural settings, in-        R(Q) = H(AQ) + |BQ|  (1)
+cluding uncertainty-aware parsing (Duan et al.,
+2024; Liu et al., 2025), contrastive disambigua-          where H(AQ) is the attention entropy that charac-
+tion (Arora et al., 2024; Kibria et al., 2024), and       terizes the degree of dispersion in attention distri-
+probabilistic semantic representations (Min et al.,       bution, |BQ| is the number of competing thinking
+2020). In the context of LLMs, ambiguity has              branches, and  defines the coefficient that penal-
+been identified as a key source of reasoning errors       izes the branch expansion. The semantic risk may
+and instability (Dziri et al., 2022; Ribeiro et al.,      include the following types:
+2020). Some works attempt to mitigate ambiguity
+through paraphrasing, rephrasing, or clarification        · Referential ambiguity refers to the presence of
+questions (Si et al., 2022; Zhang et al., 2026c).           unclear referents.
+However, these approaches either defer ambigu-
+ity resolution to the LLM or require additional in-       · Missing or implicit assumption refers to the
+teraction rounds. Moreover, they do not provide             omission of key premises or background as-
+a structured mechanism for detecting, verifying,            sumptions in the input.
+and resolving semantic conflicts prior to reasoning.
+Research highlights the importance of explicitly          · Temporal ambiguity refers to the unclear tem-
+modeling competing semantic hypotheses and val-             poral relationship or sequence of events.
+idating their consistency, which can improve ro-
+bustness under ambiguous inputs (Guo et al., 2022,        Our work aims to minimize the semantic risk by
+2023).
+                                                          transforming the semantics of the input prompt into
+3 Method                                                  a disambiguous prompt representation Q.
+
+Our work introduces DisambiguSLM, a prompt op-              Q = (Q), with Q = arg min R(Q) (2)
+timization method that explicitly resolves semantic
+ambiguities in input prompts prior to LLM infer-                                                                     Q
+ence. We employ SLM as the core executor of
+DisambiguSLM to take advantage of its computa-            3.2 Technical Framework
+tional efficiency.                                        We aim to transform the input prompt with the as-
+                                                          sistance of an SLM to identify and resolve semantic
+                                                          risk in the input prompt. Figure 1 illustrates our
+                                                          method.
+                                                          Layer 1: Semantic Risk Identification. We em-
+                                                          ploy SLM as a global scanner to perform rigorous
+
+                                                       3
+Figure 1: Framework of DisambiguSLM. We propose a prompt optimization method via semantic disambiguation.
+Specifically, we identify semantic risks, perform dual-path verification and conflict resolution, and conduct semantic
+integration to produce a non-ambiguous input prompt for LLM inference.
+
+semantic scanning on Q to locate abnormal regions          interpretations to the SLM, together with the orig-
+that may cause instability in LLM inference. SLM           inal problem context, to produce a self-consistent
+receives an input query q and produces a set of risk       unified explanation ui that resolves the semantic
+points P.                                                  conflict.
+
+{pi}ni=1  P, where pi = [si, ti, i]T (3)                   Layer 3: Semantic Integration and
+                                                           Enhancement. After verification, we feed
+Elements si, ti, i define 2D location information          the resolved risk point ui to another SLM to per-
+and risk type (e.g., ambiguity, logical gap). We           form structured logic enhancement. Specifically,
+restrict the SLM role strictly for risk positioning        we organize all the resolved representations into
+and category identification to keep the computing          the SLM to normalize the information and generate
+budget low.                                                a new enhanced context A.
+
+Layer 2: Consistency Verification and Conflict             A = Aggregate {SLM(ui)}ni=1  (5)
+Resolution. After identifying the risk point, we
+process it in the next step, which is verification and     We utilize this new representation, together with the
+resolution. We pass each risk point pi to two inde-
+pendent SLMs that generate two semantic interpre-          original query Q, as a semantically unambiguous
+tations ri,1 and ri,2. We then check the consistency       input Q to the LLM.
+ci of these two interpretations by calculating their
+semantic embedding similarity as follows:                  4 Analysis on Attention Distribution
+
+ci = cosine sim(h(ri,1), h(ri,2))  (4)                     We conjecture that unstable LLM reasoning is due
+                                                           to the presence of semantic risk in the input query
+The two interpretations are defined as consistent          q. These risk points increase the entropy of the
+when ci  , and inconsistent otherwise. For a               internal attention mechanism, thereby expanding
+consistent pair, we perform equal-weight fusion            the reasoning branch. To verify this hypothesis,
+by concatenating the two interpretations, without          we conduct an observation on the evolution of the
+assigning preference to either one, to form a stable       model's attention mechanism AQ and analyze the
+explanation ui. This concatenated representation           contribution of DisambiguSLM as a stabilizer. Par-
+explicitly preserves complementary semantic in-            ticularly, we perform a comparative analysis of the
+formation and is subsequently normalized in the            impact of original query Q and unambiguous query
+semantic integration stage. Otherwise, when the            Q on Llama-3-8b. We utilize the following demo
+two interpretations are inconsistent, we feed both         prompt for analysis.
+
+                                                           Problem:
+                                                           Company A starts with $1000.
+                                                           Company B starts with $2000.
+
+                                                        4
+There are two potential costs:                            branches. Instead of competing against diverse
+Marketing ($400) and R&D ($300).                          reasoning branches, the model precisely allocates
+Company A pays for Marketing.                             computational resources to the key semantic anchor
+It then transfers half of the remainder to                resolved by SLM.
+  Company B.
+Later, Company B invests 20% of it into R&D.              Figure 3: Comparison of joint distribution of entropy-
+Question:                                                 focus ratio between Q and Q. Q shifts high focus
+How much money does Company B have left?                  region for low entropy and low focus region for high
+Let's think step by step.                                 entropy.
+
+The pronoun "it" in the Company B invests 20%             Entropy-Focus Distribution. Besides FocusRatio,
+of it is semantically ambiguous as it may refer to        we calculate Shannon entropy of the normalized
+                                                          attention weight as follows.
+the holding amount of B ($2000) or to the amount
+                                                                                             n
+received from A ($300). Thus, with this demo
+                                                                    H(q) = - Aq,i log(Aq,i + ) (7)
+prompt, we analyze the attention distribution from
+                                                                                           i=1
+"it" token to all preceding tokens in the prompt.
+                                                          where  is small constant for numerical stability.
+Layer-wise Attention Focus. We measure the                We plot the distribution of entropy and focus ratio
+                                                          to examine the effect of query disambiguation on
+layer-wise attention focus ratio of the "it" token to     the information theory level. Figure 3 shows that
+                                                          the distribution of Q is concentrated in the low
+all preceding tokens to understand how it evolves.        focus region. Meanwhile, the distribution of Q
+                                                          significantly shifts to the high focus region for low
+We define focus ratio (FR) as follows.                    entropy and low focus region for high entropy. This
+                                                          phenomenon demonstrates the effectiveness of the
+FocusRatio(q, T ) = Aq,i  (6)                             enhanced context A over the original query Q. The
+                                                          intervention of SLM not only enables the model to
+iT                                                        identify key semantic anchors accurately but also
+                                                          reduces uncertainty during inference by eliminating
+where T refers to the subset of preceding token           semantic noise.
+indices of the semantically correct references (e.g.,     Token-Wise Attention Redistribution. To under-
+"remainder" token) and Aq defines the normalized          stand how Q changes the attention allocation in Q
+attention weight. We plot layer-wise focus ratio by       at a fine-grained level, we plot the attention reallo-
+taking the mean of the attention score over queries.      cation on each token type. We categorize tokens
+Figure 2 shows that the optimized representation          into four types: sink token, neutral tokens, target
+Q exhibits a significantly higher focus ratio than        tokens, and others. Sink token includes start token
+the original representation Q across all layers.          "<|begin_of_text|>", which typically behaves as an
+                                                          attention sink (Xiao et al., 2023). Neutral tokens
+Figure 2: Layer-wise focus ratio comparison between       include stop-word tokens (e.g., of, is). Target token
+Q and Q. Q significantly improves the attention focus
+in reasoning layers.
+
+Focus ratio of Q exhibits immense growth in the
+early layer (e.g., 8 to 15) with a maximum increase
+of approximately eight to ten times. Meanwhile,
+the focus ratio of Q is relatively constant focus
+across all layers. This phenomenon potentially
+demonstrates that upstream prompt disambiguation
+suppresses the ineffective diffusion of inference
+
+                                                       5
+Figure 4: Token-wise attention reallocation from Q       widely used reasoning benchmarks: GPQA (Rein
+to Q. Q reallocate attention from sink tokens and        et al., 2024), AGIEval-MATH (Zhong et al., 2024),
+stopwords to semantically-meaningful tokens.             LIAR (Wang, 2017), WSC (Levesque et al., 2012),
+                                                         and BBH-Navigate (Suzgun et al., 2023). These
+is the expected anchor tokens needed to answer the       benchmarks encompass a diverse range of reason-
+question correctly (e.g., "$300"). Others include        ing skills, including factual reasoning, mathemati-
+words outside of the above categories but required       cal problem solving, logical consistency checking,
+by the target model to infer the information for an-     reference resolution, and multi-step navigation rea-
+swering the question. Figure 4 demonstrates that         soning. Particularly, WSC and LIAR are known to
+Q withdraws a considerable amount of attention           be highly sensitive to semantic ambiguity and un-
+from sink token and neutral tokens and reallocates       derspecified inputs, making them suitable for eval-
+those to target and other tokens, which are more         uating robustness under semantic risk. We average
+semantically meaningful in answering the question.       the accuracy over three independent runs. Addition-
+                                                         ally, we measure Avg. Cost as the cost required for
+5 Results                                                making an inference call to the optimizer model to
+                                                         obtain the final prompt. Note that this cost excludes
+This section elaborates on the evaluation of our         execution-time inference cost from calling the tar-
+DisambiguSLM method. We utilize Llama-3.2-1B             get LLM. Table 1 presents our results. Across all
+as SLM and GPT-4o-mini as LLM. This small-               LLMs, our method consistently outperforms con-
+sized language model is sufficient to function as        ventional prompting and prior prompt optimization,
+a semantic controller for all related subtasks in        with large gains on ambiguity-sensitive tasks such
+our method. Unless stated otherwise, we set the          as WSC and BBH-Navigate. By resolving semantic
+hyperparameters as follows: similarity threshold to      uncertainty at the input level, it stabilizes attention
+ = 0.8, temperature to 0.2, and random seeds in          and reasoning trajectories before LLM execution.
+the range 2025-2029. We utilize five samples per         Gains are largest in LLaMA-3-70B, indicating that
+input.                                                   models are more sensitive to ambiguity and benefit
+                                                         most from explicit semantic rectification. Over-
+5.1 Main Result                                          all, input-level semantic risk mitigation with SLM
+                                                         provides an efficient low-cost path to improving
+We evaluate the performance of our method on             reasoning robustness beyond surface-level prompt
+three LLMs: GPT-4o-mini, LLaMa-3-70B, and                optimization.
+DeepSeek-V3 to cover diverse architectures and de-
+ployment settings, enabling a fair evaluation of ro-     Stability and Consistency. Further, we measure
+bustness and cross-model generalization. We com-         the stability and self-consistency across prompt op-
+pare our method against several strong baselines,        timization methods. Specifically, we utilize GPQA,
+which include direct prompting, chain-of-thought         LIAR, and WSC benchmarks. We report single-
+(CoT) (Wei et al., 2022), Rephrase (Deng et al.,         sample accuracy (Acc@1), majority-vote accuracy,
+2023), Step-back (Zheng et al., 2023), APE (Zhou         and disagreement rate. Disagreement rate measures
+et al., 2022), OPRO (Yang et al., 2023), PromptA-        the proportion of inputs whose sampled outputs are
+gent (Wang et al., 2023), PromptBreeder (Fernando        not identical. Lower disagreement rates indicate
+et al., 2023), TextGrad (Yuksekgonul et al., 2024),      higher output stability. Table 2 demonstrates that
+and SPO (Xiang et al., 2025). We evaluate on five        across all datasets, prompt optimization methods
+                                                         exhibit high sampling variance (15-30% disagree-
+                                                         ment), as they rely on the target LLM to internally
+                                                         resolve semantic ambiguity. In contrast, our seman-
+                                                         tic risk rectification framework achieves the lowest
+                                                         disagreement rates on all datasets. Particularly,
+                                                         LIAR and WSC indicate substantially more stable
+                                                         reasoning. These results show that input-level se-
+                                                         mantic rectification primarily improves consistency
+                                                         and reproducibility rather than merely boosting av-
+                                                         erage performance.
+
+                                                      6
+Method       LLM     GPQA   AGIEval-MATH             LIAR     WSC   BBH-Navigate  Avg. Perf.      Avg. Cost ($)
+Naïve         GPT     38.9          42.1              63.5    72.4        91.3       61.6                -
+prompting   LLaMA     35.8          39.6              59.9    68.4        87.1       58.2                -
+           DeepSeek   36.4          40.2              60.8    69.7        88.9       59.2                -
+CoT           GPT     41.6          44.5              65.4    77.8        89.7       63.8                -
+            LLaMA     38.2           42               61.5    73.9        86.3       60.4                -
+Rephrase   DeepSeek   38.7          42.6              62.1    74.9        87.5       61.2                -
+              GPT     40.2          42.1              50.5    79.1        93.5       61.1                -
+Step-back   LLaMA     37.1          39.8              48.6    74.2        89.6      57.93                -
+           DeepSeek   37.9          40.3              49.2    75.6        90.8       58.8                -
+APE           GPT     42.4          47.5              62.8    78.7        93.5        65                 -
+            LLaMA     39.1          44.1              59.7     74         90.2       61.4                -
+OPRO       DeepSeek   39.8          45.2              60.4    75.1        91.2       62.3                -
+              GPT     41.1          44.4              65.9    80.2        92.5       64.8
+Prompt      LLaMA      38           42.5              62.6    76.1        89.3       61.7              9.07
+Agent      DeepSeek   38.5          42.9              63.4    77.3        90.1       62.4              9.07
+Prompt        GPT     43.3          46.1              67.6    80.2        95.8       66.6              9.07
+Breeder     LLaMA     39.6          43.3              64.2    76.8        91.5       63.1              4.51
+           DeepSeek   40.1           44               65.1    77.9        92.4       63.9              4.51
+TextGrad      GPT     41.3          41.4              64.1    82.7        95.7        65               4.51
+            LLaMA     38.2          40.1              61.2    79.4        91.1        62               2.71
+SPO        DeepSeek   38.6          40.7              61.9    80.3        92.1       62.7              2.71
+Disambigu     GPT     40.9          45.9              63.2    76.7        96.3       64.5              2.71
+SLM         LLaMA     37.6          42.9              60.3    74.1         92        61.4              4.82
+(Ours)     DeepSeek   38.1          43.8              61.1    74.8         93        62.2              4.82
+              GPT     40.2          44.4              65.7     78         91.3       63.9              4.82
+            LLaMA     36.9          41.8               62      75         88.7       60.9             13.14
+           DeepSeek   37.5          42.1               63     75.9        89.4       61.6             13.14
+              GPT     43.6          46.1              67.1     82         97.2       66.9             13.14
+            LLaMA      40           43.5              63.8    79.6        93.1        64               0.15
+           DeepSeek   40.5          44.2              64.7    80.1        94.3       64.8              0.15
+              GPT      44           46.7               69     85.2         98        68.6              0.15
+            LLaMA     41.1          44.2              65.9    83.8        94.8        66               0.02
+           DeepSeek   41.6          44.9              66.6     83         95.4       66.3              0.02
+                                                                                                       0.02
+
+           Table 1: Performance of prompting techniques across various reasoning benchmarks.
+
+         Method             Acc@1 (%)                   Majority Acc (%)  Disagreement Rate (%) 
+                                                                          GPQA LIAR WSC
+    Naïve prompting  GPQA LIAR         WSC           GPQA LIAR WSC
+            CoT                        72.4                                24.7 26.9 21.5
+                     38.9 63.5         77.8             40.2  65 74.1      22.1 24.6 18.6
+         Rephrase                      79.1                                23.4 29.4 17.9
+        Step-back    41.6 65.4         78.7             43.9 67.2 80.4     20.8 25.3 17.1
+                                       80.2                                21.6 23.8 15.8
+            APE      40.2 50.5         80.2             42.1 52.8 81       18.9 21.4 15.2
+          OPRO                         82.7                                20.4 24.2 13.6
+      PromptAgent    42.4 62.8         76.7             45    65.1 81.3    21.1 24.9 18.4
+     PromptBreeder                      78                                 22.3 23.1 17.2
+         TextGrad    41.1 65.9          82              43.8 67.9 83.1     17.5 20.2 14.1
+            SPO                        85.2                                11.2 12.5 7.8
+DisambiguSLM (Ours)  43.3 67.6                          46.5  70 83.6
+
+                     41.3 64.1                          44.1 66.5 85.9
+
+                     40.9 63.2                          43    65.7 79.8
+
+                     40.2 65.7                          42.6 67.8 80.9
+
+                     43.6 67.1                          46.8 69.8 85.1
+
+                     44     69                          47.3 72.6 88.4
+
+           Table 2: Stability and self-consistency comparison accross various prompting methods.
+
+Robustness on Ambiguity. Additionally, we eval-         Rewrite the following question to make it
+uate the robustness of prompting methods on
+ambiguity-augmented benchmarks. We randomly              slightly more semantically ambiguous, while
+pick 200 samples from WSC, LIAR, and GPQA
+benchmarks. We utilize GPT-4o-mini to generate           keeping it logically solvable.
+a semantically ambiguous but still solvable variant     You may introduce ambiguity by:
+by introducing underspecified references or mild        · using unclear or underspecified references
+logical uncertainty while preserving the original        (e.g., pronouns or vague entities),
+ground-truth answer. Specifically, we utilize the       · omitting minor contextual details, or
+following prompt.                                       · introducing mild logical uncertainty that
+                                                         requires inference.
+Instruction:                                            Do NOT change the underlying correct answer.
+                                                        The rewritten question should remain natural,
+
+                                                         fluent, and answerable by careful reasoning.
+                                                        Only output the rewritten question.
+                                                        Original Question:
+                                                        Q
+
+                                                     7
+Table 3 shows that all methods degrade on                  bust reasoning.
+ambiguity-augmented inputs, validating increased
+semantic uncertainty. Standard prompting (e.g.,            Module           GPQA LIAR WSC Avg.
+Naïve prompting, CoT, Rephrase) is especially brit-
+tle on WSC and LIAR, while prompt optimiza-                Baseline (Ours) 44  69 85.2 66.1
+tion methods yield only modest gains by relying
+on the target model to resolve ambiguity at in-            w/o L2 & L3 40.9 64.8 76.5 60.7
+ference. Our semantic risk rectification frame-
+work consistently achieves the best performance            dual - single 42.7 66.2 81.6 63.5
+across all benchmarks, particularly on WSC and
+LIAR. This demonstrates the effectiveness of input-        w/o CR-L2        43.2 66.9 82.3 64.1
+level ambiguity resolution. Stable performance on
+GPQA further confirms robustness without sacri-            w/o L3           43.4 67.5 83.4 64.8
+ficing knowledge-intensive reasoning.
+                                                           Table 4: Robustness analysis on ambiguous prompt
+                                                           across various prompting methods.
+
+Method           WSC LIAR GPQA Avg.                        Sensitivity on SLM Variants. We examine the ef-
+Naïve prompting                                            fect of SLM size and type on the prompting perfor-
+CoT              66.8 58.9 36.5 54.1                       mance. We utilize three benchmarks for this eval-
+Rephrase                                                   uation: GPQA, LIAR, and WSC. Table 5 shows
+Step-back        71.5 61.7 38.9 57.4                       that a lightweight 1B model captures most bene-
+APE                                                        fits of semantic risk rectification. Scaling to 1.5B
+OPRO             72.8 47.6 37.1 52.5                       yields only marginal gains. This shows that the
+PromptAgent                                                framework's effectiveness stems from structured
+PromptBreeder    73.1 60.8 39.7 57.9                       semantic rectification rather than model scale, and
+TextGrad                                                   that small models are sufficient for efficient seman-
+SPO              74.6 62.4 38.8 58.6                       tic preprocessing.
+DisambiguSLM
+(Ours)           75.2 64.1 40.3 59.9
+
+                 77.4 62  39.2 59.5
+
+                 70.9 60.1 38.5 56.5
+
+                 72 62.7 38.9 57.9
+
+                 77.9 64.8 41.1 61.3                       SLM              GPQA LIAR WSC Avg.
+
+                 82.6 68.9 42.8 64.8                       Baseline (Ours) 44  69 85.2 66.1
+
+                                                           Qwen-2.5-1.5B 44.2 69.3 85.7 66.4
+
+                                                           GPT-3.5-turbo 44.7 70.1 86.6 67.1
+
+Table 3: Robustness analysis on ambiguous prompt           GPT-4o           45.3 70.8 87.4 67.8
+accross various prompting methods.
+                                                           Table 5: The effect of SLM type on the reasoning
+                                                           performance.
+
+5.2 Ablation Studies                                       Sensitivity of Hyperparameter. To verify the ro-
+                                                           bustness of DisambiguSLM to the selection of sim-
+Modular Contributions. We analyze the contribu-            ilarity threshold , we conducted parameter sensi-
+tion of each element in our method. Specifically,          tivity experiments on different threshold settings
+we evaluate the following scenarios: eliminating           for two benchmark tasks (WSC and LIAR) that are
+layers 2 and 3 (w/o L2 & L3), changing dual to sin-        most sensitive to semantic ambiguity. We perform
+gle verification on layer 2 (dual - single), eliminat-     this experiment under a similar setup to the main
+ing conflict resolution mechanism on layer 2 (w/o          experiment. Figure 5 demonstrates that within
+CR-L2), and eliminating only layer 3 (w/o L3). We          a reasonable threshold range, the model perfor-
+perform this ablation on three benchmarks, GPQA,           mance varies only slightly, and the overall trend
+LIAR, and WSC. The results in Table 4, demon-              remains consistent. This result indicates that Dis-
+strate that all modules are essential. Removing            ambiguSLM is not highly sensitive to the similar-
+dual-path verification causes major drops on LIAR          ity threshold, and its performance improvement
+and WSC, underscoring the need for redundant               mainly comes from the structured semantic risk
+interpretation and consistency checks. Disabling           identification and resolution mechanism, rather
+conflict resolution further degrades performance,          than fine-tuning of a specific threshold.
+confirming the importance of explicitly resolving
+contradictory semantics. Variants that only detect         6 Conclusion
+risk without disambiguation perform worst, espe-
+cially on WSC. This demonstrates that gains come           We propose a prompt optimization method pre-
+from active semantic rectification, not mere risk          LLM inference where SLM acts as a cheap yet
+awareness. Removing structured aggregation on              well-performing evaluator. The core idea of our
+stage 3 also hurts performance, highlighting the           method is the resolution of semantic ambiguities or
+value of a unified semantic representation for ro-
+
+                                                        8
+Figure 5: Evaluation on the sensitivity of similarity       References
+threshold.
+                                                            Abhishek Arora, Emily Silcock, Melissa Dell, and Le-
+risks in the original prompt through the assistance            ander Heldring. 2024. Contrastive entity coreference
+of SLM. Our method demonstrates effectiveness in               and disambiguation for historical texts. In Proceed-
+a wide range of reasoning benchmarks against state-            ings of the 2024 Conference on Empirical Methods
+of-the-art prompting methods. Our work expands                 in Natural Language Processing, pages 6174-6186.
+the exploration of SLM as an assistant model for
+LLM in resolving the semantic confusion of user             Maciej Besta, Nils Blach, Ales Kubicek, Robert Gersten-
+input.                                                         berger, Michal Podstawski, Lukas Gianinazzi, Joanna
+                                                               Gajda, Tomasz Lehmann, Hubert Niewiadomski, Pi-
+7 Limitation                                                   otr Nyczyk, and 1 others. 2024. Graph of thoughts:
+                                                               Solving elaborate problems with large language mod-
+We present DisambiguSLM as prompt optimiza-                    els. In Proceedings of the AAAI conference on artifi-
+tion method via ambiguity resolution that leverage             cial intelligence, volume 38, pages 17682-17690.
+SLM as the resolver for efficient execution. Disam-
+biguSLM aims to address semantic uncertainties at           Kevin Clark, Urvashi Khandelwal, Omer Levy, and
+the input level, rather than correcting factual errors.        Christopher D Manning. 2019. What does bert look
+In fact-checking tasks, semantic disambiguation                at? an analysis of bert's attention. arXiv preprint
+can only reduce ambiguity in understanding, but                arXiv:1906.04341.
+cannot replace external knowledge or evidence re-
+trieval. When task performance is primarily limited         Antonia Creswell and Murray Shanahan. 2022. Faith-
+by the lack of facts rather than semantic ambiguity,           ful reasoning using large language models. arXiv
+the benefits of DisambiguSLM may be limited. For               preprint arXiv:2208.14271.
+instance, given the prompt "The governor said the
+tax plan would help middle-class families", Dis-            Yihe Deng, Weitong Zhang, Zixiang Chen, and Quan-
+ambiguSLM will detect two semantic risks. First,               quan Gu. 2023. Rephrase and respond: Let large
+referential ambiguity in the specific referent of the          language models ask better questions for themselves.
+tax plan, which may correspond to different ver-               arXiv preprint arXiv:2311.04205.
+sions or different stages of policy plans. Second,
+missing assumptions in the definition of help (such         Jinhao Duan, Hao Cheng, Shiqi Wang, Alex Zavalny,
+as short-term tax cuts, long-term income growth,               Chenan Wang, Renjing Xu, Bhavya Kailkhura, and
+etc.) and a criterion for defining middle-class fam-           Kaidi Xu. 2024. Shifting attention to relevance: To-
+ilies. During the processing of DisambiguSLM,                  wards the predictive uncertainty quantification of free-
+SLM can identify the above semantic risks and                  form large language models. In Proceedings of the
+generate several reasonable semantic clarification             62nd Annual Meeting of the Association for Compu-
+explanations. However, these explanations are all              tational Linguistics (Volume 1: Long Papers), pages
+based on the factual premise of the input statement            5050-5063.
+itself.
+                                                            Nouha Dziri, Sivan Milton, Mo Yu, Osmar R Zaiane,
+                                                               and Siva Reddy. 2022. On the origin of hallucinations
+                                                               in conversational models: Is it the datasets or the
+                                                               models? In Proceedings of the 2022 Conference
+                                                               of the North American Chapter of the Association
+                                                               for Computational Linguistics: Human Language
+                                                               Technologies, pages 5271-5285.
+
+                                                            Chrisantha Fernando, Dylan Banarse, Henryk
+                                                               Michalewski, Simon Osindero, and Tim Rock-
+                                                               täschel. 2023. Promptbreeder: Self-referential
+                                                               self-improvement via prompt evolution. arXiv
+                                                               preprint arXiv:2309.16797.
+
+                                                            Jinyu Guo, Xunlei Chen, Qiyang Xia, Zhaokun Wang,
+                                                               Jie Ou, Libo Qin, Shunyu Yao, and Wenhong Tian.
+                                                               2025. Hash-rag: bridging deep hashing with retriever
+                                                               for efficient, fine retrieval and augmented generation.
+                                                               In Findings of the Association for Computational
+                                                               Linguistics: ACL 2025, pages 26847-26858.
+
+                                                            Jinyu Guo, Kai Shuang, Jijie Li, Zihan Wang, and
+                                                               Yixuan Liu. 2022. Beyond the granularity: Multi-
+                                                               perspective dialogue collaborative selection for dia-
+                                                               logue state tracking. In Proceedings of the 60th An-
+                                                               nual Meeting of the Association for Computational
+                                                               Linguistics (Volume 1: Long Papers), pages 2320-
+                                                               2332.
+
+                                                         9
+Jinyu Guo, Kai Shuang, Kaihang Zhang, Yixuan Liu,                   with self-feedback. Advances in Neural Information
+   Jijie Li, and Zihan Wang. 2023. Learning to imag-                Processing Systems, 36:46534-46594.
+   ine: distillation-based interactive context exploitation
+   for dialogue state tracking. In Proceedings of the            Sewon Min, Julian Michael, Hannaneh Hajishirzi, and
+   AAAI conference on artificial intelligence, volume 37,           Luke Zettlemoyer. 2020. Ambigqa: Answering
+   pages 12845-12853.                                               ambiguous open-domain questions. arXiv preprint
+                                                                    arXiv:2004.10645.
+Jiuzhou Han, Nigel Collier, Wray Buntine, and Ehsan
+   Shareghi. 2024. Pive: Prompting with iterative verifi-        Roberto Navigli. 2009. Word sense disambiguation: A
+   cation improving graph-based generative capability               survey. ACM computing surveys (CSUR), 41(2):1-
+   of llms. In Findings of the Association for Computa-             69.
+   tional Linguistics: ACL 2024, pages 6702-6718.
+                                                                 Jie Ou, Jinyu Guo, Shuaihong Jiang, Zhaokun Wang,
+Jerry R Hobbs. 1978. Resolving pronoun references.                  Libo Qin, Shunyu Yao, and Wenhong Tian. 2025.
+   Lingua, 44(4):311-338.                                           Accelerating adaptive retrieval augmented generation
+                                                                    via instruction-driven representation reduction of re-
+Wenyang Hu, Gregory Kang Ruey Lau, Liu Diwen,                       trieval overlaps. In Findings of the Association for
+   Chen Jizhuo, See Kiong Ng, and Bryan Kian Hsiang                 Computational Linguistics: ACL 2025, pages 26983-
+   Low. 2025. Dipper: Diversity in prompts for pro-                 27000.
+   ducing large language model ensembles in reasoning
+   tasks. In Proceedings of the 2025 Conference on               Jonathan Pilault, Xavier Garcia, Arthur Brazin-
+   Empirical Methods in Natural Language Processing,                skas, and Orhan Firat. 2023. Interactive-chain-
+   pages 35546-35560.                                               prompting: Ambiguity resolution for crosslingual
+                                                                    conditional generation with interaction. arXiv
+Ziwei Ji, Nayeon Lee, Rita Frieske, Tian Yu, Dan                    preprint arXiv:2301.10309.
+   Su, Yiming Xu, Etsuko Ishii, Yejin Bang, Andrea
+   Madotto, and Pascale Fung. 2023. A survey of hallu-           David Rein, Betty Li Hou, Asa Cooper Stickland, Jack-
+   cination in natural language generation. ACM Com-                son Petty, Richard Yuanzhe Pang, Julien Dirani, Ju-
+   puting Surveys, 55(12):1-38.                                     lian Michael, and Samuel R Bowman. 2024. Gpqa:
+                                                                    A graduate-level google-proof q&a benchmark. In
+Andrew Kehler and Andrew Kehler. 2002. Coherence,                   First Conference on Language Modeling.
+   reference, and the theory of grammar, volume 380.
+   CSLI publications Stanford, CA.                               Marco Tulio Ribeiro, Tongshuang Wu, Carlos Guestrin,
+                                                                    and Sameer Singh. 2020. Beyond accuracy: Behav-
+Raihan Kibria, Sheikh Intiser Uddin Dipta, and Muham-               ioral testing of nlp models with checklist. arXiv
+   mad Abdullah Adnan. 2024. On functional compe-                   preprint arXiv:2005.04118.
+   tence of llms for linguistic disambiguation. In Pro-
+   ceedings of the 28th Conference on Computational              Chenglei Si, Zhe Gan, Zhengyuan Yang, Shuohang
+   Natural Language Learning, pages 143-160.                        Wang, Jianfeng Wang, Jordan Boyd-Graber, and Li-
+                                                                    juan Wang. 2022. Prompting gpt-3 to be reliable.
+Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yu-                 arXiv preprint arXiv:2210.09150.
+   taka Matsuo, and Yusuke Iwasawa. 2022. Large lan-
+   guage models are zero-shot reasoners. Advances in             Gaurav Srivastava, Shuxiang Cao, and Xuan Wang.
+   neural information processing systems, 35:22199-                 2025. Thinkslm: Towards reasoning in small lan-
+   22213.                                                           guage models. In Proceedings of the 2025 Confer-
+                                                                    ence on Empirical Methods in Natural Language
+Hector J Levesque, Ernest Davis, and Leora Morgen-                  Processing (EMNLP 2025).
+   stern. 2012. The winograd schema challenge. KR,
+   2012(13th):3.                                                 Elias Stengel-Eskin, Kyle Rawlins, and Benjamin
+                                                                    Van Durme. 2023. Zero and few-shot semantic
+Yu Li, Tian Lan, and Zhengling Qi. 2026. When                       parsing with ambiguous inputs. arXiv preprint
+   right meets wrong: Bilateral context conditioning                arXiv:2306.00824.
+   with reward-confidence correction for grpo. arXiv
+   preprint arXiv:2603.13134.                                    Mirac Suzgun, Nathan Scales, Nathanael Schärli, Se-
+                                                                    bastian Gehrmann, Yi Tay, Hyung Won Chung,
+Xiaoou Liu, Tiejin Chen, Longchao Da, Chacha Chen,                  Aakanksha Chowdhery, Quoc Le, Ed Chi, Denny
+   Zhen Lin, and Hua Wei. 2025. Uncertainty quantifi-               Zhou, and 1 others. 2023. Challenging big-bench
+   cation and confidence calibration in large language              tasks and whether chain-of-thought can solve them.
+   models: A survey. In Proceedings of the 31st ACM                 In Findings of the Association for Computational
+   SIGKDD Conference on Knowledge Discovery and                     Linguistics: ACL 2023, pages 13003-13051.
+   Data Mining V. 2, pages 6107-6117.
+                                                                 Anfu Tang, Laure Soulier, and Vincent Guigue. 2025.
+Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler                    Clarifying ambiguities: on the role of ambiguity
+   Hallinan, Luyu Gao, Sarah Wiegreffe, Uri Alon,                   types in prompting methods for clarification genera-
+   Nouha Dziri, Shrimai Prabhumoye, Yiming Yang,                    tion. In Proceedings of the 48th International ACM
+   and 1 others. 2023. Self-refine: Iterative refinement            SIGIR Conference on Research and Development in
+                                                                    Information Retrieval, pages 20-30.
+
+                                                             10
+Miles Turpin, Julian Michael, Ethan Perez, and Samuel         Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran,
+   Bowman. 2023. Language models don't always say                Tom Griffiths, Yuan Cao, and Karthik Narasimhan.
+   what they think: Unfaithful explanations in chain-of-         2023. Tree of thoughts: Deliberate problem solving
+   thought prompting. Advances in Neural Information             with large language models. Advances in neural
+   Processing Systems, 36:74952-74965.                           information processing systems, 36:11809-11822.
+
+Chengbing Wang, Yang Zhang, Wenjie Wang, Xiaoyan              Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak
+   Zhao, Fuli Feng, Xiangnan He, and Tat-Seng Chua.              Shafran, Karthik R Narasimhan, and Yuan Cao. 2022.
+   2025. Think-while-generating: On-the-fly reason-              React: Synergizing reasoning and acting in language
+   ing for personalized long-form generation. arXiv              models. In The eleventh international conference on
+   preprint arXiv:2512.06690.                                    learning representations.
+
+Junxi Wang, Te Sun, Jiayi Zhu, Junxian Li, Haowen             Mert Yuksekgonul, Federico Bianchi, Joseph Boen,
+   Xu, Zichen Wen, Xuming Hu, Zhiyu Li, and Lin-                 Sheng Liu, Zhi Huang, Carlos Guestrin, and James
+   feng Zhang. 2026a. Streammeco: Long-term agent                Zou. 2024. Textgrad: Automatic" differentiation" via
+   memory compression for efficient streaming video              text. arXiv preprint arXiv:2406.07496.
+   understanding. arXiv preprint arXiv:2604.09000.
+                                                              Chenrui Zhang, Lin Liu, Chuyuan Wang, Xiao Sun,
+William Yang Wang. 2017. " liar, liar pants on fire":            Hongyu Wang, Jinpeng Wang, and Mingchen Cai.
+   A new benchmark dataset for fake news detection.              2024. Prefer: Prompt ensemble learning via
+   arXiv preprint arXiv:1705.00648.                              feedback-reflect-refine. In Proceedings of the AAAI
+                                                                 conference on artificial intelligence, volume 38,
+Xinyuan Wang, Chenxi Li, Zhen Wang, Fan Bai,                     pages 19525-19532.
+   Haotian Luo, Jiayou Zhang, Nebojsa Jojic, Eric P
+   Xing, and Zhiting Hu. 2023. Promptagent:                   Jiaquan Zhang, Qigan Sun, Chaoning Zhang, Xudong
+   Strategic planning with language models enables               Wang, Zhenzhen Huang, Yitian Zhou, Pengcheng
+   expert-level prompt optimization. arXiv preprint              Zheng, Chi lok Andy Tai, Sung-Ho Bae, Zeyu Ma,
+   arXiv:2310.16427.                                             Caiyan Qin, Jinyu Guo, Yang Yang, and Hengtao
+                                                                 Shen. 2026a. Tda-rc: Task-driven alignment for
+Xudong Wang, Chaoning Zhang, Jiaquan Zhang, Cheng-               knowledge-based reasoning chains in large language
+   hao Li, Qigan Sun, Sung-Ho Bae, Peng Wang, Ning               models. arXiv preprint arXiv:2604.04942.
+   Xie, Jie Zou, Yang Yang, and 1 others. 2026b.
+   Efficient and interpretable multi-agent llm rout-          Jiaquan Zhang, Chaoning Zhang, Shuxu Chen, Zhen-
+   ing via ant colony optimization. arXiv preprint               zhen Huang, Pengcheng Zheng, Zhicheng Wang,
+   arXiv:2603.12933.                                             Ping Guo, Fan Mo, Sung-Ho Bae, Jie Zou, Jiwei
+                                                                 Wei, and Yang Yang. 2026b. Lightweight llm agent
+Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc Le,                memory with small language models. arXiv preprint
+   Ed Chi, Sharan Narang, Aakanksha Chowdhery, and               arXiv:2604.07798.
+   Denny Zhou. 2022. Self-consistency improves chain
+   of thought reasoning in language models. arXiv             Jiaquan Zhang, Chaoning Zhang, Shuxu Chen, Xudong
+   preprint arXiv:2203.11171.                                    Wang, Zhenzhen Huang, Pengcheng Zheng, Shuai
+                                                                 Yuan, Sheng Zheng, Qigan Sun, Jie Zou, and 1 others.
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten                 2026c. Learning global hypothesis space for enhanc-
+   Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou,                ing synergistic reasoning chain. In The Fourteenth
+   and 1 others. 2022. Chain-of-thought prompting elic-          International Conference on Learning Representa-
+   its reasoning in large language models. Advances              tions.
+   in neural information processing systems, 35:24824-
+   24837.                                                     Huaixiu Steven Zheng, Swaroop Mishra, Xinyun Chen,
+                                                                 Heng-Tze Cheng, Ed H Chi, Quoc V Le, and Denny
+Sarah Wiegreffe and Yuval Pinter. 2019. Attention is not         Zhou. 2023. Take a step back: Evoking reasoning via
+   not explanation. arXiv preprint arXiv:1908.04626.             abstraction in large language models. arXiv preprint
+                                                                 arXiv:2310.06117.
+Jinyu Xiang, Jiayi Zhang, Zhaoyang Yu, Fengwei Teng,
+   Jinhao Tu, Xinbing Liang, Sirui Hong, Chenglin Wu,         Pengcheng Zheng, Chaoning Zhang, Ji-Hwan Mo, Guo-
+   and Yuyu Luo. 2025. Self-supervised prompt opti-              hui Li, Jiaquan Zhang, Jiahao Zhang, Sihan Cao,
+   mization. arXiv preprint arXiv:2502.06855.                    Sheng Zheng, Caiyan Qin, Guoqing Wang, and Yang
+                                                                 Yang. 2026. Llava-fa: Learning fourier approxima-
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song                  tion for compressing large multimodal models. arXiv
+   Han, and Mike Lewis. 2023. Efficient streaming                preprint arXiv:2602.00135.
+   language models with attention sinks. arXiv preprint
+   arXiv:2309.17453.                                          Wanjun Zhong, Ruixiang Cui, Yiduo Guo, Yaobo Liang,
+                                                                 Shuai Lu, Yanlin Wang, Amin Saied, Weizhu Chen,
+Chengrun Yang, Xuezhi Wang, Yifeng Lu, Hanxiao                   and Nan Duan. 2024. Agieval: A human-centric
+   Liu, Quoc V Le, Denny Zhou, and Xinyun Chen.                  benchmark for evaluating foundation models. In
+   2023. Large language models as optimizers. In                 Findings of the Association for Computational Lin-
+   The Twelfth International Conference on Learning              guistics: NAACL 2024, pages 2299-2314.
+   Representations.
+
+                                                          11
+Xuhui Zhou, Yue Zhang, Leyang Cui, and Dandan
+   Huang. 2020. Evaluating commonsense in pre-
+   trained language models. In Proceedings of the
+   AAAI conference on artificial intelligence, volume 34,
+   pages 9733-9740.
+
+Yixiao Zhou, Yang Li, Dongzhou Cheng, Hehe Fan, and
+   Yu Cheng. 2026. Look inward to explore outward:
+   Learning temperature policy from llm internal states
+   via hierarchical rl. arXiv preprint arXiv:2602.13035.
+
+Yongchao Zhou, Andrei Ioan Muresanu, Ziwen Han,
+   Keiran Paster, Silviu Pitis, Harris Chan, and Jimmy
+   Ba. 2022. Large language models are human-level
+   prompt engineers. In The eleventh international con-
+   ference on learning representations.
+
+                                                             12
+A Appendix                                                 Focus only on explaining the risk  point.
+                                                           Do NOT solve the entire problem.
+A.1 Analytical Assumption                                  User Question:
+
+Conceptual Role of Semantic Risk Function. We              {Input Prompt}
+introduces semantic risk function (Equation 1)             Semantic Risk Point:
+to characterize how semantic ambiguity in input
+prompts leads to instability in the inference process      {Risk Span}
+of LLMs. This function combines the entropy of
+the attention distribution and the number of poten-        Layer 2: Verification and Resolution. The system
+tially competing inference branches to explain the         calculates the semantic similarity between two ex-
+impact of semantic ambiguity on the diffusion of in-       planations and compares it with a preset threshold
+ference paths at the conceptual level. Note that this      to produce the following conditions:
+semantic risk function is only used for conceptual
+modeling, aiming to help understand the semantic              · If two explanations are determined to be con-
+ambiguity phenomena, rather than serving as an                   sistent, they will be equally weighted and
+optimization objective or decision-making basis in               fused through concatenation to generate a sta-
+the DisambiguSLM. We do not compute the risk                     ble explanation.
+function at any stage of DisambiguSLM, and the
+weight parameters are not instantiated, adjusted, or          · Otherwise, proceed to the conflict resolution
+used for any inference decision-making. Further,                 step.
+the prompt repair process of DisambiguSLM does
+not depend on the numerical value or the minimized         You are given a user question and two different
+result of this function.                                    interpretations of the same semantic risk
+                                                            point.
+A.2 Prompt Design                                          Your task is to produce a single, self-consistent
+                                                            explanation that resolves the semantic
+Layer 1: Risk Identification. The goal of this stage        conflict between the two interpretations,
+is to identify key segments from the input prompt           based on your explanation of the original
+that may lead to semantic ambiguity or unstable             question, and ensure logical consistency.
+reasoning without attempting to solve the problem.         User Question:
+                                                           {Input Prompt}
+You are given a user question.                             Interpretation 1:
+Your task is to identify spans or phrases that             {Interpretation 1}
+ may introduce semantic ambiguity,                         Interpretation 2:
+ underspecified references, or logical                     {Interpretation 2}
+ uncertainty that could affect reasoning
+ stability.                                                Layer 3: Semantic Integration and
+Do NOT attempt to answer the question.
+Do NOT resolve the ambiguity.                              Enhancement. At this stage, SLM integrates all
+For each identified risk point, output:
+(1) the exact text span, and                               repaired semantic interpretations into a unified,
+(2) a brief description of the type of semantic
+ risk (referential ambiguity, missing                      structured enhanced semantic representation to
+ assumption, temporal ambiguity).
+User Question:                                             assist subsequent LLM reasoning.
+{Input Prompt}
+                                                           You are given a user question and a list of
+Layer 2: Dual-Interpretation Generation. For                resolved semantic clarifications.
+each identified semantic risk point, SLM is inde-          Your task is to integrate these clarifications
+pendently invoked twice under the same context              into a concise and structured supplemental
+to generate two potential semantic interpretations,         context that improves semantic clarity for
+thereby covering different reasonable understand-           downstream reasoning.
+ings.                                                      Do NOT answer the question.
+                                                           Do NOT introduce new assumptions.
+You are given a user question and a specific               User Question:
+ semantic risk point extracted from it.                    {Input Prompt}
+Your task is to provide ONE plausible                      Resolved Clarifications:
+ interpretation that clarifies the meaning of              {Resolved Explanations}
+ the risk point in the context of the
+ question.
+
+                                                       13
+
