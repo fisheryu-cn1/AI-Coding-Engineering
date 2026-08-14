@@ -12,8 +12,18 @@ app = typer.Typer(
 
 @app.command("mcp")
 def mcp_cmd() -> None:
-    """[M4 落地] 启动 MCP 服务（stdio/HTTP）。"""
-    typer.echo("M1 占位：serve mcp 将在 M4 落地（mcp>=1.29,<2 钉版）。")
+    """启动 MCP 服务（stdio；13 §2）。"""
+    try:
+        from kbapp.mcp_server import mcp
+    except ImportError as e:
+        # 仅当缺的是 mcp 本体（或其子模块）时才报"未装 extra"；传递依赖导入
+        # 失败应原样上抛，避免误报（13 §2.1 评审 P3-3）。
+        name = e.name or ""
+        if name != "mcp" and not name.startswith("mcp."):
+            raise
+        typer.echo("未安装 mcp extra：请先 `uv sync --extra mcp` 后重试。")
+        raise typer.Exit(code=1) from None
+    mcp.run(transport="stdio")
 
 
 @app.command("viz")

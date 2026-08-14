@@ -7,7 +7,7 @@ M1 唯一完整实现的子命令：
 - ``set``    —— 按点路径写（带 audit；写锁）
 - ``diff``   —— 与默认值对比，标出用户改动
 
-退出码（设计 05 §9 + 04 §2.2）：
+退出码（05 §9；该约定为 M1 落地时补充并回写设计文档）：
 
 - ``0`` —— 成功
 - ``1`` —— 配置校验失败（键不存在、类型不匹配）
@@ -54,9 +54,7 @@ err_console = Console(stderr=True)
 @app.command("show")
 def show_cmd(
     ctx: typer.Context,
-    defaults: bool = typer.Option(
-        False, "--defaults", help="仅显示默认配置，忽略用户配置"
-    ),
+    defaults: bool = typer.Option(False, "--defaults", help="仅显示默认配置，忽略用户配置"),
 ) -> None:
     """打印当前生效配置（含默认值合并结果）。"""
     paths = DataPaths.from_data_dir(ctx.obj["data_dir"])
@@ -89,11 +87,14 @@ def get_cmd(
         err_console.print(f"[red]错误[/red] {e}")
         raise typer.Exit(code=1) from None
 
-    # Render bools / ints / floats as plain literals, otherwise yaml-quote
+    # Render: bool → true/false; int/float → repr; str → as-is (避免 yaml.safe_dump
+    # 给标量字符串追加的文档结束符 '...'); list/dict → yaml block dump.
     if isinstance(value, bool):
         console.print("true" if value else "false")
     elif isinstance(value, (int, float)):
         console.print(repr(value))
+    elif isinstance(value, str):
+        console.print(value)
     else:
         console.print(yaml.safe_dump(value, allow_unicode=True).rstrip())
 
@@ -117,9 +118,7 @@ def set_cmd(
     paths = DataPaths.from_data_dir(ctx.obj["data_dir"])
 
     if not yes:
-        err_console.print(
-            f"[yellow]将修改[/yellow] {key}（当前值由 kb config get {key} 查看）"
-        )
+        err_console.print(f"[yellow]将修改[/yellow] {key}（当前值由 kb config get {key} 查看）")
         if not typer.confirm("确认?", default=False):
             raise typer.Abort()
 
@@ -190,8 +189,12 @@ def diff_cmd(ctx: typer.Context) -> None:
 
 
 def _render(value: object) -> str:
-    if value is None:
+    from kbapp.core.config import _MISSING
+
+    if value is _MISSING:
         return "<missing>"
+    if value is None:
+        return "null"
     if isinstance(value, str):
         return value
     return repr(value)

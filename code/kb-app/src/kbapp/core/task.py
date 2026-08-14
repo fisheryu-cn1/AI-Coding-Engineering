@@ -54,7 +54,10 @@ TASK_STATUS = Literal["pending", "running", "done", "failed"]
 TASK_STATUSES: tuple[str, ...] = ("pending", "running", "done", "failed")
 
 #: Default retry budget.
-DEFAULT_MAX_ATTEMPTS = 3
+#: 设计 07 §7.2 退避序列 30s → 1m → 5m 三档；attempts 与档位 1:1 对应，
+#: 即第 N 次失败后 delay=backoff(N)。attempts 达到 max_attempts 走
+#: terminal 分支——为了让 5m 档可达，默认值取 4（30s/60s/300s + 终态）。
+DEFAULT_MAX_ATTEMPTS = 4
 
 #: Backoff schedule (设计 07 §7.2: 30s → 1m → 5m …)
 _BACKOFF_SCHEDULE_SECONDS: tuple[int, ...] = (30, 60, 300)
@@ -190,16 +193,22 @@ def enqueue_task(
     task_id: str | None = None,
     run_after: str | None = None,
     max_attempts: int = DEFAULT_MAX_ATTEMPTS,
+    conn: sqlite3.Connection | None = None,
 ) -> str:
     """Enqueue a new pending task; return the task id (generated if not given).
 
     Validates ``kind`` against :data:`TASK_KINDS`. JSON-encodes ``payload``.
+
+    If ``conn`` is given, the INSERT happens on that connection inside the
+    caller's transaction (avoids recursive ``BEGIN IMMEDIATE`` which would
+    deadlock on the same SQLite file).
     """
     if kind not in TASK_KINDS:
         raise UnknownTaskKindError(kind)
     tid = task_id or new_task_id()
-    with registry.transaction() as conn:
-        conn.execute(
+
+    def _insert(c: sqlite3.Connection) -> None:
+        c.execute(
             "INSERT INTO tasks (id, kind, payload, status, attempts, "
             "max_attempts, run_after, created_at) "
             "VALUES (?, ?, ?, 'pending', 0, ?, ?, ?)",
@@ -212,23 +221,47 @@ def enqueue_task(
                 _now_iso(),
             ),
         )
+
+    if conn is not None:
+        _insert(conn)
+    else:
+        with registry.transaction() as outer_conn:
+            _insert(outer_conn)
     return tid
 
 
-def next_task(registry: Registry) -> Task | None:
+def next_task(
+    registry: Registry,
+    *,
+    kind: str | tuple[str, ...] | None = None,
+) -> Task | None:
     """Return the next pending task whose ``run_after`` is in the past.
 
-    FIFO by ``created_at`` (which is monotonic via ULID prefix).
-    Returns ``None`` when nothing is runnable.
+    FIFO by ``created_at`` (ISO 秒串；同秒内次序由插入顺序保证，
+    索引 ``idx_tasks_status(created_at)`` 决定最终次序——同秒并列不会
+    跨次日重排）。Pass ``kind``（单个字符串或元组）只选这些 kind 的任务
+    （M3 runner 传 ``('parse','summarize')``，其它 kind 的 M3+ 任务保持
+    pending 不被吞）。Returns ``None`` when nothing is runnable.
     """
     now = _now_iso()
     with registry.transaction() as conn:
-        row = conn.execute(
-            "SELECT * FROM tasks "
-            "WHERE status = 'pending' AND (run_after IS NULL OR run_after <= ?) "
-            "ORDER BY created_at ASC LIMIT 1",
-            (now,),
-        ).fetchone()
+        if kind is not None:
+            kinds = (kind,) if isinstance(kind, str) else tuple(kind)
+            placeholders = ",".join("?" for _ in kinds)
+            row = conn.execute(
+                "SELECT * FROM tasks "
+                "WHERE status = 'pending' AND (run_after IS NULL OR run_after <= ?) "
+                f"AND kind IN ({placeholders}) "
+                "ORDER BY created_at ASC LIMIT 1",
+                (now, *kinds),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT * FROM tasks "
+                "WHERE status = 'pending' AND (run_after IS NULL OR run_after <= ?) "
+                "ORDER BY created_at ASC LIMIT 1",
+                (now,),
+            ).fetchone()
     return Task.from_row(row) if row else None
 
 
@@ -243,9 +276,7 @@ def mark_running(registry: Registry, task_id: str) -> None:
         if row is None:
             raise TaskError(f"任务不存在：{task_id}")
         if row["status"] != "pending":
-            raise TaskError(
-                f"任务 {task_id} 状态为 {row['status']!r}，无法切到 running"
-            )
+            raise TaskError(f"任务 {task_id} 状态为 {row['status']!r}，无法切到 running")
         conn.execute(
             "UPDATE tasks SET status = 'running', attempts = attempts + 1, "
             "started_at = ?, error = NULL WHERE id = ?",
@@ -256,9 +287,13 @@ def mark_running(registry: Registry, task_id: str) -> None:
 def mark_done(registry: Registry, task_id: str) -> None:
     """Transition ``running`` → ``done``."""
     with registry.transaction() as conn:
+        row = conn.execute("SELECT status FROM tasks WHERE id = ?", (task_id,)).fetchone()
+        if row is None:
+            raise TaskError(f"任务不存在：{task_id}")
+        if row["status"] != "running":
+            raise TaskError(f"任务 {task_id} 状态为 {row['status']!r}，无法切到 done")
         conn.execute(
-            "UPDATE tasks SET status = 'done', finished_at = ?, error = NULL "
-            "WHERE id = ?",
+            "UPDATE tasks SET status = 'done', finished_at = ?, error = NULL WHERE id = ?",
             (_now_iso(), task_id),
         )
 
@@ -269,27 +304,36 @@ def mark_failed(
     error: str,
     *,
     terminal: bool = False,
+    immediate: bool = False,
 ) -> None:
     """Transition ``running`` → ``pending`` (with ``run_after``) or ``failed``.
 
     If ``attempts < max_attempts`` and not ``terminal``, the task returns to
     ``pending`` with ``run_after = now + backoff(attempts)``; otherwise it
-    becomes ``failed``.
+    becomes ``failed``. Pass ``immediate=True`` to requeue without a backoff
+    (``run_after = NULL``) — used by Ctrl-C so a restarted runner picks the
+    task up right away (09 §10「立即可执行的 pending」).
     """
     with registry.transaction() as conn:
         row = conn.execute(
-            "SELECT attempts, max_attempts FROM tasks WHERE id = ?", (task_id,)
+            "SELECT attempts, max_attempts, status FROM tasks WHERE id = ?",
+            (task_id,),
         ).fetchone()
         if row is None:
             raise TaskError(f"任务不存在：{task_id}")
+        if row["status"] != "running":
+            raise TaskError(f"任务 {task_id} 状态为 {row['status']!r}，无法标记失败")
 
         attempts = row["attempts"]
         max_attempts = row["max_attempts"]
         if not terminal and attempts < max_attempts:
-            delay = backoff_seconds(attempts)
-            run_after = (
-                datetime.now(UTC) + timedelta(seconds=delay)
-            ).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if immediate:
+                run_after = None
+            else:
+                delay = backoff_seconds(attempts)
+                run_after = (datetime.now(UTC) + timedelta(seconds=delay)).strftime(
+                    "%Y-%m-%dT%H:%M:%SZ"
+                )
             conn.execute(
                 "UPDATE tasks SET status = 'pending', run_after = ?, "
                 "error = ?, started_at = NULL WHERE id = ?",
@@ -297,8 +341,7 @@ def mark_failed(
             )
         else:
             conn.execute(
-                "UPDATE tasks SET status = 'failed', finished_at = ?, "
-                "error = ? WHERE id = ?",
+                "UPDATE tasks SET status = 'failed', finished_at = ?, error = ? WHERE id = ?",
                 (_now_iso(), error, task_id),
             )
 
@@ -313,9 +356,7 @@ def reset_stale_running(
     Returns the number of tasks reset (typically 0 in normal operation;
     >0 after a crash). Safe to call repeatedly.
     """
-    threshold = (datetime.now(UTC) - stale_after).strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
+    threshold = (datetime.now(UTC) - stale_after).strftime("%Y-%m-%dT%H:%M:%SZ")
     with registry.transaction() as conn:
         cur = conn.execute(
             "UPDATE tasks SET status = 'pending', started_at = NULL, "
@@ -327,11 +368,9 @@ def reset_stale_running(
         return cur.rowcount
 
 
-def count_tasks(
-    registry: Registry, *, status: str | None = None
-) -> int:
+def count_tasks(registry: Registry, *, status: str | None = None) -> int:
     """Return the number of tasks, optionally filtered by ``status``."""
-    with registry.transaction() as conn:
+    with registry.read_only() as conn:
         if status is None:
             row = conn.execute("SELECT COUNT(*) AS n FROM tasks").fetchone()
         else:
@@ -341,11 +380,9 @@ def count_tasks(
     return int(row["n"])
 
 
-def list_tasks(
-    registry: Registry, *, status: str | None = None, limit: int = 50
-) -> list[Task]:
+def list_tasks(registry: Registry, *, status: str | None = None, limit: int = 50) -> list[Task]:
     """Return recent tasks, optionally filtered by ``status``."""
-    with registry.transaction() as conn:
+    with registry.read_only() as conn:
         if status is None:
             rows = conn.execute(
                 "SELECT * FROM tasks ORDER BY created_at DESC LIMIT ?",
@@ -353,8 +390,7 @@ def list_tasks(
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT * FROM tasks WHERE status = ? "
-                "ORDER BY created_at DESC LIMIT ?",
+                "SELECT * FROM tasks WHERE status = ? ORDER BY created_at DESC LIMIT ?",
                 (status, limit),
             ).fetchall()
     return [Task.from_row(r) for r in rows]

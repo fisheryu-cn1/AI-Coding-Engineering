@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Replace .diagram ASCII art blocks with SVG <img> references in the HTML."""
+
 import re
 
 HTML_PATH = "llm_app_architecture_guide.html"
@@ -30,7 +31,9 @@ matches = list(pattern.finditer(content))
 print(f"Found {len(matches)} .diagram blocks (expecting {len(SVG_FILES)})")
 
 if len(matches) != len(SVG_FILES):
-    raise RuntimeError(f"Mismatch: found {len(matches)} blocks but have {len(SVG_FILES)} SVGs")
+    raise RuntimeError(
+        f"Mismatch: found {len(matches)} blocks but have {len(SVG_FILES)} SVGs"
+    )
 
 # Build replacements from end to start so earlier indices aren't shifted
 for idx in range(len(matches) - 1, -1, -1):
@@ -39,9 +42,9 @@ for idx in range(len(matches) - 1, -1, -1):
     replacement = (
         f'<div class="diagram-svg">\n'
         f'  <img src="{SVG_PREFIX}{svg_file}" alt="diagram" style="max-width:100%;height:auto;display:block;margin:0 auto;">\n'
-        f'</div>'
+        f"</div>"
     )
-    content = content[:m.start()] + replacement + content[m.end():]
+    content = content[: m.start()] + replacement + content[m.end() :]
 
 with open(HTML_PATH, "w", encoding="utf-8") as f:
     f.write(content)

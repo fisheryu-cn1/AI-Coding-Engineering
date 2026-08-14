@@ -1,0 +1,82 @@
+# M3 召回抽检查询集（11 §10-7）
+#
+# 口径：success@10（top-10 含 ≥1 篇期望文档的查询占比）≥ 80%（LLM 在线档）；
+# recall@10 附记参考、不作门槛；离线档单独记录、不作门槛。
+#
+# 每条：
+#   - query:  检索查询串
+#   - type:   keyword | topic_nav | cross_lang | short_abbrev
+#   - expect: 期望命中的 doc_id 列表（≥1 篇，允许多篇）
+#
+# 语料：本仓库 references/ + research/ + design/（203 文件入库），
+# doc_id 取自真实索引（~/.graphit-kb/registry.sqlite files 表，2026-08-14）。
+# 注释保留文件名备查。分类计数：keyword 7 / topic_nav 3 / cross_lang 5 /
+# short_abbrev 5；中文查询 10 条、英文查询 10 条。
+queries:
+  # ---- 英文 keyword ----
+  - query: "Lost in the Middle"
+    type: keyword
+    expect: [D0027]            # ContextEngineering/02-Liu-Lost_in_the_Middle.pdf
+  - query: "context rot"
+    type: keyword
+    expect: [D0032]            # ContextEngineering/06-Hong-Context_Rot.html
+  - query: "Petri net reachability compositionality"
+    type: keyword
+    expect: [D0156, D0157]     # PetriNets/Reachability via Compositionality; PetriNets基础论文
+  - query: "LLMLingua"
+    type: keyword
+    expect: [D0077, D0081, D0083]  # PromptCompression/31-LLMLingua; 33-LLMLingua-2; 32-Long-LLMLingua
+  # ---- 英文 topic_nav ----
+  - query: "ContextEngineering"
+    type: topic_nav
+    expect: [D0049, D0057, D0036]  # ContextEngineering 主题成员（topic 列实证）
+  - query: "CodeGraph"
+    type: topic_nav
+    expect: [D0135, D0139, D0146]  # CodeGraph 主题成员
+  # ---- 英文 short_abbrev ----
+  - query: "RAG"
+    type: short_abbrev
+    expect: [D0125, D0005, D0123]  # GraphRAG 论文; graphrag_survey_report; LightRAG
+  - query: "KG"
+    type: short_abbrev
+    expect: [D0104, D0100]     # 01-LLM-KG-Construction-Survey; ontology-kg-graphdb-survey
+  - query: "OWL"
+    type: short_abbrev
+    expect: [D0113, D0116]     # 01-OWL-DL与HermiT推理机; HermiT_OWL2Reasoner 论文
+  # ---- 中文 cross_lang（中文查询命中英文文档）----
+  - query: "检索增强生成"
+    type: cross_lang
+    expect: [D0125, D0123, D0005]  # GraphRAG / LightRAG / graphrag_survey_report
+  - query: "提示压缩"
+    type: cross_lang
+    expect: [D0073, D0077, D0074]  # 42-Prompt-Compression-Survey; 31-LLMLingua; 参考资料清单
+  - query: "代码图谱"
+    type: cross_lang
+    expect: [D0135, D0139, D0169]  # CodeGraph.pdf; RepoGraph; Qoder 代码图谱报告
+  - query: "工作流网"
+    type: cross_lang
+    expect: [D0154]            # PetriNets/Verification of Workflow Nets.pdf
+  - query: "智能体操作系统"
+    type: cross_lang
+    expect: [D0020, D0015, D0023]  # 02-AIOS-LLM-Agent-OS; 01-LLM-as-OS; 03-MemOS
+  # ---- 中文 keyword ----
+  - query: "上下文工程"
+    type: keyword
+    expect: [D0056, D0058, D0176]  # 阅读报告_上下文工程文献综述; 核心参考资料清单; 知识图谱管理Agent上下文
+  - query: "知识图谱构建"
+    type: keyword
+    expect: [D0100, D0182]     # ontology-kg-graphdb-survey; API文档知识图谱构建专题设计
+  - query: "互联网裁员"
+    type: keyword
+    expect: [D0173, D0174]     # AI_Layoff_Trap 分析 md/html
+  # ---- 中文 topic_nav ----
+  - query: "本体"
+    type: topic_nav
+    expect: [D0100, D0104, D0111]  # ontology 主题成员
+  # ---- 中文 short_abbrev ----
+  - query: "AI"
+    type: short_abbrev
+    expect: [D0021, D0160]     # 04-Anthropic-Agentic-Coding-Trends; agentic_coding_tech_brief
+  - query: "图谱"
+    type: short_abbrev
+    expect: [D0169, D0179, D0175]  # Qoder 代码图谱报告; 代码图谱与LLM上下文管理工具调研; Context7与代码图谱结合设计分析

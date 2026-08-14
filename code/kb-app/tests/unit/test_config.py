@@ -39,9 +39,7 @@ def test_load_config_missing_file_returns_defaults(tmp_path: Path) -> None:
 
 def test_load_config_merges_user_over_defaults(tmp_path: Path) -> None:
     p = tmp_path / "config.yaml"
-    p.write_text(
-        "scoring:\n  thresholds:\n    accept: 0.55\n", encoding="utf-8"
-    )
+    p.write_text("scoring:\n  thresholds:\n    accept: 0.55\n", encoding="utf-8")
     cfg = load_config(p)
     assert cfg.raw["scoring"]["thresholds"]["accept"] == 0.55
     # Defaults preserved for non-overridden leaves
@@ -126,6 +124,36 @@ def test_set_value_int_field_rejects_float_string() -> None:
         set_value(cfg, "retrieve.rrf_k", "12.5")
 
 
+def test_set_value_parses_list_from_string() -> None:
+    """Container leaves parse YAML from the CLI string (09 §9；P3-5)."""
+    cfg = Config.defaults()
+    cfg.raw["llm"]["fallback"] = []
+    old, new = set_value(
+        cfg,
+        "llm.fallback",
+        '[{"provider": "openai", "model": "gpt-4o-mini"}]',
+    )
+    assert old == []
+    assert new == [{"provider": "openai", "model": "gpt-4o-mini"}]
+
+
+def test_set_value_parses_dict_from_string() -> None:
+    cfg = Config.defaults()
+    cfg.raw["classify"]["topic_keywords"] = {}
+    old, new = set_value(
+        cfg, "classify.topic_keywords", "{ContextEngineering: [context, retrieval]}"
+    )
+    assert old == {}
+    assert new == {"ContextEngineering": ["context", "retrieval"]}
+
+
+def test_set_value_list_rejects_non_list_parse() -> None:
+    cfg = Config.defaults()
+    cfg.raw["llm"]["fallback"] = []
+    with pytest.raises(ConfigError):
+        set_value(cfg, "llm.fallback", "not-a-list")
+
+
 def test_set_value_missing_leaf_raises() -> None:
     cfg = Config.defaults()
     with pytest.raises(ConfigError):
@@ -167,3 +195,12 @@ def test_merge_defaults_does_not_mutate_DEFAULTS() -> None:
     # Reload defaults and verify untouched
     fresh = Config.defaults()
     assert fresh.raw["scoring"]["thresholds"]["accept"] == 0.70
+
+
+def test_data_dir_env_override(monkeypatch, tmp_path) -> None:
+    """GRAPHIT_KB_DATA_DIR 覆盖配置文件 data_dir（llm_usage 寻址一致性，M3 DoD 复核）。"""
+    monkeypatch.setenv("GRAPHIT_KB_DATA_DIR", str(tmp_path))
+    cfg = Config.defaults()
+    assert cfg.data_dir == tmp_path
+    monkeypatch.delenv("GRAPHIT_KB_DATA_DIR")
+    assert cfg.data_dir != tmp_path

@@ -1,49 +1,301 @@
-"""``kb search ...`` stub. M3 起替换为真实命令。"""
+"""``kb search / show / read / related / compare / topics``（M3 落地，11 §2/§6）。
+
+六个命令均为**顶层**命令（对齐 04 §2.1），由 :mod:`kbapp.cli.main` 逐个注册。
+业务逻辑下沉到 :mod:`kbapp.retrieve`，本模块只做参数解析 + 打印。
+"""
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
+from rich.console import Console
+from rich.table import Table
 
-app = typer.Typer(
-    help="检索与查阅（search / show / read / related / compare / topics）— M3 落地",
-    no_args_is_help=True,
+from kbapp.core.config import load_config
+from kbapp.core.paths import DataPaths
+from kbapp.core.registry import Registry, get_file, list_files, list_topics
+from kbapp.llm import get_llm_or_none
+from kbapp.retrieve import SearchHit, resolve_doc
+from kbapp.retrieve import search as _search
+from kbapp.retrieve.assembler import (
+    compare_documents,
+    read_section,
+    read_summary,
+    section_tree,
 )
+from kbapp.retrieve.hybrid import topic_panorama
+from kbapp.retrieve.query_understanding import norm
+
+console = Console()
+err_console = Console(stderr=True)
+
+#: 检索模式（11 §2.6）。vector 为 P1 目标态，M3 显式报错。
+SEARCH_MODES = ("hybrid", "graph", "topic-global", "vector")
 
 
-@app.command("query")
-def query_cmd() -> None:
-    """[M3 落地] 三路混合检索 + RRF。"""
-    typer.echo("M1 占位：search query 将在 M3 落地（FTS5 + LanceDB + RRF）。")
+def _bootstrap(ctx: typer.Context) -> tuple[Registry, object, DataPaths]:
+    """解析 data_dir → load config → init registry，供各命令复用。
+
+    顺带做 embedding 档启动校验（11 §5，P2-5：所有检索命令均接线）。
+    """
+    data_dir: Path = ctx.obj["data_dir"]
+    paths = DataPaths.from_data_dir(data_dir)
+    paths.ensure_dirs()
+    cfg = load_config(paths.config_path)
+    registry = Registry(paths.registry_db)
+    registry.initialize()
+    _warn_embedding_backend(cfg)
+    return registry, cfg, paths
 
 
-@app.command("show")
-def show_cmd() -> None:
-    """[M3 落地] 文档元数据 + 章节树 + 摘要。"""
-    typer.echo("M1 占位：search show 将在 M3 落地。")
+def _vector_deps_available() -> bool:
+    """探测向量档依赖（LanceDB / bge-m3 / onnxruntime）是否可导入（11 §5）。"""
+    for mod in ("lancedb", "sentence_transformers", "onnxruntime"):
+        try:
+            __import__(mod)
+        except ImportError:
+            return False
+    return True
 
 
-@app.command("read")
-def read_cmd() -> None:
-    """[M3 落地] 输出章节原文。"""
-    typer.echo("M1 占位：search read 将在 M3 落地。")
+def _warn_embedding_backend(cfg) -> None:
+    """embedding 档启动校验（11 §5）：非 none 档且依赖缺失 → 警告按 none 运行。"""
+    backend = cfg.get("embedding.backend", "none")
+    if backend != "none" and not _vector_deps_available():
+        err_console.print(
+            f"[yellow]向量档 embedding.backend={backend!r} 但向量依赖缺失，按 none 运行[/yellow]；"
+            "可 `kb config set embedding.backend none` 消除本警告"
+        )
 
 
-@app.command("related")
-def related_cmd() -> None:
-    """[M5 落地] 关联资料 + 原因标注。"""
-    typer.echo("M1 占位：search related 将在 M5 落地（实体图谱）。")
+def _resolve_or_exit(registry: Registry, ref: str):
+    """doc_id / 路径 / 标题片段 → FileRow；歧义/未命中打印错误并退出（13 §2.1）。"""
+    res = resolve_doc(registry, ref)
+    if res.row is None:
+        if res.candidates:
+            err_console.print(f"[red]文档引用歧义[/red] {ref!r}，候选：{', '.join(res.candidates)}")
+        else:
+            err_console.print(f"[red]找不到文档[/red] {ref!r}")
+        raise typer.Exit(code=1)
+    return res.row
 
 
-@app.command("compare")
-def compare_cmd() -> None:
-    """[M5 落地] 多文档观点并排。"""
-    typer.echo("M1 占位：search compare 将在 M5 落地。")
+def _print_search_result(query: str, hits: list[SearchHit], note: str) -> None:
+    table = Table(title=f"kb search {query!r}", show_lines=False)
+    table.add_column("#", justify="right", no_wrap=True)
+    table.add_column("得分", style="green", no_wrap=True)
+    table.add_column("路径", style="cyan")
+    table.add_column("章节", style="yellow")
+    table.add_column("摘要", style="dim")
+    for i, h in enumerate(hits, 1):
+        table.add_row(str(i), f"{h.score:.4f}", h.path, h.section_path, h.snippet)
+    console.print(table)
+    if note:
+        console.print(f"[dim]{note}[/dim]")
+    if hits:
+        console.print("[dim]锚点下钻：kb show <doc_id> / kb read <doc_id> '<section>'[/dim]")
 
 
-@app.command("topics")
-def topics_cmd() -> None:
-    """[M3 落地] 主题清单与规模。"""
-    typer.echo("M1 占位：search topics 将在 M3 落地。")
+def search_cmd(
+    ctx: typer.Context,
+    query: str = typer.Argument(..., help="检索查询串"),
+    mode: str = typer.Option("hybrid", "--mode", help="hybrid|graph|topic-global|vector"),
+    topic: str | None = typer.Option(None, "--topic", help="限定主题（硬过滤）"),
+    limit: int = typer.Option(10, "--limit", help="返回条数"),
+) -> None:
+    """三路（MVP 两路）检索 + RRF（11 §2）。"""
+    if mode not in SEARCH_MODES:
+        err_console.print(f"[red]未知 mode[/red] {mode!r}（允许：{SEARCH_MODES}）")
+        raise typer.Exit(code=1)
+    registry, cfg, _paths = _bootstrap(ctx)
+
+    if mode == "vector":
+        err_console.print("[red]vector 模式为 P1 目标态[/red]（M3 无向量档，见 11 §2.4）")
+        raise typer.Exit(code=1)
+
+    if mode == "topic-global":
+        groups = topic_panorama(registry, cfg, topic=topic, limit=limit)
+        _print_topic_panorama(groups)
+        return
+
+    llm = get_llm_or_none(cfg)
+    result = _search(
+        registry,
+        cfg,
+        query,
+        mode=mode,
+        topic=topic,
+        limit=limit,
+        llm=llm,
+    )
+    _print_search_result(query, result.hits, result.note)
 
 
-__all__ = ["app"]
+def _print_topic_panorama(groups: list[dict]) -> None:
+    if not groups:
+        console.print("[dim]无主题数据[/dim]")
+        return
+    for g in groups:
+        console.print(f"[bold]{g['name']}[/bold]（{g['doc_count']} 篇）")
+        for d in g["docs"]:
+            console.print(f"  {d['doc_id']}  {d['path']}")
+            if d["snippet"]:
+                console.print(f"    [dim]{d['snippet']}[/dim]")
+
+
+def show_cmd(
+    ctx: typer.Context,
+    doc: str = typer.Argument(..., help="doc_id（Dxxxx）或路径/标题片段"),
+) -> None:
+    """文档元数据 + 章节树 + 摘要（11 §2 输出侧）。"""
+    registry, _cfg, _paths = _bootstrap(ctx)
+    row = _resolve_or_exit(registry, doc)
+
+    console.print(f"[bold]{row.title or row.path}[/bold]  [dim]{row.doc_id}[/dim]")
+    meta = Table(show_header=False, show_lines=False)
+    meta.add_column(style="cyan")
+    meta.add_column(style="green")
+    meta.add_row("path", row.path)
+    meta.add_row("corpus", row.corpus)
+    meta.add_row("doc_type", row.doc_type or "-")
+    meta.add_row("topic", row.topic or "-")
+    meta.add_row("status", row.status)
+    meta.add_row("summary_source", row.summary_source)
+    console.print(meta)
+
+    summary = read_summary(registry, row)
+    if summary:
+        console.print("[bold]摘要[/bold]")
+        console.print(summary)
+
+    tree = section_tree(registry, row.doc_id)
+    if tree:
+        console.print(f"[bold]章节树[/bold]（{len(tree)} 节）")
+        for s in tree:
+            console.print(f"  {s['section_path']}")
+
+
+def read_cmd(
+    ctx: typer.Context,
+    doc: str = typer.Argument(..., help="doc_id（Dxxxx）或路径/标题片段"),
+    section: str = typer.Argument(..., help="章节 section_path，如 '$summary' / '§1 引言'"),
+) -> None:
+    """输出章节原文（11 §3.4；$summary 读摘要产物文件）。"""
+    registry, _cfg, _paths = _bootstrap(ctx)
+    row = _resolve_or_exit(registry, doc)
+    text = read_section(registry, row.doc_id, section)
+    if text is None:
+        err_console.print(f"[red]章节不存在[/red] {section!r}")
+        raise typer.Exit(code=1)
+    console.print(text)
+
+
+def related_cmd(
+    ctx: typer.Context,
+    doc: str = typer.Argument(..., help="doc_id（Dxxxx）或路径/标题片段"),
+    limit: int = typer.Option(10, "--limit", help="返回条数"),
+) -> None:
+    """同 Topic 文档推荐（11 §2.5 M3 口径；实体/--hops 为 M5 目标态）。"""
+    registry, _cfg, _paths = _bootstrap(ctx)
+    row = _resolve_or_exit(registry, doc)
+
+    with registry.read_only() as conn:
+        if row.topic is not None:
+            others = [
+                r
+                for r in list_files(conn, topic=row.topic, limit=200)
+                if r.doc_id != row.doc_id and r.status not in ("deleted", "duplicate")
+            ]
+        else:
+            others = [
+                r
+                for r in list_files(conn, limit=200)
+                if r.doc_id != row.doc_id and r.status not in ("deleted", "duplicate")
+            ]
+    console.print(
+        f"[bold]与 {row.doc_id} 相关[/bold]（同 topic：{row.topic or '未分类，退化全库'}）"
+    )
+    for r in others[:limit]:
+        console.print(f"  {r.doc_id}  {r.title or r.path}")
+
+
+def compare_cmd(
+    ctx: typer.Context,
+    docs: str = typer.Option(..., "--docs", help="逗号分隔的 doc_id，如 D0001,D0002"),
+) -> None:
+    """多文档 L1–L3 摘要经 LLM 组装对比表（11 §2.5 M3 口径；无 LLM 回退并排摘要）。"""
+    registry, cfg, _paths = _bootstrap(ctx)
+    llm = get_llm_or_none(cfg)
+    doc_ids = [d.strip() for d in docs.split(",") if d.strip()]
+    if len(doc_ids) < 2:
+        err_console.print("[red]compare 需 ≥2 个文档[/red]（--docs a,b[,c]）")
+        raise typer.Exit(code=1)
+
+    with registry.read_only() as conn:
+        rows = [(d, get_file(conn, d)) for d in doc_ids]
+    for doc_id, row in rows:
+        if row is None:
+            err_console.print(f"[red]找不到文档[/red] {doc_id}")
+            raise typer.Exit(code=1)
+
+    entries = [
+        (row.doc_id, row.title or row.path, read_summary(registry, row) or "") for _, row in rows
+    ]
+
+    table = compare_documents(llm, entries)
+    if table:
+        console.print(table)
+        return
+
+    # 回退：并排打印各文档摘要。
+    console.print("[dim]（LLM 不可用，回退并排摘要）[/dim]")
+    for _, row in rows:
+        console.print(f"\n[bold]{row.doc_id} — {row.title or row.path}[/bold]")
+        summary = read_summary(registry, row)
+        if summary:
+            console.print(summary)
+        else:
+            console.print("[dim]（无摘要；用 kb index run 生成或 kb index set-topic 后重扫）[/dim]")
+
+
+def topics_cmd(ctx: typer.Context) -> None:
+    """主题清单与规模（11 §2.1 norm 碰撞提示）。"""
+    registry, _cfg, _paths = _bootstrap(ctx)
+    with registry.read_only() as conn:
+        topics = list_topics(conn)
+    if not topics:
+        console.print("[dim]无主题[/dim]")
+        return
+    table = Table(title="topics", show_lines=False)
+    table.add_column("name", style="cyan", no_wrap=True)
+    table.add_column("doc_count", style="green")
+    table.add_column("description", style="dim")
+    for t in topics:
+        table.add_row(t.name, str(t.doc_count), t.description or "")
+    console.print(table)
+
+    # norm 碰撞提示（11 §2.1 四轮 #3，P2-3）
+    collisions = _norm_collision_groups([t.name for t in topics])
+    for names in collisions:
+        console.print(
+            f"[yellow]主题名归一化碰撞[/yellow]：{', '.join(names)}"
+            " → 建议 `kb index set-topic` 归并"
+        )
+
+
+def _norm_collision_groups(names: list[str]) -> list[list[str]]:
+    groups: dict[str, list[str]] = {}
+    for n in names:
+        groups.setdefault(norm(n), []).append(n)
+    return [v for v in groups.values() if len(v) > 1]
+
+
+__all__ = [
+    "compare_cmd",
+    "read_cmd",
+    "related_cmd",
+    "search_cmd",
+    "show_cmd",
+    "topics_cmd",
+]

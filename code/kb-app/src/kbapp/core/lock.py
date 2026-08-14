@@ -1,5 +1,8 @@
 """Atomic write lock (设计 05 §7.1, S7 修复).
 
+**平台支持**：POSIX-only（Linux / macOS）。``_is_alive`` 依赖
+``os.kill(pid, 0)``，Windows 下 PID 语义不同，本模块不保证可用。
+
 S7 修复要点（评审报告 07 §S7 + 03 §6.4）：
 
 1. ``os.open(path, O_CREAT|O_EXCL|O_WRONLY)`` —— 真正的原子获取；不依赖
@@ -16,6 +19,10 @@ S7 修复要点（评审报告 07 §S7 + 03 §6.4）：
   视作"持锁中"（后者在单用户本机基本不会触发）。
 - 锁文件内容只写 PID（行尾换行），后续可扩展为 JSON 记录持有者元数据
   （启动时间、命令名），保持向后兼容——读时按行解析首段为 int 即可。
+
+已知限制：mtime 兜底回收后，原持有进程恢复时调用 ``release_write_lock``
+会无条件 unlink，理论上可删掉新持有者的锁文件——单用户本地场景概率极
+低；M2+ 若引入多用户/网络盘需改为按 PID 校验后再删。
 """
 
 from __future__ import annotations

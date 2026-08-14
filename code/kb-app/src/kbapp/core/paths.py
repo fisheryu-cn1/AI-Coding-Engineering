@@ -34,6 +34,7 @@ EXTRACTED_DIR = "extracted"
 INBOX_DIR = "inbox"
 REPORTS_DIR = "reports"
 SCORING_MODULES_DIR = "scoring_modules"
+AUTO_SUMMARIES_DIR = "auto_summaries"  # 11 §3.2：自动摘要产物（平级，不与语料 summaries/ 同名嵌套）
 WRITE_LOCK = ".write.lock"
 
 
@@ -56,6 +57,7 @@ class DataPaths:
     inbox_dir: Path
     reports_dir: Path
     scoring_modules_dir: Path
+    auto_summaries_dir: Path
     write_lock: Path
 
     @classmethod
@@ -78,6 +80,7 @@ class DataPaths:
             inbox_dir=d / INBOX_DIR,
             reports_dir=d / REPORTS_DIR,
             scoring_modules_dir=d / SCORING_MODULES_DIR,
+            auto_summaries_dir=d / AUTO_SUMMARIES_DIR,
             write_lock=d / WRITE_LOCK,
         )
 
@@ -95,6 +98,7 @@ class DataPaths:
             self.inbox_dir,
             self.reports_dir,
             self.scoring_modules_dir,
+            self.auto_summaries_dir,
         ):
             d.mkdir(parents=True, exist_ok=True)
 

@@ -62,7 +62,13 @@ def test_lock_holder_none_when_no_lock(data_dir: Path) -> None:
 
 
 def test_stale_pid_is_reclaimed(data_dir: Path) -> None:
-    """A lock file pointing at a dead PID should be reaped on next acquire."""
+    """A lock file pointing at a dead PID should be reaped on next acquire.
+
+    用 PID 99_999_999 作"确定不存在"哨兵——Linux 默认 ``/proc/sys/kernel/pid_max``
+    默认 4194304（部分发行版 32768 ~ 2^22），99_999_999 远超上限；macOS 默认
+    99999。若未来该 PID 撞上容器/嵌入式系统上的真 PID，理论上本测试会偶发
+    失败——届时改用 ``os.fork`` + 子进程退出 + ``waitpid`` 制造确定死 PID。
+    """
     lock_path = data_dir / ".write.lock"
     lock_path.write_text("99999999\n", encoding="utf-8")  # likely-dead PID
 

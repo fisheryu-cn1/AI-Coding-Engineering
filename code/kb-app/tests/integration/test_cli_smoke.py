@@ -58,9 +58,7 @@ def test_config_set_then_get_roundtrip(tmp_path: Path) -> None:
 
 
 def test_config_get_missing_key_exits_with_code_1(tmp_path: Path) -> None:
-    result = runner.invoke(
-        app, ["--data-dir", str(tmp_path), "config", "get", "no.such.key"]
-    )
+    result = runner.invoke(app, ["--data-dir", str(tmp_path), "config", "get", "no.such.key"])
     assert result.exit_code == 1
 
 
@@ -104,7 +102,8 @@ def test_status_runs(tmp_path: Path) -> None:
     result = runner.invoke(app, ["--data-dir", str(tmp_path), "status"])
     assert result.exit_code == 0, result.stdout
     assert "GraphIt-KB 状态" in result.stdout
-    assert "任务总数" in result.stdout
+    assert "任务 pending" in result.stdout  # M2: per-status counter
+    assert "FTS chunk 总数" in result.stdout
 
 
 def test_config_set_writes_audit_row(tmp_path: Path) -> None:

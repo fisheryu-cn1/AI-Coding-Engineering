@@ -23,6 +23,12 @@ from typing import Any
 
 import yaml
 
+#: Sentinel for "this leaf is missing from the user / default side" in
+#: :func:`diff_defaults`. Kept as a private singleton so the CLI can
+#: distinguish it from a real ``None`` value (e.g. ``llm.api_base`` defaults
+#: to ``None`` — the diff must not render that as "<missing>").
+_MISSING = object()
+
 DEFAULT_DATA_DIR = "~/.graphit-kb"
 
 
@@ -59,9 +65,18 @@ DEFAULTS: dict[str, Any] = {
         "api_key_env": "DEEPSEEK_API_KEY",
         "json_mode": True,
         "fallback": [],
+        "retry": {
+            "max_attempts": 4,
+            "base_delay_seconds": 1,
+            "backoff_factor": 2,
+            "max_delay_seconds": 30,
+        },
+        "fallback_max_switches": 1,
+        "summary_max_tokens": 800,  # 11 §3.3：自动摘要 L1–L3 输出预算
+        "summary_input_budget": 12000,  # 11 §3.1：摘要 LLM 输入（章节树+各章首段）预算
     },
     "embedding": {
-        "backend": "local",
+        "backend": "none",  # 11 §5：无向量 MVP 默认 none（local/api 为 P1 目标态）
         "model": "BAAI/bge-m3",
         "api_model": None,
     },
@@ -71,15 +86,29 @@ DEFAULTS: dict[str, Any] = {
         "context_budget": 8000,
         "rrf_k": 60,
     },
+    "search": {
+        # 11 §2.4：LLM 重排；max_tokens 需覆盖推理模型 think 开销
+        "rerank": {"enabled": True, "top_k": 20, "max_tokens": 1024},
+        "query_expansion": True,  # 11 §2.3：LLM 查询扩展（离线自动关）
+        "query_expansion_max_tokens": 1024,  # 同上：推理模型 think 会吃预算
+        "synonyms": {},  # 11 §2.2/§2.3：用户自定义同义/缩写表（dict，YAML 容器口径）
+        "exact_boost": 1.3,  # 13 §3 R-2：原查询语义命中倍率（扩展只增召回、不压精确命中）
+        "graph": {"max_docs": 20, "max_sections": 40, "weight": 0.5},  # 11 §2.1：图路有界化+权重
+    },
     "parse": {
         "pdf_fast_min_coverage": 0.85,
         "pdf_fast_min_headers": 3,
         "chunk_size": 2048,
         "chunk_overlap": 200,
+        "page_char_norm": 1500,  # 09 §4：分母（每页经验字符数）
+        "ocr_enabled": False,  # 09 §1：Tesseract OCR 默认关闭
     },
     "classify": {
         "gap_threshold": 0.05,
         "confirm_threshold": 0.70,
+        "topic_keywords": {},  # 09 §7.1：{topic: [关键词...]}；默认空
+        "min_keyword_score": 2,  # 09 §7.1：top1 命中门槛
+        "top_ratio": 1.5,  # 09 §7.1：top1/top2 比值门槛
     },
     "scoring": {
         "default_module": "default",
@@ -125,8 +154,27 @@ class Config:
 
     # ---- typed accessors -------------------------------------------------
 
+    def get(self, dotted_key: str, default: Any = None) -> Any:
+        """Read a value by dotted path; return ``default`` if missing.
+
+        Convenience wrapper around :func:`get_value` that swallows
+        :class:`ConfigError` (missing leaf) and returns ``default``. Used by
+        pipeline stages where a missing key is a soft fallback, not an
+        error.
+        """
+        try:
+            return get_value(self, dotted_key)
+        except ConfigError:
+            return default
+
     @property
     def data_dir(self) -> Path:
+        # GRAPHIT_KB_DATA_DIR 环境变量优先（与 CLI --data-dir 的 envvar 注入口径
+        # 一致）：否则 llm_usage 记账等按 cfg.data_dir 寻址的写入会落到配置文件
+        # 里的默认目录而非实际数据目录（M3 DoD 复核修复）。
+        env = os.environ.get("GRAPHIT_KB_DATA_DIR")
+        if env:
+            return Path(env).expanduser()
         return Path(self.raw["data_dir"]).expanduser()
 
     @property
@@ -171,9 +219,7 @@ def load_config(path: Path | None) -> Config:
         raise ConfigError(f"config.yaml 解析失败 ({p}): {e}") from e
 
     if not isinstance(user, dict):
-        raise ConfigError(
-            f"config.yaml 顶层必须是 mapping，得到 {type(user).__name__} ({p})"
-        )
+        raise ConfigError(f"config.yaml 顶层必须是 mapping，得到 {type(user).__name__} ({p})")
 
     merged = merge_defaults(user)
     return Config(raw=merged)
@@ -195,9 +241,7 @@ def dump_config(cfg: Config, path: Path) -> None:
         sort_keys=False,
         default_flow_style=False,
     )
-    fd, tmp_name = tempfile.mkstemp(
-        prefix=f".{p.name}.", suffix=".tmp", dir=str(p.parent)
-    )
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{p.name}.", suffix=".tmp", dir=str(p.parent))
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(payload)
@@ -247,9 +291,7 @@ def set_value(cfg: Config, dotted_key: str, value: Any) -> tuple[Any, Any]:
     cur = cfg.raw
     for part in parts[:-1]:
         if part not in cur or not isinstance(cur[part], dict):
-            raise ConfigError(
-                f"配置路径中间节点不存在或不是 dict：{dotted_key!r}"
-            )
+            raise ConfigError(f"配置路径中间节点不存在或不是 dict：{dotted_key!r}")
         cur = cur[part]
 
     leaf = parts[-1]
@@ -334,8 +376,23 @@ def _coerce_scalar(existing: Any, new: Any) -> Any:
             except ValueError as e:
                 raise ConfigError(f"无法把 {new!r} 解析为 float") from e
         raise ConfigError(f"无法把 {type(new).__name__} 解析为 float")
-    # str / list / dict / None — pass through; deeper validation is not the
-    # job of this module
+    if isinstance(existing, (list, dict)):
+        # The CLI delivers a string; parse it back into the container type so
+        # `kb config set llm.fallback [...]` and
+        # `kb config set classify.topic_keywords '{...}'` actually work (09 §9
+        # 「全部参数可修改」；P3-5).
+        if isinstance(new, type(existing)):
+            return new
+        if isinstance(new, str):
+            try:
+                parsed = yaml.safe_load(new)
+            except yaml.YAMLError as e:
+                raise ConfigError(f"无法把 {new!r} 解析为 {type(existing).__name__}: {e}") from e
+            if isinstance(parsed, type(existing)):
+                return parsed
+            raise ConfigError(f"无法把 {new!r} 解析为 {type(existing).__name__}")
+        raise ConfigError(f"无法把 {type(new).__name__} 解析为 {type(existing).__name__}")
+    # str / None — pass through; deeper validation is not the job of this module
     return new
 
 
@@ -344,13 +401,13 @@ def _walk_diff(prefix: str, base: Any, current: Any, out: dict[str, tuple[Any, A
         for k, v in base.items():
             sub_prefix = f"{prefix}.{k}" if prefix else k
             if k not in current:
-                out[sub_prefix] = (v, "<missing>")
+                out[sub_prefix] = (v, _MISSING)
                 continue
             _walk_diff(sub_prefix, v, current[k], out)
         for k in current:
             if k not in base:
                 sub_prefix = f"{prefix}.{k}" if prefix else k
-                out[sub_prefix] = ("<missing>", current[k])
+                out[sub_prefix] = (_MISSING, current[k])
         return
     if base != current:
         out[prefix] = (base, current)

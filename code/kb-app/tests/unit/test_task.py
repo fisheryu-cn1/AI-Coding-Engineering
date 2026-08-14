@@ -88,9 +88,7 @@ def test_next_task_returns_oldest_pending(registry: Registry) -> None:
 
 def test_next_task_skips_future_run_after(registry: Registry) -> None:
     """A task whose ``run_after`` is in the future must not be picked up."""
-    future = (
-        datetime.now(UTC) + timedelta(hours=1)
-    ).strftime("%Y-%m-%dT%H:%M:%SZ")
+    future = (datetime.now(UTC) + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
     enqueue_task(registry, "parse", {}, run_after=future)
     assert next_task(registry) is None
 
@@ -141,6 +139,18 @@ def test_mark_failed_retryable_resets_to_pending_with_run_after(
     assert rows[0].attempts == 1
 
 
+def test_mark_failed_immediate_requeues_without_run_after(registry: Registry) -> None:
+    """``immediate=True`` requeues without backoff (09 §10 Ctrl-C；P3-1)."""
+    tid = enqueue_task(registry, "parse", {})
+    mark_running(registry, tid)
+    mark_failed(registry, tid, error="Ctrl-C", immediate=True)
+
+    rows = list_tasks(registry, status="pending")
+    assert len(rows) == 1
+    assert rows[0].id == tid
+    assert rows[0].run_after is None
+
+
 def test_mark_failed_terminal_goes_to_failed(registry: Registry) -> None:
     tid = enqueue_task(registry, "parse", {})
     mark_running(registry, tid)
@@ -169,12 +179,8 @@ def test_reset_stale_running_recovers_crashed_tasks(registry: Registry) -> None:
     mark_running(registry, tid)
     # Backdate started_at so it looks stale
     with registry.connect() as conn:
-        old = (
-            datetime.now(UTC) - timedelta(hours=2)
-        ).strftime("%Y-%m-%dT%H:%M:%SZ")
-        conn.execute(
-            "UPDATE tasks SET started_at = ? WHERE id = ?", (old, tid)
-        )
+        old = (datetime.now(UTC) - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        conn.execute("UPDATE tasks SET started_at = ? WHERE id = ?", (old, tid))
 
     n = reset_stale_running(registry)
     assert n == 1

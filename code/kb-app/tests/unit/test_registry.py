@@ -62,10 +62,7 @@ def test_files_table_has_summary_stale_and_pages() -> None:
         r.initialize()
         with r.connect() as conn:
             cols = {
-                row["name"]
-                for row in conn.execute(
-                    f"PRAGMA table_info({TABLE_FILES})"
-                ).fetchall()
+                row["name"] for row in conn.execute(f"PRAGMA table_info({TABLE_FILES})").fetchall()
             }
             assert "summary_stale" in cols
             assert "pages" in cols
@@ -86,9 +83,7 @@ def test_tasks_table_supports_tombstone_kind() -> None:
                 f"VALUES (?, 'tombstone', '{{}}', '2026-08-13T00:00:00Z')",
                 ("t1",),
             )
-            row = conn.execute(
-                f"SELECT kind FROM {TABLE_TASKS} WHERE id = 't1'"
-            ).fetchone()
+            row = conn.execute(f"SELECT kind FROM {TABLE_TASKS} WHERE id = 't1'").fetchone()
             assert row["kind"] == "tombstone"
 
 
@@ -103,10 +98,7 @@ def test_tasks_table_has_run_after_column() -> None:
         r.initialize()
         with r.connect() as conn:
             cols = {
-                row["name"]
-                for row in conn.execute(
-                    f"PRAGMA table_info({TABLE_TASKS})"
-                ).fetchall()
+                row["name"] for row in conn.execute(f"PRAGMA table_info({TABLE_TASKS})").fetchall()
             }
             assert "run_after" in cols
 
@@ -123,9 +115,7 @@ def test_llm_usage_table_present() -> None:
         with r.connect() as conn:
             cols = {
                 row["name"]
-                for row in conn.execute(
-                    f"PRAGMA table_info({TABLE_LLM_USAGE})"
-                ).fetchall()
+                for row in conn.execute(f"PRAGMA table_info({TABLE_LLM_USAGE})").fetchall()
             }
             for col in ("model", "purpose", "input_tokens", "output_tokens", "cost"):
                 assert col in cols
