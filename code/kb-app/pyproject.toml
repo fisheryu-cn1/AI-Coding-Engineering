@@ -19,8 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 # M3+ 才落地的 extras（声明保留，不安装/不调用，避免 fastmcp 教训复发）
 embed = ["sentence-transformers>=3,<4", "torch>=2.4,<3"]  # M3 bge-m3
-graph-ladybug = ["ladybug>=0.1,<1"]  # M5 图谱
-graph-kuzu = ["kuzu>=0.11.3,<3"]  # M5 降级后端
+graph-ladybug = ["ladybug>=0.1,<1"]  # M5 图谱（单一选型，15 D15-10）
 vector = ["lancedb>=0.20,<1", "pyarrow>=18,<20"]  # M3 向量
 mcp = ["mcp>=1.29,<2"]  # M4 MCP 服务
 # M2 parse/llm extras (09-M2 §1): 解析器与 LLM 客户端；缺省时 LLM 走纯规则降级（§7.4）。
