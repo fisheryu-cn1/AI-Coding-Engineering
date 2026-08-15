@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>G6 v5 vendor smoke</title>
+<style>#c { width: 600px; height: 400px; border: 1px solid #ccc; }</style>
+</head>
+<body>
+<div id="c"></div>
+<script src="g6.min.js"></script>
+<script>
+  if (typeof G6 === 'undefined') {
+    document.body.innerHTML = '<p>FAIL: G6 global not defined</p>';
+    return;
+  }
+  const data = {
+    nodes: [
+      { id: 'a', label: 'A' },
+      { id: 'b', label: 'B' },
+      { id: 'c', label: 'C' },
+    ],
+    edges: [
+      { source: 'a', target: 'b' },
+      { source: 'b', target: 'c' },
+    ],
+  };
+  const graph = new G6.Graph({ container: 'c', data, node: { labelPlacement: 'center' } });
+  graph.render();
+  document.body.innerHTML += '<p>OK: graph rendered, nodes=' + data.nodes.length + '</p>';
+</script>
+</body>
+</html>
