@@ -1,9 +1,11 @@
-"""Pipeline runner (M2; 09 §10).
+"""Pipeline runner (M2; 09 §10; M5 graph pipeline).
 
 Serial, foreground, single-writer execution loop. The CLI's
 ``kb index run`` command calls :func:`run_pending_tasks` after taking
 the write lock; the runner picks tasks one at a time and runs the M2
-three-stage sequence (parse → chunk → classify).
+three-stage sequence (parse → chunk → classify), then enqueues the
+``index`` stage task (15 §4.1), the ``extract`` task (15 §4.2), and
+processes runtime ``tombstone`` tasks (15 §4.1).
 
 Ctrl-C during a stage:
 
@@ -31,10 +33,16 @@ from kbapp.core.task import (
     RetryableError,
     TerminalError,
     _now_iso,
+    enqueue_task,
     mark_failed,
     mark_running,
     next_task,
     reset_stale_running,
+)
+from kbapp.pipeline.graph_stages import (
+    stage_extract_graph,
+    stage_index_graph,
+    stage_tombstone_graph,
 )
 from kbapp.pipeline.stages import (
     set_topic,
@@ -83,6 +91,9 @@ class RunReport:
 # Runner
 # ---------------------------------------------------------------------------
 
+#: 串行 runner 消费的 task kinds（M3 增 summarize；M5 增 index/extract/tombstone）。
+_RUNNER_KINDS: tuple[str, ...] = ("parse", "summarize", "index", "extract", "tombstone")
+
 
 def run_pending_tasks(ctx: PipelineCtx) -> RunReport:
     """Drive the queue to drain; return a :class:`RunReport`.
@@ -98,7 +109,7 @@ def run_pending_tasks(ctx: PipelineCtx) -> RunReport:
     while True:
         if ctx.max_tasks is not None and report.tasks_done + report.tasks_failed >= ctx.max_tasks:
             break
-        task = next_task(ctx.registry, kind=("parse", "summarize"))
+        task = next_task(ctx.registry, kind=_RUNNER_KINDS)
         if task is None:
             break
 
@@ -176,10 +187,20 @@ def run_pending_tasks(ctx: PipelineCtx) -> RunReport:
 
 
 def _run_one(doc_id: str, ctx: PipelineCtx, *, task_kind: str = "parse") -> None:
-    """Dispatch by kind (11 §3.1)：parse → parse/chunk/classify；summarize → stage_summarize。"""
+    """Dispatch by kind (15 §4.1)。"""
     if task_kind == "summarize":
         stage_summarize(doc_id, ctx)
         return
+    if task_kind == "index":
+        stage_index_graph(doc_id, ctx)
+        return
+    if task_kind == "extract":
+        stage_extract_graph(doc_id, ctx)
+        return
+    if task_kind == "tombstone":
+        stage_tombstone_graph(doc_id, ctx)
+        return
+    # parse → parse/chunk/classify → enqueue index（15 §4.1）
     parse_result = stage_parse(doc_id, ctx)
     if parse_result.status == "skip":
         return
@@ -189,6 +210,8 @@ def _run_one(doc_id: str, ctx: PipelineCtx, *, task_kind: str = "parse") -> None
     classify_result = stage_classify(doc_id, ctx)
     if classify_result.status == "skip":
         return
+    # 入队 index 任务（runner 串行消费，extract 入队在 index 完成后）
+    enqueue_task(ctx.registry, kind="index", payload={"doc_id": doc_id})
 
 
 __all__ = [

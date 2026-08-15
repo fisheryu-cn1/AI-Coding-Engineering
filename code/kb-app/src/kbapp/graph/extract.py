@@ -1,8 +1,21 @@
-"""Stub for entity extraction helpers — Task 9 充实。"""
+"""Entity extraction helpers (15 §4.2 / D15-13).
+
+MVP-simplified disambiguation: ``entity_id = f"{type}:{norm(name)}"`` — same
+type + same normalized name MERGE onto the same node. No embedding, no
+SAME_AS, no merge/redirect logic.
+
+This module also exposes :func:`run_extract` (Task 9 will fill in the LLM
+call) and the placeholder used by :func:`stage_extract_graph` when the
+extractor is not yet wired.
+"""
 
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from kbapp.core.registry import FileRow
 
 
 def norm(name: str) -> str:
@@ -38,4 +51,27 @@ def _doc_type_allowed(cfg, doc_type: str | None) -> bool:
     return doc_type is not None and doc_type in allowed
 
 
-__all__ = ["is_core_doc", "norm"]
+def entity_id(entity_type: str, name: str) -> str:
+    """Compute ``entity_id`` from type + name (15 D15-13)."""
+    return f"{entity_type}:{norm(name)}"
+
+
+def run_extract(
+    *,
+    store: Any,
+    registry: Any,
+    paths: Any,
+    doc_id: str,
+    row: "FileRow",
+    llm: Any,
+    cfg: Any,
+) -> dict[str, int]:
+    """Run entity extraction; return metrics dict.
+
+    Task 9 落地前为空实现（无 LLM 调用/无 MENTIONS/RELATES_TO 写入），仅
+    返回空 metrics 以便 runner 串行链路跑通——后续任务直接替换本函数体。
+    """
+    return {"entities": 0, "mentions": 0, "relates_to": 0, "dropped_kind": 0}
+
+
+__all__ = ["entity_id", "is_core_doc", "norm", "run_extract"]

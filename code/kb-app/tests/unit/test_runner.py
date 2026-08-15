@@ -65,7 +65,8 @@ def test_runner_drains_queue_and_writes_chunks(tmp_path: Path, text_corpus: Path
         llm=None,
     )
     report = run_pending_tasks(ctx)
-    assert report.tasks_done == 1
+    # parse 完成后入队 index 任务，runner 串行消费 → 2 个任务 done。
+    assert report.tasks_done == 2
     assert report.tasks_failed == 0
 
     # Files row updated
@@ -81,6 +82,21 @@ def test_runner_drains_queue_and_writes_chunks(tmp_path: Path, text_corpus: Path
     # Cache payload written
     cache_files = list(paths.extracted_dir.glob("*.json"))
     assert cache_files, "cache/extracted/<sha>.json missing"
+
+    # Graph Document 节点已落（index 任务已跑）
+    from kbapp.graph.store import make_graph_store
+
+    paths.ensure_dirs()
+    store = make_graph_store("ladybug", Config.defaults())
+    store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    try:
+        rows = store.query(
+            "MATCH (d:Document) WHERE d.doc_id = $i RETURN d.title AS t",
+            {"i": doc_id},
+        )
+        assert rows == [{"t": text_corpus} | {"t": "Topic: Context Engineering"}] or len(rows) == 1
+    finally:
+        store.close()
 
 
 def test_runner_max_tasks_caps_iterations(tmp_path: Path) -> None:
@@ -123,10 +139,11 @@ def test_runner_max_tasks_caps_iterations(tmp_path: Path) -> None:
     )
     report = run_pending_tasks(ctx)
     assert report.tasks_done == 2
-    # Third task is still pending.
+    # 中间产物：3 parse - 2 done = 1 parse pending；前 2 个 parse 各自入队 1 个
+    # index，所以挂账 1 个 parse + 2 个 index = 3 pending。
     from kbapp.core.task import count_tasks
 
-    assert count_tasks(registry, status="pending") == 1
+    assert count_tasks(registry, status="pending") == 3
 
 
 def test_runner_leaves_non_parse_tasks_pending(tmp_path: Path) -> None:
