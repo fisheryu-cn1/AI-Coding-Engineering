@@ -565,7 +565,7 @@ def reindex_cmd(
     full: bool = typer.Option(  # noqa: B008
         False,
         "--full",
-        help="清空 fts_chunks 并重新入队所有非 duplicate/deleted 文档",
+        help="清空 fts_chunks 与 graph/ 并重新入队所有非 duplicate/deleted 文档",
     ),
     no_cache: bool = typer.Option(  # noqa: B008
         False,
@@ -574,7 +574,7 @@ def reindex_cmd(
     ),
     wait: bool = typer.Option(False, "--wait", help="锁被占用时阻塞轮询"),
 ) -> None:
-    """重建索引（09 §10 reindex 定义）。"""
+    """重建索引（09 §10 + 15 §4.4 reindex 定义）。"""
     if not full:
         err_console.print("[red]reindex 必须配合 --full[/red]（09 §10）")
         raise typer.Exit(code=1)
@@ -592,11 +592,15 @@ def reindex_cmd(
         registry = Registry(paths.registry_db)
         registry.initialize()
 
-        # 1. Clear fts_chunks.
+        # 1. Clear fts_chunks + graph/（15 §4.4：图库是衍生数据，可全量重建）
         deleted_chunks = 0
         with registry.transaction() as conn:
             cur = conn.execute("DELETE FROM fts_chunks")
             deleted_chunks = cur.rowcount
+
+        from kbapp.graph.reset import reset_graph
+
+        reset_graph(paths)
 
         # 2. Optionally clear cache/extracted.
         removed_files = 0
@@ -626,7 +630,7 @@ def reindex_cmd(
 
         console.print(
             f"[green]reindex 已入队[/green] {enqueued} 个任务；"
-            f"清空 {deleted_chunks} 条 FTS；移除 {removed_files} 个缓存文件"
+            f"清空 {deleted_chunks} 条 FTS；重置 graph/；移除 {removed_files} 个缓存文件"
         )
     except LockError as e:
         err_console.print(f"[red]锁错误[/red] {e}")
