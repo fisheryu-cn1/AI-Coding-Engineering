@@ -108,7 +108,7 @@ def _run(coro):
 
 
 def test_mcp_handshake_and_four_tools(tmp_path: Path) -> None:
-    """DoD-1：initialize → tools/list 恰含四工具 → kb_search 全通。"""
+    """DoD-1：initialize → tools/list 恰含 M4 四工具 + M5 三只读图工具。"""
     data_dir = tmp_path / "data"
     _seed(data_dir)
 
@@ -118,10 +118,46 @@ def test_mcp_handshake_and_four_tools(tmp_path: Path) -> None:
                 await session.initialize()
                 tools = await session.list_tools()
                 names = {t.name for t in tools.tools}
-                assert names == {"kb_search", "kb_show", "kb_read", "kb_assemble_context"}
+                assert names == {
+                    "kb_search",
+                    "kb_show",
+                    "kb_read",
+                    "kb_assemble_context",
+                    # M5 MCP 三只读图工具（15 §5.2；图库缺失时返 MODE_NOT_READY）
+                    "kb_related",
+                    "kb_compare",
+                    "kb_topics",
+                }
                 out = _call_json(await session.call_tool("kb_search", {"query": "knowledge graph"}))
                 assert out["hits"]
                 assert out["hits"][0]["doc_id"] == "D0001"
+                # kb_topics 不依赖图库——必返回空 topics（无图状态下不走图）
+                topics = _call_json(await session.call_tool("kb_topics", {}))
+                assert "topics" in topics
+
+    _run(_go())
+
+
+def test_mcp_graph_tools_unavailable_without_reindex(tmp_path: Path) -> None:
+    """M5 MCP 工具：图库缺失时 kb_related / kb_compare 返 MODE_NOT_READY。"""
+    data_dir = tmp_path / "data"
+    _seed(data_dir)
+
+    async def _go():
+        async with stdio_client(_params(data_dir)) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                # 图库文件不存在 → MODE_NOT_READY
+                r = await session.call_tool("kb_related", {"target": "Method:rag", "type": "Entity"})
+                err = json.loads(r.content[0].text)["error"]
+                assert err["code"] == "MODE_NOT_READY"
+                assert "reindex" in err["suggestion"]
+
+                r = await session.call_tool(
+                    "kb_compare", {"concept": "Method:rag", "doc_ids": ["D0001"]}
+                )
+                err = json.loads(r.content[0].text)["error"]
+                assert err["code"] == "MODE_NOT_READY"
 
     _run(_go())
 
