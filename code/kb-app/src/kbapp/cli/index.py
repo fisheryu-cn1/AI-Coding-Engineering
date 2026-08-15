@@ -267,6 +267,13 @@ def _do_scan(
         for row in tombstones:
             apply_deleted(conn, row.doc_id)
             report.deleted.append(row.doc_id)
+            # 15 §4.1：图 tombstone 任务入队（runner 串行消费，软删 Document 节点）
+            enqueue_task(
+                registry,
+                kind="tombstone",
+                payload={"doc_id": row.doc_id},
+                conn=conn,
+            )
 
     # Persist manifest mismatches to reports/ (09 §5 / 06 §4.4).
     _write_manifest_mismatch_report(paths, manifest_mismatches)

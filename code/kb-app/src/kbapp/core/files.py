@@ -245,6 +245,9 @@ def apply_deleted(conn: sqlite3.Connection, doc_id: str) -> None:
     and identity fields are **preserved** so M5 graph soft-delete can still
     locate the row, and so a later re-add at the same path revives the row
     instead of colliding on the ``files.path`` UNIQUE constraint (P0-2).
+
+    15 §4.1: ``graph tombstone`` 任务入队由本调用方负责（cli/index.py
+    _do_scan 与 maint 模块），本函数只持久化 status='deleted'。
     """
     row = next(iter(_row_lookup(conn, doc_id)), None)
     if row is None:

@@ -159,3 +159,41 @@ def test_runner_enqueues_index_after_parse(default_config, registry, paths, tmp_
     enqueue_task(registry, kind="index", payload={"doc_id": "d1"})
     ts = list_tasks(registry, limit=10)
     assert any(t.kind == "index" for t in ts)
+
+
+def test_tombstone_soft_deletes_document(
+    default_config, registry, paths, tmp_path
+) -> None:
+    """stage_tombstone_graph 软删 Document：valid_to 非空 + CONTAINS_SECTION 边保留。"""
+    _seed_doc(registry, paths, default_config)
+
+    from kbapp.graph.store import make_graph_store
+    from kbapp.pipeline.graph_stages import stage_tombstone_graph
+    from kbapp.pipeline.runner import PipelineCtx
+
+    ctx = PipelineCtx(cfg=default_config, paths=paths, registry=registry, llm=None)
+    # 先同步结构
+    from kbapp.pipeline.graph_stages import stage_index_graph
+
+    stage_index_graph("d1", ctx)
+    # 再 tombstone
+    result = stage_tombstone_graph("d1", ctx)
+    assert result.status == "ok"
+
+    store = make_graph_store("ladybug", default_config)
+    store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    try:
+        rows = store.query(
+            "MATCH (d:Document) WHERE d.doc_id = $i RETURN d.valid_to AS v",
+            {"i": "d1"},
+        )
+        assert rows[0]["v"] != ""
+        # 边仍物理存在（15 §4.1：软删过滤由查询层负责）
+        rows = store.query(
+            "MATCH (d:Document)-[:CONTAINS_SECTION]->(s:Section) WHERE d.doc_id = $i "
+            "RETURN count(s) AS n",
+            {"i": "d1"},
+        )
+        assert rows[0]["n"] == 2
+    finally:
+        store.close()
