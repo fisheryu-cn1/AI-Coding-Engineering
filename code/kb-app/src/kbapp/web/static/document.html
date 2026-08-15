@@ -2,18 +2,29 @@
 <html lang="zh">
 <head>
 <meta charset="utf-8">
-<title>GraphIt-KB Document</title>
+<title>GraphIt-KB 文档</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body data-page="document">
-<header><h1>文档</h1><nav><a href="/">检索</a> <a href="/document">文档</a> <a href="/status">状态</a> <a href="/graph">图谱</a></nav></header>
+<header>
+  <h1>GraphIt-KB</h1>
+  <nav>
+    <a href="/">检索</a>
+    <a href="/document">文档</a>
+    <a href="/status">状态</a>
+    <a href="/graph">图谱</a>
+  </nav>
+</header>
 <main>
-  <input id="doc" placeholder="doc_id">
-  <button id="btn">载入</button>
-  <div id="meta"></div>
-  <div id="summary"></div>
-  <div id="sections"></div>
-  <aside id="related"></aside>
+  <section class="lookup">
+    <input id="doc" placeholder="doc_id / 路径 / 标题片段">
+    <button id="btn">载入</button>
+  </section>
+  <section id="meta"></section>
+  <section id="summary"></section>
+  <section id="sections"></section>
+  <aside id="related" class="sidebar"></aside>
+  <aside id="mentions" class="sidebar"></aside>
 </main>
 <script src="/static/app.js" defer></script>
 </body>
