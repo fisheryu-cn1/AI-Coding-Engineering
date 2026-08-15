@@ -15,6 +15,7 @@ from rich.table import Table
 from kbapp.core.config import load_config
 from kbapp.core.paths import DataPaths
 from kbapp.core.registry import Registry, get_file, list_files, list_topics
+from kbapp.graph import GraphError, make_graph_store
 from kbapp.llm import get_llm_or_none
 from kbapp.retrieve import SearchHit, resolve_doc
 from kbapp.retrieve import search as _search
@@ -24,6 +25,7 @@ from kbapp.retrieve.assembler import (
     read_summary,
     section_tree,
 )
+from kbapp.retrieve.graph_search import graph_compare, graph_related
 from kbapp.retrieve.hybrid import topic_panorama
 from kbapp.retrieve.query_understanding import norm
 
@@ -194,44 +196,63 @@ def read_cmd(
 def related_cmd(
     ctx: typer.Context,
     doc: str = typer.Argument(..., help="doc_id（Dxxxx）或路径/标题片段"),
+    hops: int = typer.Option(1, "--hops", help="图遍历跳数（1-3）"),
     limit: int = typer.Option(10, "--limit", help="返回条数"),
 ) -> None:
-    """同 Topic 文档推荐（11 §2.5 M3 口径；实体/--hops 为 M5 目标态）。"""
-    registry, _cfg, _paths = _bootstrap(ctx)
+    """图遍历语义（15 §5.1）：基于共享 Entity / Topic 1-3 跳邻域。
+
+    行为回归（M3 → M5）：不再回退 M3 文档级 `same-topic` 实现；图库缺失
+    或 schema 不符时显式报错并提示 `kb index reindex --full`。
+    """
+    registry, cfg, paths = _bootstrap(ctx)
     row = _resolve_or_exit(registry, doc)
 
-    with registry.read_only() as conn:
-        if row.topic is not None:
-            others = [
-                r
-                for r in list_files(conn, topic=row.topic, limit=200)
-                if r.doc_id != row.doc_id and r.status not in ("deleted", "duplicate")
-            ]
-        else:
-            others = [
-                r
-                for r in list_files(conn, limit=200)
-                if r.doc_id != row.doc_id and r.status not in ("deleted", "duplicate")
-            ]
-    console.print(
-        f"[bold]与 {row.doc_id} 相关[/bold]（同 topic：{row.topic or '未分类，退化全库'}）"
-    )
-    for r in others[:limit]:
-        console.print(f"  {r.doc_id}  {r.title or r.path}")
+    backend = cfg.raw["graph"]["backend"]
+    store = make_graph_store(backend, cfg)
+    try:
+        store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    except (FileNotFoundError, GraphError) as e:
+        err_console.print(
+            f"[red]图库不可用[/red] {e}；请先 `kb index reindex --full`"
+        )
+        raise typer.Exit(code=2)
+
+    try:
+        # 推断 target_type：先用 Document 查 1 跳关系，结果可能经由 Entity / Topic
+        result = graph_related(
+            store,
+            target=row.doc_id,
+            target_type="Document",
+            hops=hops,
+            limit=limit,
+        )
+    finally:
+        store.close()
+
+    console.print(f"[bold]与 {row.doc_id} 相关（{hops} 跳邻域）[/bold]")
+    if not result["related"]:
+        console.print("  [dim]无邻域节点[/dim]")
+        return
+    for r in result["related"]:
+        console.print(f"  [{r['type']}] {r['id']}")
 
 
 def compare_cmd(
     ctx: typer.Context,
     docs: str = typer.Option(..., "--docs", help="逗号分隔的 doc_id，如 D0001,D0002"),
+    limit: int = typer.Option(5, "--limit", help="关系条数"),
 ) -> None:
-    """多文档 L1–L3 摘要经 LLM 组装对比表（11 §2.5 M3 口径；无 LLM 回退并排摘要）。"""
-    registry, cfg, _paths = _bootstrap(ctx)
-    llm = get_llm_or_none(cfg)
+    """图遍历语义（15 §5.1）：基于共享 Entity / Topic 的 RELATES_TO 对照表。
+
+    行为回归（M3 → M5）：依赖图库，不静默回退 M3 摘要对比。
+    """
+    registry, cfg, paths = _bootstrap(ctx)
     doc_ids = [d.strip() for d in docs.split(",") if d.strip()]
     if len(doc_ids) < 2:
         err_console.print("[red]compare 需 ≥2 个文档[/red]（--docs a,b[,c]）")
         raise typer.Exit(code=1)
 
+    # 校验 doc_id 都存在
     with registry.read_only() as conn:
         rows = [(d, get_file(conn, d)) for d in doc_ids]
     for doc_id, row in rows:
@@ -239,24 +260,66 @@ def compare_cmd(
             err_console.print(f"[red]找不到文档[/red] {doc_id}")
             raise typer.Exit(code=1)
 
-    entries = [
-        (row.doc_id, row.title or row.path, read_summary(registry, row) or "") for _, row in rows
-    ]
+    backend = cfg.raw["graph"]["backend"]
+    store = make_graph_store(backend, cfg)
+    try:
+        store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    except (FileNotFoundError, GraphError) as e:
+        err_console.print(
+            f"[red]图库不可用[/red] {e}；请先 `kb index reindex --full`"
+        )
+        raise typer.Exit(code=2)
 
-    table = compare_documents(llm, entries)
-    if table:
-        console.print(table)
+    try:
+        # 以 doc_ids 第一个文档的某 Entity 为主（若 graph 不支持文档级 concept
+        # 推断则取共享概念）。MVP：以 First doc 共享的 Entity 为 concept 兜底。
+        # 简化：直接以 doc_ids 列表传给 graph_compare，前端按 docs 过滤显示。
+        # 这里采用"概念名 = 第一个 doc_id"作为 MVP 兜底（UI 端可调整）。
+        rows_data = []
+        for d in doc_ids:
+            # 语义：MVP 阶段直接按 doc_id 关联的 entity 聚合
+            result = graph_related(
+                store,
+                target=d,
+                target_type="Document",
+                hops=1,
+                limit=10,
+            )
+            for r in result["related"]:
+                if r["type"] == "Entity":
+                    cmp = graph_compare(
+                        store,
+                        concept=r["id"],
+                        limit=limit,
+                    )
+                    for row in cmp["rows"]:
+                        row["concept"] = r["id"]
+                        row["doc_id"] = d
+                        rows_data.append(row)
+    finally:
+        store.close()
+
+    if not rows_data:
+        console.print("[dim]（这些文档之间没有共享实体关系）[/dim]")
         return
 
-    # 回退：并排打印各文档摘要。
-    console.print("[dim]（LLM 不可用，回退并排摘要）[/dim]")
-    for _, row in rows:
-        console.print(f"\n[bold]{row.doc_id} — {row.title or row.path}[/bold]")
-        summary = read_summary(registry, row)
-        if summary:
-            console.print(summary)
-        else:
-            console.print("[dim]（无摘要；用 kb index run 生成或 kb index set-topic 后重扫）[/dim]")
+    table = Table(title=f"compare {docs!r}", show_lines=False)
+    table.add_column("concept", style="cyan")
+    table.add_column("doc_id", style="green")
+    table.add_column("kind", style="yellow")
+    table.add_column("src", style="dim")
+    table.add_column("dst", style="dim")
+    table.add_column("evidence", style="dim")
+    for r in rows_data:
+        table.add_row(
+            r.get("concept", ""),
+            r.get("doc_id", ""),
+            r.get("kind", ""),
+            r.get("src", ""),
+            r.get("dst", ""),
+            r.get("evidence_section_id", ""),
+        )
+    console.print(table)
 
 
 def topics_cmd(ctx: typer.Context) -> None:
