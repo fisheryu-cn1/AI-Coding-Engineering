@@ -79,7 +79,7 @@ GRAPH_NODES: tuple[NodeDef, ...] = (
             "title": _S,
             "summary": _S,
             "page_range": _S,
-            "order": _I,
+            "seq": _I,
         },
     ),
     NodeDef(
@@ -105,7 +105,7 @@ GRAPH_RELS: tuple[RelDef, ...] = (
         "CONTAINS_SECTION",
         "Document",
         "Section",
-        {"order": _I},
+        {"seq": _I},
     ),
     RelDef(
         "MENTIONS",

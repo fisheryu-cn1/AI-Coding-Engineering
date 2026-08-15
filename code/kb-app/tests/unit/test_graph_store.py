@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 
@@ -22,6 +24,9 @@ def test_factory_rejects_missing_ladybug_extra(default_config, monkeypatch) -> N
 
     from kbapp.graph.store import GraphError, make_graph_store
 
+    # 隔离：先弹掉缓存——前面 test_ladybug_store.py 加载过 ladybug_store。
+    # 这样下面的"import ladybug"拦截才会触发。
+    monkeypatch.delitem(sys.modules, "kbapp.graph.ladybug_store", raising=False)
     real_import = builtins.__import__
 
     def fake_import(name, *args, **kwargs):
