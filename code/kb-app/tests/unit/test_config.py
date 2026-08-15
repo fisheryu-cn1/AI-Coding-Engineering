@@ -204,3 +204,22 @@ def test_data_dir_env_override(monkeypatch, tmp_path) -> None:
     assert cfg.data_dir == tmp_path
     monkeypatch.delenv("GRAPHIT_KB_DATA_DIR")
     assert cfg.data_dir != tmp_path
+
+
+# ---------------------------------------------------------------------------
+# M5/M6 config keys (15 §7)
+# ---------------------------------------------------------------------------
+
+
+def test_defaults_include_m5_keys(default_config) -> None:
+    """15 §7 新增 graph/extract/viz 键。"""
+    raw = default_config.raw
+    assert raw["graph"] == {"backend": "ladybug", "dir": "graph"}
+    assert raw["extract"]["doc_types"] == ["paper", "design"]
+    assert raw["extract"]["extra_docs"] == []
+    assert raw["viz"] == {"port": 8371, "max_nodes": 500}
+
+
+def test_embedding_backend_stays_none(default_config) -> None:
+    """15 D15-11：embedding.backend 保持 none，实体消歧走 entity_id 碰撞。"""
+    assert default_config.raw["embedding"]["backend"] == "none"

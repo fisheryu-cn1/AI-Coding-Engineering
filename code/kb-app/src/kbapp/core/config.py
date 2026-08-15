@@ -132,6 +132,11 @@ DEFAULTS: dict[str, Any] = {
         "http_token": None,
         "enable_write_tools": False,
     },
+    # M5/M6 新增（15 §7）：图库单一选型 ladybug（D15-10），extract 门控含
+    # 单独标记入口 extract.extra_docs（D15-12），viz 服务绑定 127.0.0.1。
+    "graph": {"backend": "ladybug", "dir": "graph"},
+    "extract": {"doc_types": ["paper", "design"], "extra_docs": []},
+    "viz": {"port": 8371, "max_nodes": 500},
 }
 
 
