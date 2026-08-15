@@ -43,11 +43,12 @@ def test_status_endpoint_shape(client) -> None:
 
 
 def test_search_endpoint_returns_shape(client) -> None:
-    """GET /api/search?q=&limit= 返回 {hits, note}。"""
+    """GET /api/search?q=&limit= 返回 {hits, note, entities}（Task 19）。"""
     r = client.get("/api/search", params={"q": "x", "limit": 5})
     assert r.status_code == 200
     data = r.json()
-    assert set(data) == {"hits", "note"}
+    assert set(data) == {"hits", "note", "entities"}
+    assert isinstance(data["entities"], list)
 
 
 def test_topics_endpoint_returns_list(client) -> None:
