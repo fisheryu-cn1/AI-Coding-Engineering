@@ -13,6 +13,7 @@ Provides:
 from __future__ import annotations
 
 from kbapp.graph.extract import is_core_doc, norm
+from kbapp.graph.queries import entity_path, topic_subgraph
 from kbapp.graph.schema import (
     ENTITY_TYPES,
     GRAPH_NODES,
@@ -32,7 +33,9 @@ __all__ = [
     "NodeDef",
     "REL_KINDS",
     "RelDef",
+    "entity_path",
     "is_core_doc",
     "make_graph_store",
     "norm",
+    "topic_subgraph",
 ]

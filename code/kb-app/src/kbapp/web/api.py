@@ -116,4 +116,48 @@ def status_api(request: Request) -> dict[str, Any]:
     }
 
 
+@router.get("/graph/subgraph")
+def graph_subgraph(
+    topic: str,
+    hops: int = 2,
+    request: Request = None,  # type: ignore[assignment]
+) -> dict[str, Any]:
+    """主题 N 跳子图（500 节点裁剪）。"""
+    from kbapp.graph import GraphError, make_graph_store, topic_subgraph
+
+    _registry, cfg, paths = _state(request)
+    max_nodes = int(cfg.raw["viz"]["max_nodes"])
+    try:
+        store = make_graph_store(cfg.raw["graph"]["backend"], cfg)
+        store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    except (FileNotFoundError, GraphError):
+        raise HTTPException(status_code=503, detail="graph unavailable, run kb index reindex --full")
+    try:
+        return topic_subgraph(store, topic, hops=hops, max_nodes=max_nodes)
+    finally:
+        store.close()
+
+
+@router.get("/graph/path")
+def graph_path(
+    src: str,
+    dst: str,
+    max_hops: int = 3,
+    request: Request = None,  # type: ignore[assignment]
+) -> dict[str, Any]:
+    """两实体最短路径。"""
+    from kbapp.graph import GraphError, entity_path, make_graph_store
+
+    _registry, cfg, paths = _state(request)
+    try:
+        store = make_graph_store(cfg.raw["graph"]["backend"], cfg)
+        store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    except (FileNotFoundError, GraphError):
+        raise HTTPException(status_code=503, detail="graph unavailable, run kb index reindex --full")
+    try:
+        return entity_path(store, src, dst, max_hops=max_hops)
+    finally:
+        store.close()
+
+
 __all__ = ["router"]
