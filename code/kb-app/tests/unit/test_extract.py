@@ -11,7 +11,6 @@ key invariants:
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -59,7 +58,7 @@ def _seed_doc_for_extract(
     registry, paths, default_config, doc_id="d1", topic="ContextEngineering", doc_type="paper"
 ):
     """Plant files row + parse cache with RAG / Vector DB mentions."""
-    from kbapp.core.registry import upsert_file, update_file_fields
+    from kbapp.core.registry import update_file_fields, upsert_file
 
     payload = {
         "sha256": "s",
@@ -117,14 +116,20 @@ def test_run_extract_writes_entities_mentions_relations(
 
     payload = {
         "entities": [
-            {"name": "RAG", "type": "Method", "aliases": [], "description": "Retrieval-Augmented Generation"},
-            {"name": "Vector DB", "type": "Tool", "aliases": [], "description": "Vector store"},
-            {"name": "RAG", "type": "Method", "aliases": ["RAG"], "description": "dup"},  # 重复
+            {"name": "RAG", "type": "Method", "aliases": [],
+             "description": "Retrieval-Augmented Generation"},
+            {"name": "Vector DB", "type": "Tool", "aliases": [],
+             "description": "Vector store"},
+            {"name": "RAG", "type": "Method", "aliases": ["RAG"],
+             "description": "dup"},  # 重复
         ],
         "relations": [
-            {"src": "RAG", "dst": "Vector DB", "kind": "uses", "weight": 1.0, "evidence_section_id": "d1#1"},
-            {"src": "RAG", "dst": "Vector DB", "kind": "uses", "weight": 0.5, "evidence_section_id": "d1#1"},  # 同对同 kind
-            {"src": "RAG", "dst": "Vector DB", "kind": "kungfu", "weight": 1.0, "evidence_section_id": "d1#1"},  # 未知 kind
+            {"src": "RAG", "dst": "Vector DB", "kind": "uses",
+             "weight": 1.0, "evidence_section_id": "d1#1"},
+            {"src": "RAG", "dst": "Vector DB", "kind": "uses",
+             "weight": 0.5, "evidence_section_id": "d1#1"},  # 同对同 kind
+            {"src": "RAG", "dst": "Vector DB", "kind": "kungfu",
+             "weight": 1.0, "evidence_section_id": "d1#1"},  # 未知 kind
         ],
     }
     llm = _FakeLLM(payload)
@@ -180,7 +185,8 @@ def test_run_extract_writes_entities_mentions_relations(
         assert weights["Tool:vector-db"] == 2
         # RELATES_TO 1 条
         rows = store.query(
-            "MATCH (a:Entity)-[r:RELATES_TO]->(b:Entity) RETURN a.entity_id AS a, b.entity_id AS b, r.kind AS k"
+            "MATCH (a:Entity)-[r:RELATES_TO]->(b:Entity) "
+            "RETURN a.entity_id AS a, b.entity_id AS b, r.kind AS k"
         )
         assert len(rows) == 1
         assert rows[0]["k"] == "uses"
@@ -266,4 +272,7 @@ def test_run_extract_skip_on_missing_llm(
         )
     finally:
         store.close()
-    assert metrics == {"entities": 0, "mentions": 0, "relates_to": 0, "dropped_kind": 0, "skipped": 1}
+    assert metrics == {
+        "entities": 0, "mentions": 0, "relates_to": 0,
+        "dropped_kind": 0, "skipped": 1,
+    }

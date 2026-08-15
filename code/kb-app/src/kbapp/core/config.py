@@ -74,6 +74,7 @@ DEFAULTS: dict[str, Any] = {
         "fallback_max_switches": 1,
         "summary_max_tokens": 800,  # 11 §3.3：自动摘要 L1–L3 输出预算
         "summary_input_budget": 12000,  # 11 §3.1：摘要 LLM 输入（章节树+各章首段）预算
+        "extract_max_tokens": 4096,  # 15 §4.2：实体抽取输出预算（推理模型 think 吃预算，需放大）
     },
     "embedding": {
         "backend": "none",  # 11 §5：无向量 MVP 默认 none（local/api 为 P1 目标态）

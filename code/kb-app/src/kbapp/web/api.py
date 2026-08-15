@@ -41,7 +41,9 @@ def search(q: str, limit: int = 10, request: Request = None) -> dict[str, Any]: 
     return {
         "hits": hits,
         "note": result.note,
-        "entities": _aggregate_entities(registry, cfg, paths=_state(request)[2], doc_ids=[h["doc_id"] for h in hits]),
+        "entities": _aggregate_entities(
+            registry, cfg, paths=_state(request)[2], doc_ids=[h["doc_id"] for h in hits]
+        ),
     }
 
 
@@ -218,7 +220,9 @@ def graph_subgraph(
         store = make_graph_store(cfg.raw["graph"]["backend"], cfg)
         store.open(str(paths.graph_dir / "graph.lbug"), "ro")
     except (FileNotFoundError, GraphError):
-        raise HTTPException(status_code=503, detail="graph unavailable, run kb index reindex --full")
+        raise HTTPException(
+            status_code=503, detail="graph unavailable, run kb index reindex --full"
+        ) from None
     try:
         return topic_subgraph(store, topic, hops=hops, max_nodes=max_nodes)
     finally:
@@ -240,7 +244,9 @@ def graph_path(
         store = make_graph_store(cfg.raw["graph"]["backend"], cfg)
         store.open(str(paths.graph_dir / "graph.lbug"), "ro")
     except (FileNotFoundError, GraphError):
-        raise HTTPException(status_code=503, detail="graph unavailable, run kb index reindex --full")
+        raise HTTPException(
+            status_code=503, detail="graph unavailable, run kb index reindex --full"
+        ) from None
     try:
         return entity_path(store, src, dst, max_hops=max_hops)
     finally:

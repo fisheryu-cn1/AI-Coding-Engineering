@@ -351,6 +351,7 @@ class LLM:
         kwargs: dict[str, Any] = {
             "model": f"{spec.provider}/{spec.model}",
             "messages": messages,
+            "api_key": api_key,  # 显式传 key（否则 openai/ 兼容端点会去找 OPENAI_API_KEY）
             "max_tokens": max_tokens,
             "timeout": 60,
             "num_retries": 0,  # ★ disable litellm's own retries (we own ladder)

@@ -14,13 +14,12 @@ from rich.table import Table
 
 from kbapp.core.config import load_config
 from kbapp.core.paths import DataPaths
-from kbapp.core.registry import Registry, get_file, list_files, list_topics
+from kbapp.core.registry import Registry, get_file, list_topics
 from kbapp.graph import GraphError, make_graph_store
 from kbapp.llm import get_llm_or_none
 from kbapp.retrieve import SearchHit, resolve_doc
 from kbapp.retrieve import search as _search
 from kbapp.retrieve.assembler import (
-    compare_documents,
     read_section,
     read_summary,
     section_tree,
@@ -215,7 +214,7 @@ def related_cmd(
         err_console.print(
             f"[red]图库不可用[/red] {e}；请先 `kb index reindex --full`"
         )
-        raise typer.Exit(code=2)
+        raise typer.Exit(code=2) from None
 
     try:
         # 推断 target_type：先用 Document 查 1 跳关系，结果可能经由 Entity / Topic
@@ -268,7 +267,7 @@ def compare_cmd(
         err_console.print(
             f"[red]图库不可用[/red] {e}；请先 `kb index reindex --full`"
         )
-        raise typer.Exit(code=2)
+        raise typer.Exit(code=2) from None
 
     try:
         # 以 doc_ids 第一个文档的某 Entity 为主（若 graph 不支持文档级 concept

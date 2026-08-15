@@ -148,7 +148,9 @@ def test_mcp_graph_tools_unavailable_without_reindex(tmp_path: Path) -> None:
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 # 图库文件不存在 → MODE_NOT_READY
-                r = await session.call_tool("kb_related", {"target": "Method:rag", "type": "Entity"})
+                r = await session.call_tool(
+                    "kb_related", {"target": "Method:rag", "type": "Entity"}
+                )
                 err = json.loads(r.content[0].text)["error"]
                 assert err["code"] == "MODE_NOT_READY"
                 assert "reindex" in err["suggestion"]

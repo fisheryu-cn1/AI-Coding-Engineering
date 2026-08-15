@@ -26,9 +26,12 @@ def graph_related(
     故先抓 RAW 邻域，Python 层完成去重 / 计数。
     """
     hops = max(1, min(int(hops), 3))
-    pk = {"Entity": "entity_id", "Document": "doc_id", "Section": "section_id", "Topic": "name"}.get(
-        target_type, "entity_id"
-    )
+    pk = {
+        "Entity": "entity_id",
+        "Document": "doc_id",
+        "Section": "section_id",
+        "Topic": "name",
+    }.get(target_type, "entity_id")
     cypher = (
         f"MATCH (a:{target_type} {{{pk}: $target}}) "
         f"MATCH (a)-[r*..{hops}]-(n) "
@@ -71,12 +74,12 @@ def graph_compare(
     # doc_ids 限定：lbug 暂不支持 EXISTS 子查询 + 多 MATCH 联合；先按 concept 宽查，
     # 前端按 doc_ids 过滤显示（Task 19 词云/侧栏回填时拉具体 doc_id 范围）。
     cypher = (
-        f"MATCH (a:Entity {{entity_id: $concept}})-[r:RELATES_TO]-(b:Entity) "
-        f"RETURN r.kind AS kind, "
-        f"       a.entity_id AS src, b.entity_id AS dst, "
-        f"       coalesce(r.weight, 1.0) AS weight, "
-        f"       coalesce(r.evidence_section_id, '') AS evidence_section_id "
-        f"ORDER BY weight DESC LIMIT $limit"
+        "MATCH (a:Entity {entity_id: $concept})-[r:RELATES_TO]-(b:Entity) "
+        "RETURN r.kind AS kind, "
+        "       a.entity_id AS src, b.entity_id AS dst, "
+        "       coalesce(r.weight, 1.0) AS weight, "
+        "       coalesce(r.evidence_section_id, '') AS evidence_section_id "
+        "ORDER BY weight DESC LIMIT $limit"
     )
     rows = store.query(cypher, params)
     return {

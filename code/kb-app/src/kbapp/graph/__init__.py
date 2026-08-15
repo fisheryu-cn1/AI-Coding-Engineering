@@ -18,9 +18,9 @@ from kbapp.graph.schema import (
     ENTITY_TYPES,
     GRAPH_NODES,
     GRAPH_RELS,
+    REL_KINDS,
     NodeDef,
     RelDef,
-    REL_KINDS,
 )
 from kbapp.graph.store import GraphError, GraphStore, make_graph_store
 

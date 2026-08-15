@@ -15,14 +15,13 @@ import json
 import logging
 import re
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from kbapp.graph.schema import ENTITY_TYPES, REL_KINDS
 
 if TYPE_CHECKING:
-    from kbapp.core.registry import FileRow, Registry
     from kbapp.core.paths import DataPaths
+    from kbapp.core.registry import FileRow, Registry
 
 
 _logger = logging.getLogger(__name__)
@@ -68,12 +67,28 @@ def entity_id(entity_type: str, name: str) -> str:
     return f"{entity_type}:{norm(name)}"
 
 
+#: 抽取输入预算（字符）：单次 LLM 调用 body 上限。超长 prompt 会让推理模型
+#: （think 吃预算）直接返回空——实测 150KB prompt 下 minimax-m2.7 返回空串。
+_EXTRACT_INPUT_BUDGET = 12000
+
+
 def _extract_prompt(title: str, sections: list[dict]) -> str:
-    """LLM 抽取 prompt（15 §4.2：单次调用同时产实体 + 关系）。"""
-    body = "\n".join(
-        f"## {s.get('section_path', '?')} {s.get('title', '')}\n{s.get('text', '')[:1500]}"
-        for s in sections
-    )
+    """LLM 抽取 prompt（15 §4.2：单次调用同时产实体 + 关系）。
+
+    输入有界：每 Section 正文截 1500 字符，总 body 上限 :data:`_EXTRACT_INPUT_BUDGET`。
+    """
+    parts: list[str] = []
+    used = 0
+    for s in sections:
+        line = (
+            f"## {s.get('section_path', '?')} {s.get('title', '')}\n"
+            f"{s.get('text', '')[:1500]}"
+        )
+        if used + len(line) > _EXTRACT_INPUT_BUDGET and parts:
+            break
+        parts.append(line)
+        used += len(line)
+    body = "\n".join(parts)
     return (
         "Extract entities and relations from the document. Reply with JSON only.\n"
         "Schema: "
@@ -90,7 +105,7 @@ def _now_iso() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _section_text_by_id(paths: "DataPaths", sha: str) -> dict[str, str]:
+def _section_text_by_id(paths: DataPaths, sha: str) -> dict[str, str]:
     """读 parse cache JSON，返回 {section_path: text}。"""
     cache = paths.extracted_dir / f"{sha}.json"
     if not cache.exists():
@@ -105,10 +120,10 @@ def _section_text_by_id(paths: "DataPaths", sha: str) -> dict[str, str]:
 def run_extract(
     *,
     store: Any,
-    registry: "Registry",
-    paths: "DataPaths",
+    registry: Registry,
+    paths: DataPaths,
     doc_id: str,
-    row: "FileRow",
+    row: FileRow,
     llm: Any,
     cfg: Any,
 ) -> dict[str, int]:
@@ -135,6 +150,7 @@ def run_extract(
         raw = llm.complete(
             [{"role": "user", "content": prompt}],
             json_mode=True,
+            max_tokens=int(cfg.get("llm.extract_max_tokens", 4096)),
             purpose="extract",
             doc_id=doc_id,
         )

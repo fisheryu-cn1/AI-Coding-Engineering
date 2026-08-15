@@ -77,7 +77,10 @@ class LadybugStore:
         cols = [f"{node.pk} STRING"] + [
             f"{k} {v}" for k, v in node.props.items()
         ]
-        return f"CREATE NODE TABLE IF NOT EXISTS {node.label}({', '.join(cols)}, PRIMARY KEY({node.pk}))"
+        return (
+            f"CREATE NODE TABLE IF NOT EXISTS {node.label}"
+            f"({', '.join(cols)}, PRIMARY KEY({node.pk}))"
+        )
 
     @staticmethod
     def _ddl_rel(rel: RelDef) -> str:
@@ -136,7 +139,7 @@ class LadybugStore:
         rows: list[dict] = []
         while result.has_next():
             raw = result.get_next()
-            rows.append(dict(zip(cols, raw)))
+            rows.append(dict(zip(cols, raw, strict=False)))
         return rows
 
     def shortest_path(

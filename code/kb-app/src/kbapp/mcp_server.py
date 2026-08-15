@@ -78,7 +78,7 @@ def _open_graph_readonly(cfg: Config, paths: DataPaths):
     try:
         store.open(str(paths.graph_dir / "graph.lbug"), "ro")
     except (FileNotFoundError, GraphError) as e:
-        raise _GraphUnavailable(str(e))
+        raise _GraphUnavailable(str(e)) from e
     return store
 
 

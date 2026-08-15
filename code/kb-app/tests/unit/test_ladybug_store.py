@@ -61,7 +61,7 @@ def test_readonly_rejects_write(default_config, tmp_path) -> None:
     ro = LadybugStore(default_config)
     ro.open(str(tmp_path / "g2"), "ro")
     try:
-        with pytest.raises(Exception):
+        with pytest.raises(PermissionError):
             ro.upsert_nodes("Topic", [{"name": "x", "description": ""}])
     finally:
         ro.close()
@@ -72,7 +72,10 @@ def test_upsert_edges_requires_both_endpoints(store) -> None:
     store.upsert_edges(
         "RELATES_TO",
         [
-            {"src": "nope", "dst": "also_nope", "kind": "uses", "weight": 1.0, "evidence_section_id": ""}
+            {
+                "src": "nope", "dst": "also_nope", "kind": "uses",
+                "weight": 1.0, "evidence_section_id": "",
+            }
         ],
     )
     rows = store.query("MATCH ()-[r:RELATES_TO]->() RETURN count(r) AS n")

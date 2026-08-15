@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-def _open_store(ctx: "PipelineCtx"):
+def _open_store(ctx: PipelineCtx):
     backend = ctx.cfg.raw["graph"]["backend"]
     store = make_graph_store(backend, ctx.cfg)
     # LadybugDB 把路径当作单文件处理（内部 mmap 多个 wal/lock 文件）；目录
@@ -40,7 +40,7 @@ def _open_store(ctx: "PipelineCtx"):
     return store
 
 
-def stage_index_graph(doc_id: str, ctx: "PipelineCtx") -> StageResult:
+def stage_index_graph(doc_id: str, ctx: PipelineCtx) -> StageResult:
     """Open graph store → sync structure → close; raises TerminalError on hard fail."""
     store = _open_store(ctx)
     try:
@@ -52,7 +52,7 @@ def stage_index_graph(doc_id: str, ctx: "PipelineCtx") -> StageResult:
     return StageResult("ok", metrics=metrics)
 
 
-def stage_tombstone_graph(doc_id: str, ctx: "PipelineCtx") -> StageResult:
+def stage_tombstone_graph(doc_id: str, ctx: PipelineCtx) -> StageResult:
     """Soft-delete the Document node by stamping ``valid_to``."""
     from datetime import UTC, datetime
 
@@ -70,7 +70,7 @@ def stage_tombstone_graph(doc_id: str, ctx: "PipelineCtx") -> StageResult:
     return StageResult("ok", metrics={"valid_to": now})
 
 
-def stage_extract_graph(doc_id: str, ctx: "PipelineCtx") -> StageResult:
+def stage_extract_graph(doc_id: str, ctx: PipelineCtx) -> StageResult:
     """Entity + relation extraction (15 §4.2). Gated by is_core_doc.
 
     Implementation lives in :func:`kbapp.graph.extract.run_extract` (Task 9).

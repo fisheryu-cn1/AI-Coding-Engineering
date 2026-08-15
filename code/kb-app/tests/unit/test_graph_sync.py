@@ -16,7 +16,7 @@ ladybug = pytest.importorskip("ladybug")
 
 def _seed_doc(registry, paths, default_config, doc_id="d1", topic="ContextEngineering"):
     """Plant a files row + a parse cache JSON for one doc."""
-    from kbapp.core.registry import upsert_file, update_file_fields
+    from kbapp.core.registry import update_file_fields, upsert_file
 
     payload = {
         "sha256": "s",
@@ -128,9 +128,9 @@ def test_stage_index_graph_end_to_end(default_config, registry, paths, tmp_path)
     """stage_index_graph 走完整链路：开 store→sync→close，落图完成。"""
     _seed_doc(registry, paths, default_config)
 
+    from kbapp.graph.store import make_graph_store
     from kbapp.pipeline.graph_stages import stage_index_graph
     from kbapp.pipeline.runner import PipelineCtx
-    from kbapp.graph.store import make_graph_store
 
     ctx = PipelineCtx(cfg=default_config, paths=paths, registry=registry, llm=None)
     result = stage_index_graph("d1", ctx)
