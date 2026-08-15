@@ -228,7 +228,7 @@ P1×6 修复 + DoD 执行闭环（12 报告"DoD 测试执行与闭环"节）：2
 - [ ] DoD-5 补充：R-1 实机验证 `context rot` 命中 D0032（需真实语料，待实测）
 - [ ] DoD-6 召回抽检：在线档**连续两轮 success@10 ≥ 80%**（需真实语料 + LLM，待实测）
 - [ ] DoD-7 NFR-4：`kb_assemble_context`（确定性路径）在线档 < 10s（需真实语料，待实测）
-- [x] DoD-8 门禁：`uv run pytest` **242 项**全绿 + `ruff check .`/`ruff format --check .` 全过（含 `scripts/`，14 报告 P1-1 修复后）
+- [x] DoD-8 门禁：`uv run pytest` **242 项**全绿 + `ruff check .`/`ruff format --check .` 全过（含 `scripts/`，14 报告 P1-1 修复后）。环境口径（14 §10 复核）：POSIX/新 SQLite 下 242 passed；原生 Windows + Python 3.12 下 **240 passed + 2 skipped**（2 项 POSIX-only 锁测试 win32 skipif）；解释器须 ≥ SQLite 3.39 系（见下表 .python-version 行）
 - [x] DoD-9 文档：milestone-log M4 节 + §8 回写清单执行（03/04/05）
 
 ### M4 补充设计登记（设计文档外的实现决策）
@@ -241,6 +241,8 @@ P1×6 修复 + DoD 执行闭环（12 报告"DoD 测试执行与闭环"节）：2
 | `search.exact_boost` DEFAULTS | 补入 `core/config.py` DEFAULTS["search"]（默认 1.3，`kb config set` 可改） | `core/config.py` |
 | mcp 只读状态懒加载 | 进程内缓存 `(Registry, Config)`（`Registry.read_only()` 每次开新连接、WAL 下可并发读；config 改动需重启进程生效） | `mcp_server.py:_state` |
 | e2e 测试跑法 | MCP e2e 用 `asyncio.run` + `stdio_client` 子进程（`python -m kbapp.cli.main serve mcp`，`GRAPHIT_KB_DATA_DIR` 注入），不依赖 pytest-asyncio | `tests/integration/test_mcp.py` |
+| `.python-version` 3.11→3.12 | 14 §10 复核 N-2：Python 3.11.0 捆绑 SQLite 3.38.4，FTS5 虚表非 ASCII LIKE 静默空集（CJK 短查询零命中）；3.12.13/SQLite 3.50.4 修复。requires-python `>=3.11,<3.13` 不变 | `.python-version` |
+| Windows 测试兼容 | 14 §10 复核 N-3：test_registry 4 项补 `conn.close()`（sqlite3 with 只提交不关闭，Windows 临时目录清理必败）；test_lock 2 项加 win32 skipif（lock 模块声明 POSIX-only，Windows 下 stale 锁仅靠 1h mtime 兜底回收） | `tests/unit/test_registry.py` / `test_lock.py` |
 
 ## 后续里程碑锚点
 

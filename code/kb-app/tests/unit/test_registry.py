@@ -66,6 +66,8 @@ def test_files_table_has_summary_stale_and_pages() -> None:
             }
             assert "summary_stale" in cols
             assert "pages" in cols
+        # sqlite3 的 with 只提交不关闭；显式 close 以便 Windows 清理临时目录
+        conn.close()
 
 
 def test_tasks_table_supports_tombstone_kind() -> None:
@@ -85,6 +87,7 @@ def test_tasks_table_supports_tombstone_kind() -> None:
             )
             row = conn.execute(f"SELECT kind FROM {TABLE_TASKS} WHERE id = 't1'").fetchone()
             assert row["kind"] == "tombstone"
+        conn.close()
 
 
 def test_tasks_table_has_run_after_column() -> None:
@@ -101,6 +104,7 @@ def test_tasks_table_has_run_after_column() -> None:
                 row["name"] for row in conn.execute(f"PRAGMA table_info({TABLE_TASKS})").fetchall()
             }
             assert "run_after" in cols
+        conn.close()
 
 
 def test_llm_usage_table_present() -> None:
@@ -119,6 +123,7 @@ def test_llm_usage_table_present() -> None:
             }
             for col in ("model", "purpose", "input_tokens", "output_tokens", "cost"):
                 assert col in cols
+        conn.close()
 
 
 def test_fts_chunks_uses_trigram_tokenizer(registry: Registry) -> None:

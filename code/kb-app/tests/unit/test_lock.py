@@ -13,6 +13,7 @@ Covers:
 from __future__ import annotations
 
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -61,6 +62,10 @@ def test_lock_holder_none_when_no_lock(data_dir: Path) -> None:
     assert lock_holder(data_dir) is None
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="lock 模块声明 POSIX-only（lock.py docstring），Windows 死 PID 探测失效",
+)
 def test_stale_pid_is_reclaimed(data_dir: Path) -> None:
     """A lock file pointing at a dead PID should be reaped on next acquire.
 
@@ -135,6 +140,10 @@ def test_wait_mode_raises_lock_held_on_timeout(data_dir: Path) -> None:
         release_write_lock(a)
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="lock 模块声明 POSIX-only（lock.py docstring）：Windows 不允许 unlink 被占用的文件",
+)
 def test_force_release_removes_lock_even_when_held(data_dir: Path) -> None:
     a = _make_lock(data_dir)
     assert force_release(data_dir) is True
