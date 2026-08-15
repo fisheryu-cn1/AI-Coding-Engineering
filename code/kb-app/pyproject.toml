@@ -22,6 +22,7 @@ embed = ["sentence-transformers>=3,<4", "torch>=2.4,<3"]  # M3 bge-m3
 graph-ladybug = ["ladybug>=0.1,<1"]  # M5 图谱（单一选型，15 D15-10）
 vector = ["lancedb>=0.20,<1", "pyarrow>=18,<20"]  # M3 向量
 mcp = ["mcp>=1.29,<2"]  # M4 MCP 服务
+viz = ["fastapi>=0.115", "uvicorn>=0.30"]  # M6 Web viz 服务（15 §6.1）
 # M2 parse/llm extras (09-M2 §1): 解析器与 LLM 客户端；缺省时 LLM 走纯规则降级（§7.4）。
 # 用户决策：不走 Docling 重依赖，DOCX 用 python-docx 简单读取（不依赖版面分析）。
 parse = [
