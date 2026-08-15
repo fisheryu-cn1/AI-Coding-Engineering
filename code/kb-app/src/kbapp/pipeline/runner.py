@@ -193,6 +193,19 @@ def _run_one(doc_id: str, ctx: PipelineCtx, *, task_kind: str = "parse") -> None
         return
     if task_kind == "index":
         stage_index_graph(doc_id, ctx)
+        # index 任务成功后按 is_core 门控入队 extract（15 §4.1）
+        from kbapp.core.registry import get_file
+        from kbapp.graph.extract import is_core_doc
+
+        with ctx.registry.read_only() as conn:
+            row = get_file(conn, doc_id)
+        if row is not None and is_core_doc(
+            ctx.cfg,
+            topic=row.topic,
+            doc_type=row.doc_type,
+            doc_id=doc_id,
+        ):
+            enqueue_task(ctx.registry, kind="extract", payload={"doc_id": doc_id})
         return
     if task_kind == "extract":
         stage_extract_graph(doc_id, ctx)
@@ -210,7 +223,7 @@ def _run_one(doc_id: str, ctx: PipelineCtx, *, task_kind: str = "parse") -> None
     classify_result = stage_classify(doc_id, ctx)
     if classify_result.status == "skip":
         return
-    # 入队 index 任务（runner 串行消费，extract 入队在 index 完成后）
+    # 入队 index 任务（runner 串行消费，extract 入队在 index 成功后按 is_core 门控）
     enqueue_task(ctx.registry, kind="index", payload={"doc_id": doc_id})
 
 
