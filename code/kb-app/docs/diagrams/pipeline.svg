@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 800" width="960" height="800">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <rect width="960" height="800" fill="#ffffff"/>
+  <text x="480" y="32" text-anchor="middle" font-size="17" font-weight="600" fill="#111827">索引流水线与日常维护流程</text>
+  <path d="M 220 108 L 220 140" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 188 L 220 220" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 268 L 220 296" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 340 340 L 460 340 L 460 322 L 520 322" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 340 340 L 480 340 L 480 382 L 520 382" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 340 340 L 500 340 L 500 442 L 520 442" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 384 L 220 440" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 488 L 220 530" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 606 L 220 650" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 360 672 L 435 672" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 605 672 L 680 672" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 920 672 L 945 672 L 945 244 L 360 244" stroke="#6b7280" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arrow-gray)"/>
+  <path d="M 680 762 L 640 762 L 640 540 L 380 540 L 380 464 L 360 464" stroke="#6b7280" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arrow-gray)"/>
+  <rect x="80" y="60" width="280" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="82" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb init</text>
+  <text x="220.0" y="98" text-anchor="middle" font-size="11" fill="#6b7280">一次性：建目录 · 默认配置 · 播种 topics</text>
+  <rect x="80" y="140" width="280" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="162" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">编辑 config.yaml</text>
+  <text x="220.0" y="178" text-anchor="middle" font-size="11" fill="#6b7280">corpus_roots · core_topics · 关键词 · llm</text>
+  <rect x="80" y="220" width="280" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="242" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb index scan</text>
+  <text x="220.0" y="258" text-anchor="middle" font-size="11" fill="#6b7280">白名单扫描 + SHA-256 指纹比对</text>
+  <polygon points="220,296.0 340.0,340 220,384.0 100.0,340" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="220" y="345" text-anchor="middle" font-size="12.5" font-weight="600" fill="#111827">逐文件变更判定</text>
+  <rect x="520" y="300" width="340" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="690.0" y="322" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">moved：仅更新路径</text>
+  <text x="690.0" y="338" text-anchor="middle" font-size="11" fill="#6b7280">零重抽取，保留 doc_id</text>
+  <rect x="520" y="360" width="340" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="690.0" y="382" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">duplicate：仅登记</text>
+  <text x="690.0" y="398" text-anchor="middle" font-size="11" fill="#6b7280">SHA-256 重复，不入队、不入 FTS</text>
+  <rect x="520" y="420" width="340" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="690.0" y="442" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">deleted：墓碑标记</text>
+  <text x="690.0" y="458" text-anchor="middle" font-size="11" fill="#6b7280">保留身份字段，文件回归可复活</text>
+  <rect x="80" y="440" width="280" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="462" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb index run</text>
+  <text x="220.0" y="478" text-anchor="middle" font-size="11" fill="#6b7280">取写锁，串行执行任务队列</text>
+  <rect x="80" y="530" width="280" height="76" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="552" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">四阶段流水线</text>
+  <text x="220.0" y="568" text-anchor="middle" font-size="11" fill="#6b7280">parse → chunk → classify → summarize</text>
+  <text x="220.0" y="584" text-anchor="middle" font-size="11" fill="#6b7280">分块写 FTS5 + 解析缓存；摘要需 LLM</text>
+  <rect x="80" y="650" width="280" height="44" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="672" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb status</text>
+  <text x="220.0" y="688" text-anchor="middle" font-size="11" fill="#6b7280">查看状态 / topics / 待确认队列</text>
+  <polygon points="520,637.0 605.0,672 520,707.0 435.0,672" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="520" y="677" text-anchor="middle" font-size="12.5" font-weight="600" fill="#111827">needs_confirm?</text>
+  <rect x="680" y="640" width="240" height="64" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="800.0" y="662" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb index set-topic</text>
+  <text x="800.0" y="678" text-anchor="middle" font-size="11" fill="#6b7280">Dxxxx Topic 改判，即时生效</text>
+  <text x="800.0" y="694" text-anchor="middle" font-size="11" fill="#6b7280">'-' 清空留待人工</text>
+  <rect x="680" y="740" width="240" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="800.0" y="762" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb index reindex --full</text>
+  <text x="800.0" y="778" text-anchor="middle" font-size="11" fill="#6b7280">清空 FTS，全量重建</text>
+  <text x="430" y="314" text-anchor="middle" font-size="11" fill="#6b7280">moved</text>
+  <text x="440" y="356" text-anchor="middle" font-size="11" fill="#6b7280">duplicate</text>
+  <text x="508" y="436" text-anchor="start" font-size="11" fill="#6b7280">deleted</text>
+  <text x="232" y="416" text-anchor="start" font-size="11" fill="#6b7280">new / modified → 入队 parse</text>
+  <text x="573" y="664" text-anchor="middle" font-size="11" fill="#6b7280">是</text>
+  <text x="520" y="730" text-anchor="middle" font-size="11" fill="#6b7280">否：库已可检索（kb search …）</text>
+  <text x="650" y="236" text-anchor="middle" font-size="11" fill="#6b7280">资料变动后再次扫描（增量）</text>
+  <text x="510" y="534" text-anchor="middle" font-size="11" fill="#6b7280">全量重建</text>
+  <g transform="translate(20, 760)">
+    <line x1="0" y1="6" x2="30" y2="6" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+    <text x="38" y="10" font-size="11.5" fill="#6b7280">主流程</text>
+    <line x1="110" y1="6" x2="140" y2="6" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrow-gray)"/>
+    <text x="148" y="10" font-size="11.5" fill="#6b7280">循环 / 重建</text>
+  </g>
+</svg>

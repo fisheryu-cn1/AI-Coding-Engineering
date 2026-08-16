@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" width="1200" height="660">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#9333ea"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="660" fill="#ffffff"/>
+  <text x="600" y="32" text-anchor="middle" font-size="17" font-weight="600" fill="#111827">检索与上下文组装数据流</text>
+  <path d="M 180 300 L 240 300" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 440 285 L 480 200" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 440 315 L 480 430" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 720 170 L 800 170 L 800 270 L 820 270" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 720 468 L 800 468 L 800 330 L 820 330" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 990 300 L 1030 300" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 1105 330 L 1105 400" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 320 584 L 360 584" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 600 584 L 640 584" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 880 584 L 920 584" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <rect x="40" y="270" width="140" height="60" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="110.0" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">查询 query</text>
+  <text x="110.0" y="308" text-anchor="middle" font-size="11" fill="#6b7280">自然语言 / 关键词</text>
+  <rect x="240" y="262" width="200" height="76" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="340.0" y="284" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">查询理解</text>
+  <text x="340.0" y="300" text-anchor="middle" font-size="11" fill="#6b7280">norm 归一化 · 主题词匹配</text>
+  <text x="340.0" y="316" text-anchor="middle" font-size="11" fill="#6b7280">内置+用户同义词表</text>
+  <text x="340.0" y="332" text-anchor="middle" font-size="11" fill="#6b7280">LLM 查询扩展（可选）</text>
+  <rect x="480" y="130" width="240" height="76" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="600.0" y="152" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">全文路（FTS5 trigram）</text>
+  <text x="600.0" y="168" text-anchor="middle" font-size="11" fill="#6b7280">BM25 chunk 召回</text>
+  <text x="600.0" y="184" text-anchor="middle" font-size="11" fill="#6b7280">→ section 聚合</text>
+  <text x="600.0" y="200" text-anchor="middle" font-size="11" fill="#6b7280">短查询 LIKE 兜底 + 分档</text>
+  <rect x="480" y="430" width="240" height="76" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="600.0" y="452" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">图路（结构导航）</text>
+  <text x="600.0" y="468" text-anchor="middle" font-size="11" fill="#6b7280">topic 匹配 → 文档清单</text>
+  <text x="600.0" y="484" text-anchor="middle" font-size="11" fill="#6b7280">→ 章节清单</text>
+  <text x="600.0" y="500" text-anchor="middle" font-size="11" fill="#6b7280">topic 稀疏时退化 corpus 导航</text>
+  <rect x="820" y="270" width="170" height="60" rx="8" ry="8" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="905.0" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">加权 RRF 融合</text>
+  <text x="905.0" y="308" text-anchor="middle" font-size="11" fill="#6b7280">w_fts 1.0 · w_graph 0.5</text>
+  <text x="905.0" y="324" text-anchor="middle" font-size="11" fill="#6b7280">rrf_k = 60</text>
+  <rect x="1030" y="270" width="150" height="60" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="1105.0" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">LLM 重排</text>
+  <text x="1105.0" y="308" text-anchor="middle" font-size="11" fill="#6b7280">可选 · top-20</text>
+  <text x="1105.0" y="324" text-anchor="middle" font-size="11" fill="#6b7280">失败回退 RRF 序</text>
+  <rect x="1030" y="400" width="150" height="76" rx="8" ry="8" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5"/>
+  <text x="1105.0" y="422" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">SearchHit 列表</text>
+  <text x="1105.0" y="438" text-anchor="middle" font-size="11" fill="#6b7280">锚点</text>
+  <text x="1105.0" y="454" text-anchor="middle" font-size="11" fill="#6b7280">doc_id#section_path</text>
+  <text x="600" y="118" text-anchor="middle" font-size="11" fill="#6b7280">--topic 硬过滤：前置下推 SQL，不进 RRF</text>
+  <rect x="40" y="530" width="1120" height="104" rx="8" ry="8" fill="#f9fafb" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="600" y="552" text-anchor="middle" font-size="12.5" font-weight="600" fill="#374151">kb_assemble_context（MCP 工具 · 确定性路径，全程不调 LLM）</text>
+  <rect x="80" y="562" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="200.0" y="584" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">检索命中</text>
+  <text x="200.0" y="600" text-anchor="middle" font-size="11" fill="#6b7280">search() 不传 llm</text>
+  <text x="200.0" y="616" text-anchor="middle" font-size="11" fill="#6b7280">--topics 逐个硬过滤合并</text>
+  <rect x="360" y="562" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="480.0" y="584" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">按文档去重</text>
+  <text x="480.0" y="600" text-anchor="middle" font-size="11" fill="#6b7280">保留首个命中章节为锚点</text>
+  <rect x="640" y="562" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="760.0" y="584" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">读摘要拼装</text>
+  <text x="760.0" y="600" text-anchor="middle" font-size="11" fill="#6b7280">无摘要回退首节前 200 字</text>
+  <rect x="920" y="562" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="1040.0" y="584" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">预算截断输出</text>
+  <text x="1040.0" y="600" text-anchor="middle" font-size="11" fill="#6b7280">budget×4 字符 ≈ token</text>
+  <text x="1040.0" y="616" text-anchor="middle" font-size="11" fill="#6b7280">{context_block, sources}</text>
+  <g transform="translate(20, 40)">
+    <line x1="0" y1="6" x2="30" y2="6" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="38" y="10" font-size="11.5" fill="#6b7280">主数据流</text>
+  </g>
+</svg>

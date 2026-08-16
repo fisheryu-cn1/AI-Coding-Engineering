@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GraphIt-KB（kb-app）使用说明</title>
+<style>
+  :root {
+    --ink: #1f2937;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --line: #e5e7eb;
+    --bg-soft: #f9fafb;
+    --code-bg: #f3f4f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", "Microsoft JhengHei", "SimHei", sans-serif;
+    color: var(--ink);
+    line-height: 1.75;
+    background: #ffffff;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 40px 28px 80px; }
+  header.doc { border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 28px; }
+  header.doc h1 { font-size: 26px; margin: 0 0 8px; }
+  header.doc .meta { color: var(--muted); font-size: 13px; }
+  nav.toc {
+    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 8px;
+    padding: 16px 22px; margin-bottom: 36px; font-size: 14px;
+  }
+  nav.toc strong { display: block; margin-bottom: 6px; }
+  nav.toc ol { margin: 0; padding-left: 22px; }
+  nav.toc li { margin: 2px 0; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+  h2 {
+    font-size: 20px; margin: 48px 0 14px; padding-left: 10px;
+    border-left: 4px solid var(--accent);
+  }
+  h3 { font-size: 16px; margin: 30px 0 10px; }
+  h4 { font-size: 14.5px; margin: 22px 0 8px; }
+  p { margin: 10px 0; font-size: 14.5px; }
+  ul, ol { font-size: 14.5px; padding-left: 24px; }
+  li { margin: 3px 0; }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: var(--code-bg); border-radius: 4px; padding: 1px 5px; font-size: 13px;
+  }
+  pre {
+    background: #f6f8fa; border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.6;
+  }
+  pre code { background: none; padding: 0; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13.5px;
+  }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--bg-soft); font-weight: 600; }
+  tr:nth-child(even) td { background: #fcfcfd; }
+  figure { margin: 24px 0; text-align: center; }
+  figure svg { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  .note, .warn, .tip {
+    border-radius: 8px; padding: 10px 16px; margin: 14px 0; font-size: 14px;
+  }
+  .note { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .warn { background: #fff7ed; border: 1px solid #fdba74; }
+  .tip  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .note::before { content: "说明："; font-weight: 600; }
+  .warn::before { content: "注意："; font-weight: 600; }
+  .tip::before  { content: "建议："; font-weight: 600; }
+  .tag {
+    display: inline-block; font-size: 12px; border-radius: 4px; padding: 0 6px;
+    margin-left: 4px; vertical-align: 1px;
+  }
+  .tag.ok { background: #dcfce7; color: #166534; }
+  .tag.plan { background: #f3f4f6; color: #6b7280; }
+  footer { margin-top: 60px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <h1>GraphIt-KB（kb-app）使用说明</h1>
+  <div class="meta">适用版本：kbapp 0.1.0（里程碑 M1–M4 已落地） ｜ 文档日期：2026-08-15 ｜ 代码位置：<code>code/kb-app/</code></div>
+</header>
+
+<nav class="toc">
+  <strong>目录</strong>
+  <ol>
+    <li><a href="#s1">软件概述：设计目标与主要功能</a></li>
+    <li><a href="#s2">术语与特殊概念</a></li>
+    <li><a href="#s3">安装、初始化与配置</a></li>
+    <li><a href="#s4">标准应用流程（功能与用法全览）</a></li>
+    <li><a href="#s5">MCP 服务与 AI Agent 集成</a></li>
+    <li><a href="#s6">目标应用场景示例</a></li>
+    <li><a href="#s7">注意事项与常见问题</a></li>
+    <li><a href="#s8">附录：命令与配置速查</a></li>
+  </ol>
+</nav>
+
+<!-- ================================================================ -->
+<h2 id="s1">一、软件概述：设计目标与主要功能</h2>
+
+<h3>1.1 这是什么</h3>
+<p>GraphIt-KB（命令行工具名 <code>kb</code>，Python 包名 <code>kbapp</code>）是一个<strong>纯本地运行</strong>的个人知识库应用。它把你积累的研究资料（论文 PDF、网页存档、Markdown 报告、DOCX、TXT）自动完成<strong>分类、索引、章节级结构化与多粒度摘要</strong>，并提供<strong>检索、原文查阅、关联阅读、比较分析</strong>能力；同时它可以作为本地 <strong>MCP 服务</strong>被 AI Agent（如 Kimi Code、Claude Code）调用，为知识检索与方案编写提供<strong>按 token 预算组装、带溯源锚点</strong>的上下文。</p>
+
+<h3>1.2 设计目标</h3>
+<ul>
+  <li><strong>本地优先</strong>：全部数据（索引、缓存、配置、摘要产物）保存在本地数据目录，无云端同步、无多用户权限体系；原文资料<strong>只读</strong>，所有产物单独存储。</li>
+  <li><strong>章节级颗粒度</strong>：知识管理的最小单位不是"一篇文档"，而是文档内的<strong>章节（Section）</strong>。检索命中、上下文组装、原文定位均精确到章节。</li>
+  <li><strong>面向 Agent 的上下文供给</strong>：内置 MCP 服务，Agent 可按"检索 → 查看结构 → 读取章节 → 组装上下文"的固定路径自助取用知识，替代人工翻找、复制、拼接。</li>
+  <li><strong>可维护的索引</strong>：基于 SHA-256 指纹的增量更新（新增/修改/移动/重复/删除五种情形自动判定），同时支持一键全量重建。</li>
+  <li><strong>离线可降级</strong>：不配置 LLM 时，分类、检索等核心功能仍可用（纯规则降级）；配置 LLM 后自动获得自动摘要、查询扩展、重排等增强能力。</li>
+</ul>
+
+<h3>1.3 主要功能一览</h3>
+<table>
+  <tr><th>功能域</th><th>内容</th><th>状态</th></tr>
+  <tr><td>资料接入与索引</td><td>五种格式解析（PDF / HTML / Markdown / DOCX / TXT）、结构感知分块、FTS5 全文索引、SHA-256 指纹增量扫描、策展摘要（summaries/*.md）绑定</td><td><span class="tag ok">已落地</span></td></tr>
+  <tr><td>自动分类</td><td>主题（topic）关键词粗排 + 文档类型（doc_type）规则判定；不确定时进入待确认队列，人工一键改判；可选 LLM 兜底</td><td><span class="tag ok">已落地</span></td></tr>
+  <tr><td>多粒度摘要</td><td>文档级 L1–L3 摘要（一句话索引 / 适用场景与主要观点 / 要点细节）；复用人工策展摘要，命中时跳过 LLM 生成</td><td><span class="tag ok">已落地（需 LLM）</span></td></tr>
+  <tr><td>检索</td><td>hybrid 混合检索（FTS5 全文路 + 结构导航图路，加权 RRF 融合）、主题全景、主题硬过滤；可选 LLM 查询扩展与重排</td><td><span class="tag ok">已落地</span></td></tr>
+  <tr><td>阅读与分析</td><td>文档元数据 + 章节树查看（show）、章节原文读取（read）、同主题关联阅读（related）、多文档比较（compare）</td><td><span class="tag ok">已落地</span></td></tr>
+  <tr><td>MCP 服务</td><td>stdio 传输，四只读工具：kb_search / kb_show / kb_read / kb_assemble_context，统一结构化错误码</td><td><span class="tag ok">已落地</span></td></tr>
+  <tr><td>知识图谱（实体抽取、LadybugDB）</td><td>M5 里程碑</td><td><span class="tag plan">未落地</span></td></tr>
+  <tr><td>向量检索（LanceDB + bge-m3）</td><td>P1 目标态；当前 <code>--mode vector</code> 会显式报错</td><td><span class="tag plan">未落地</span></td></tr>
+  <tr><td>Web 可视化界面</td><td>M6 里程碑（<code>kb serve viz</code> 为占位）</td><td><span class="tag plan">未落地</span></td></tr>
+  <tr><td>自动扩充收集（arXiv / 网页 → Inbox 审核）</td><td>M7 里程碑（<code>kb collect</code> 为占位）</td><td><span class="tag plan">未落地</span></td></tr>
+</table>
+
+<h3>1.4 总体架构</h3>
+<p>系统由两个入口（人用的 <code>kb</code> 命令行、Agent 用的 MCP 服务）、三组核心能力（索引流水线、检索引擎、上下文组装）和一个本地数据目录构成。LLM API 是<strong>可选</strong>增强项，不配置时系统按纯规则降级运行。</p>
+<figure>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" width="960" height="720">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#9333ea"/>
+    </marker>
+  </defs>
+  <rect width="960" height="720" fill="#ffffff"/>
+  <text x="480" y="34" text-anchor="middle" font-size="17" font-weight="600" fill="#111827">GraphIt-KB 总体架构</text>
+  <path d="M 240 108 L 220 160" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 720 108 L 740 160" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 170 216 L 170 280" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 290 216 L 290 248 L 480 248 L 480 280" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 700 216 L 700 262 L 560 262 L 560 280" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 780 216 L 780 280" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 170 344 L 170 420" stroke="#16a34a" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+  <path d="M 480 344 L 480 420" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 780 344 L 780 420" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 40 588 L 24 588 L 24 312 L 40 312" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 600 344 L 600 372 L 915 372 L 915 588 L 900 588" stroke="#9333ea" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arrow-purple)"/>
+  <rect x="140" y="60" width="200" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="240.0" y="82" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">研究者（人）</text>
+  <rect x="620" y="60" width="200" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="720.0" y="82" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">AI Agent</text>
+  <text x="720.0" y="98" text-anchor="middle" font-size="11" fill="#6b7280">Kimi Code / Claude Code 等</text>
+  <rect x="60" y="160" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="180.0" y="182" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">kb CLI（Typer 命令行）</text>
+  <text x="180.0" y="198" text-anchor="middle" font-size="11" fill="#6b7280">init / index / search / show / status …</text>
+  <rect x="620" y="160" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="740.0" y="182" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">MCP 服务（stdio）</text>
+  <text x="740.0" y="198" text-anchor="middle" font-size="11" fill="#6b7280">kb serve mcp · 四只读工具</text>
+  <rect x="60" y="280" width="260" height="64" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="190.0" y="302" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">索引流水线</text>
+  <text x="190.0" y="318" text-anchor="middle" font-size="11" fill="#6b7280">scan → parse → chunk</text>
+  <text x="190.0" y="334" text-anchor="middle" font-size="11" fill="#6b7280">→ classify → summarize</text>
+  <rect x="350" y="280" width="260" height="64" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="480.0" y="302" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">检索引擎</text>
+  <text x="480.0" y="318" text-anchor="middle" font-size="11" fill="#6b7280">FTS5 + 结构导航两路召回</text>
+  <text x="480.0" y="334" text-anchor="middle" font-size="11" fill="#6b7280">加权 RRF · 可选 LLM 重排</text>
+  <rect x="640" y="280" width="260" height="64" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="770.0" y="302" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">上下文组装</text>
+  <text x="770.0" y="318" text-anchor="middle" font-size="11" fill="#6b7280">assemble_for_task</text>
+  <text x="770.0" y="334" text-anchor="middle" font-size="11" fill="#6b7280">按 token 预算截断 + 溯源锚点</text>
+  <rect x="60" y="420" width="840" height="88" rx="8" ry="8" fill="#f9fafb" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="480" y="441" text-anchor="middle" font-size="12.5" font-weight="600" fill="#374151">数据目录（默认 ~/.graphit-kb/）</text>
+  <rect x="80" y="450" width="250" height="46" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="205.0" y="472" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">registry.sqlite（WAL）</text>
+  <text x="205.0" y="488" text-anchor="middle" font-size="11" fill="#6b7280">files / tasks / topics / fts_chunks</text>
+  <rect x="350" y="450" width="250" height="46" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="475.0" y="472" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">文件产物</text>
+  <text x="475.0" y="488" text-anchor="middle" font-size="11" fill="#6b7280">cache/extracted/ · auto_summaries/</text>
+  <rect x="620" y="450" width="260" height="46" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="750.0" y="472" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">config.yaml · reports/</text>
+  <text x="750.0" y="488" text-anchor="middle" font-size="11" fill="#6b7280">graph/ · vectors/（M5/M3+ 预留）</text>
+  <rect x="40" y="560" width="260" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="170.0" y="582" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">语料目录（只读）</text>
+  <text x="170.0" y="598" text-anchor="middle" font-size="11" fill="#6b7280">references/ · research/ · design/</text>
+  <rect x="660" y="560" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="780.0" y="582" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">LLM API（可选）</text>
+  <text x="780.0" y="598" text-anchor="middle" font-size="11" fill="#6b7280">摘要 · 分类兜底 · 扩展 · 重排</text>
+  <text x="30" y="450" text-anchor="start" font-size="11" fill="#6b7280">只读扫描</text>
+  <text x="770" y="366" text-anchor="middle" font-size="11" fill="#6b7280">LLM 调用（可选）</text>
+  <text x="325" y="405" text-anchor="middle" font-size="11" fill="#6b7280">读 / 写</text>
+  <g transform="translate(20, 648)">
+    <line x1="0" y1="6" x2="30" y2="6" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+    <text x="38" y="10" font-size="11.5" fill="#6b7280">命令 / 工具调用</text>
+    <line x1="0" y1="24" x2="30" y2="24" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+    <text x="38" y="28" font-size="11.5" fill="#6b7280">读</text>
+    <line x1="0" y1="42" x2="30" y2="42" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+    <text x="38" y="46" font-size="11.5" fill="#6b7280">写</text>
+    <line x1="0" y1="60" x2="30" y2="60" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrow-purple)"/>
+    <text x="38" y="64" font-size="11.5" fill="#6b7280">LLM 调用（可选）</text>
+  </g>
+</svg>
+  <figcaption>图 1 ｜ GraphIt-KB 总体架构：入口层、核心能力层、本地数据目录与外部资源</figcaption>
+</figure>
+
+<!-- ================================================================ -->
+<h2 id="s2">二、术语与特殊概念</h2>
+<p>以下概念贯穿全部命令的输出与配置，阅读后续章节前请先了解。</p>
+
+<table>
+  <tr><th>概念</th><th>含义</th></tr>
+  <tr><td><code>doc_id</code></td><td>每篇资料的全局唯一编号，格式 <code>D0001</code>、<code>D0002</code>……由系统顺序分配，<strong>永不复用</strong>。检索、查看、改判等操作都以它为主键。</td></tr>
+  <tr><td>语料（corpus）</td><td>资料的来源分区：<code>references</code>（参考论文/存档）、<code>research</code>（研究报告）、<code>design</code>（设计文档）、<code>external</code>（库外登记文件）、<code>inbox</code>（自动收集待审区，M7）。每个 corpus 对应配置里的一个根目录。</td></tr>
+  <tr><td>主题（topic）</td><td>资料归属的研究主题域（如 <code>ContextEngineering</code>、<code>ai-coding</code>）。主题清单存于 topics 表，初始由配置 <code>core_topics</code> 播种；<code>set-topic</code> 可创建新主题。</td></tr>
+  <tr><td>文档类型（doc_type）</td><td><code>paper</code>（论文）/ <code>design</code>（设计文档）/ <code>other</code>。按规则链判定：有策展摘要 → paper；文件名含 arXiv 号 → paper；位于 design 语料 → design；PDF → paper；其余 → other（有 LLM 时可仲裁）。</td></tr>
+  <tr><td>文档状态（status）</td><td><code>new</code> 待解析；<code>active</code> 已解析且分类确定；<code>needs_confirm</code> 分类不确定或解析失败，<strong>需要人工处理</strong>；<code>duplicate</code> 内容重复（不入索引）；<code>deleted</code> 墓碑（源文件已删除，保留身份字段）。</td></tr>
+  <tr><td>抽取状态（extract_status）</td><td><code>ok</code> 解析出标题树；<code>flat</code> 只有纯文本无结构；<code>no_text</code> PDF 无文本层（扫描件）；<code>failed</code> 解析失败；<code>pending</code> 待解析。</td></tr>
+  <tr><td>章节（Section）与 <code>section_path</code></td><td>文档内按标题层级划分的结构单元；<code>section_path</code> 是章节的路径式标识（如 <code>§2.1 总体架构</code>），用于精确定位与原文读取。</td></tr>
+  <tr><td>Chunk</td><td>章节内按长度（默认 2048 字符、重叠 200 字符）切分的检索单元，写入 FTS5 全文索引。chunk 编号形如 <code>D0001#c003</code>。</td></tr>
+  <tr><td><code>$summary</code> 伪章节</td><td>特殊的 section_path 哨兵值。每篇文档的摘要会作为一个"伪 chunk"写入索引，<code>kb read D0001 '$summary'</code> 可读取摘要全文。</td></tr>
+  <tr><td>摘要来源（summary_source）</td><td><code>curated</code>：人工策展摘要（语料目录下 <code>summaries/*.md</code>，质量最高，优先使用）；<code>auto</code>：LLM 自动生成（存于数据目录 <code>auto_summaries/</code>）；<code>none</code>：无摘要。源 PDF 修改后，curated 摘要会标记 <code>summary_stale</code>（过期）。</td></tr>
+  <tr><td>锚点（anchor）</td><td>指向原文具体位置的引用，形如 <code>D0001#§2.1</code>（doc_id + section_path）。检索结果和上下文组装都带锚点，供随时下钻原文。</td></tr>
+  <tr><td>FTS5 / trigram</td><td>SQLite 的全文检索扩展；trigram（3 字符滑动窗口）分词使中英文都能检索，无需额外分词器。</td></tr>
+  <tr><td>RRF 融合</td><td>倒数排名融合（Reciprocal Rank Fusion）：把全文路和图路两路结果按排名加权合并（权重 1.0 / 0.5，k=60），产出统一排序。</td></tr>
+  <tr><td>写锁</td><td>数据目录级互斥锁（<code>.write.lock</code>），保证同一时刻只有一个写进程。写命令遇锁占用默认立即失败（退出码 2），部分命令支持 <code>--wait</code> 阻塞等待。</td></tr>
+  <tr><td>任务队列</td><td>索引工作以任务形式排队（tasks 表），<code>kb index run</code> 串行执行。失败任务按 30 秒 → 1 分钟 → 5 分钟退避重试，最多 4 次；进程崩溃后启动时自动恢复超时任务。</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2 id="s3">三、安装、初始化与配置</h2>
+
+<h3>3.1 环境要求</h3>
+<table>
+  <tr><th>项目</th><th>要求</th></tr>
+  <tr><td>Python</td><td>≥ 3.11 且 &lt; 3.13；<strong>推荐 3.12</strong>（3.11.0 自带的 SQLite 3.38 对中文 LIKE 查询有缺陷，会导致中文短查询零命中）</td></tr>
+  <tr><td>包管理</td><td>uv（仓库已含 <code>uv.lock</code> 与 <code>.python-version</code>）</td></tr>
+  <tr><td>操作系统</td><td>Linux / macOS 全功能；Windows 上写锁不可用（写命令可能失败），只读命令（config get / status / search 等）可运行但未做端到端验证</td></tr>
+  <tr><td>磁盘</td><td>数据目录所在盘建议 ≥ 2 GB 剩余空间；<strong>不要放网络盘</strong>（NFS/SMB 上 SQLite WAL 不可靠）</td></tr>
+  <tr><td>Tesseract</td><td>可选，仅 PDF OCR 用；OCR 默认关闭，缺失只警告</td></tr>
+</table>
+
+<h3>3.2 安装</h3>
+<pre><code>cd code/kb-app
+uv sync                                # 基础依赖（CLI + 配置 + 注册库）
+uv sync --extra parse                  # 文档解析器（PDF/DOCX/HTML/MD），检索前必须
+uv sync --extra llm                    # 可选：LLM 能力（自动摘要、查询扩展、重排、分类兜底）
+uv sync --extra mcp                    # 可选：MCP 服务（Agent 集成必须）
+uv sync --extra parse --extra dev      # 开发：跑测试</code></pre>
+<p>安装后命令名为 <code>kb</code>，通过 <code>uv run kb …</code> 调用（下文示例均省略 <code>uv run</code> 前缀）。</p>
+
+<h3>3.3 指定数据目录</h3>
+<p>所有数据（配置、注册库、缓存、摘要、报告）保存在一个<strong>数据目录</strong>中，定位优先级：</p>
+<ol>
+  <li>命令行全局选项 <code>--data-dir &lt;路径&gt;</code>（放在子命令之前，如 <code>kb --data-dir D:\kb-data status</code>）；</li>
+  <li>环境变量 <code>GRAPHIT_KB_DATA_DIR</code>；</li>
+  <li>默认值 <code>~/.graphit-kb</code>。</li>
+</ol>
+<div class="tip">多项目/多语料场景可为每个库设一个数据目录，用环境变量区分；MCP 服务进程通过 <code>GRAPHIT_KB_DATA_DIR</code> 注入数据目录（见 5.3）。</div>
+
+<h3>3.4 初始化：<code>kb init</code></h3>
+<pre><code>kb init            # 幂等：可重复执行，不覆盖既有文件
+kb init --force    # 强制重写 config.yaml 为默认值（其余文件不动）</code></pre>
+<p>init 完成四件事：创建数据目录树；写入默认 <code>config.yaml</code> 与 <code>sources.yaml</code> 注释模板；初始化注册库 <code>registry.sqlite</code>；从 <code>core_topics</code> 播种主题清单。同时做环境检查（Python 版本、磁盘空间、Tesseract）。若 <code>config.yaml</code> 已存在，会打印你相对默认值的改动清单。</p>
+<p>初始化后的数据目录布局：</p>
+<pre><code>~/.graphit-kb/
+├── config.yaml            # 全局配置
+├── sources.yaml           # 自动收集来源模板（M7 起生效，当前仅占位）
+├── registry.sqlite        # SQLite 注册库（元数据 + 任务 + FTS5 全文索引）
+├── cache/extracted/       # 解析产物缓存（&lt;sha256&gt;.json，避免重复解析）
+├── auto_summaries/        # LLM 自动摘要产物（&lt;doc_id&gt;.md）
+├── reports/               # 运行报告（如策展摘要绑定不匹配报告）
+├── inbox/                 # 待审核新资料（M7 预留）
+├── graph/  vectors/       # 图谱 / 向量库（M5 / M3+ 预留）
+└── .write.lock            # 写锁文件（运行时出现）</code></pre>
+
+<h3>3.5 配置详解（config.yaml）</h3>
+<p>配置采用"默认值 + 用户覆盖"合并机制：只写你要改的键即可。用命令读写，不要手改时跳过审计：</p>
+<pre><code>kb config show                 # 查看当前生效配置（默认值合并后）
+kb config show --defaults      # 只看默认值
+kb config get corpus_roots     # 按点路径读单个键
+kb config set classify.min_keyword_score 3        # 写单个键（交互确认）
+kb config set classify.min_keyword_score 3 --yes  # 跳过确认
+kb config diff                 # 你改过哪些键（与默认值对比）</code></pre>
+<p>每次 <code>config set</code> 都会写入审计表（config_audit），可回溯"何时把什么从什么改成了什么"。写 list/dict 类型的键时，值按 YAML 语法传入，例如：</p>
+<pre><code>kb config set classify.topic_keywords '{ContextEngineering: [context engineering, 上下文工程, context rot], ai-coding: [agentic coding, ai coding]}' --yes</code></pre>
+
+<h4>关键配置键</h4>
+<table>
+  <tr><th>键</th><th>默认</th><th>说明</th></tr>
+  <tr><td><code>corpus_roots.references / research / design</code></td><td><code>~/research/…</code></td><td><strong>使用前必改</strong>：三个语料分区的根目录绝对路径</td></tr>
+  <tr><td><code>core_topics</code></td><td>4 个示例主题</td><td>初始主题清单，<code>kb init</code> 时播种到 topics 表</td></tr>
+  <tr><td><code>classify.topic_keywords</code></td><td>空</td><td><strong>分类质量的关键</strong>：每个主题的关键词表；标题命中 ×3、正文命中 ×1 计分</td></tr>
+  <tr><td><code>classify.min_keyword_score</code> / <code>classify.top_ratio</code></td><td>2 / 1.5</td><td>主题判定门槛：top1 得分 ≥ 门槛且 ≥ top2 × 比值，否则进待确认队列</td></tr>
+  <tr><td><code>llm.provider</code> / <code>llm.model</code> / <code>llm.api_key_env</code></td><td>deepseek / deepseek-chat / DEEPSEEK_API_KEY</td><td>LLM 接入（LiteLLM，兼容各家）；API key 从指定环境变量读取，<strong>不写入配置文件</strong></td></tr>
+  <tr><td><code>llm.fallback</code> / <code>llm.fallback_max_switches</code></td><td>[] / 1</td><td>备用 provider 列表与最多切换次数；调用内还有 4 轮指数退避重试</td></tr>
+  <tr><td><code>llm.summary_max_tokens</code> / <code>llm.summary_input_budget</code></td><td>800 / 12000</td><td>自动摘要的输出预算与输入预算（字符）</td></tr>
+  <tr><td><code>embedding.backend</code></td><td>none</td><td>向量档开关；当前仅支持 none，local/api 为 P1 目标态</td></tr>
+  <tr><td><code>retrieve.default_mode</code> / <code>retrieve.default_limit</code> / <code>retrieve.context_budget</code> / <code>retrieve.rrf_k</code></td><td>hybrid / 10 / 8000 / 60</td><td>检索默认模式、条数、上下文预算（约 token 数）、RRF 常数</td></tr>
+  <tr><td><code>search.query_expansion</code> / <code>search.rerank.enabled</code></td><td>true / true</td><td>LLM 查询扩展与重排开关（无 LLM 时自动关闭）</td></tr>
+  <tr><td><code>search.synonyms</code></td><td>空</td><td>用户自定义缩写/同义表（与内置表合并，同名覆盖）。内置已含 ai/kg/rag/llm/mcp/rl/nlp/ir/ml 的中英全称</td></tr>
+  <tr><td><code>search.exact_boost</code></td><td>1.3</td><td>原查询精确命中的得分倍率（查询扩展只增召回、不压精确命中）</td></tr>
+  <tr><td><code>search.graph.max_docs</code> / <code>max_sections</code> / <code>weight</code></td><td>20 / 40 / 0.5</td><td>图路召回的规模上限与 RRF 权重</td></tr>
+  <tr><td><code>parse.chunk_size</code> / <code>parse.chunk_overlap</code></td><td>2048 / 200</td><td>分块大小与重叠（字符）</td></tr>
+  <tr><td><code>parse.pdf_fast_min_coverage</code> / <code>pdf_fast_min_headers</code></td><td>0.85 / 3</td><td>PDF 快路径质量阈值（覆盖率/标题数，低于仅记警告）</td></tr>
+  <tr><td><code>mcp.transport</code> 等</td><td>stdio</td><td>MCP 服务参数；HTTP 传输与写工具为后续里程碑</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2 id="s4">四、标准应用流程（功能与用法全览）</h2>
+<p>本章按"从零建库 → 日常检索阅读 → 维护"的正常顺序，逐一说明每个功能的用法。整体流程见下图。</p>
+<figure>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 800" width="960" height="800">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <rect width="960" height="800" fill="#ffffff"/>
+  <text x="480" y="32" text-anchor="middle" font-size="17" font-weight="600" fill="#111827">索引流水线与日常维护流程</text>
+  <path d="M 220 108 L 220 140" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 188 L 220 220" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 268 L 220 296" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 340 340 L 460 340 L 460 322 L 520 322" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 340 340 L 480 340 L 480 382 L 520 382" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 340 340 L 500 340 L 500 442 L 520 442" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 384 L 220 440" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 488 L 220 530" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 220 606 L 220 650" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 360 672 L 435 672" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 605 672 L 680 672" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 920 672 L 945 672 L 945 244 L 360 244" stroke="#6b7280" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arrow-gray)"/>
+  <path d="M 680 762 L 640 762 L 640 540 L 380 540 L 380 464 L 360 464" stroke="#6b7280" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arrow-gray)"/>
+  <rect x="80" y="60" width="280" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="82" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb init</text>
+  <text x="220.0" y="98" text-anchor="middle" font-size="11" fill="#6b7280">一次性：建目录 · 默认配置 · 播种 topics</text>
+  <rect x="80" y="140" width="280" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="162" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">编辑 config.yaml</text>
+  <text x="220.0" y="178" text-anchor="middle" font-size="11" fill="#6b7280">corpus_roots · core_topics · 关键词 · llm</text>
+  <rect x="80" y="220" width="280" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="242" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb index scan</text>
+  <text x="220.0" y="258" text-anchor="middle" font-size="11" fill="#6b7280">白名单扫描 + SHA-256 指纹比对</text>
+  <polygon points="220,296.0 340.0,340 220,384.0 100.0,340" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="220" y="345" text-anchor="middle" font-size="12.5" font-weight="600" fill="#111827">逐文件变更判定</text>
+  <rect x="520" y="300" width="340" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="690.0" y="322" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">moved：仅更新路径</text>
+  <text x="690.0" y="338" text-anchor="middle" font-size="11" fill="#6b7280">零重抽取，保留 doc_id</text>
+  <rect x="520" y="360" width="340" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="690.0" y="382" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">duplicate：仅登记</text>
+  <text x="690.0" y="398" text-anchor="middle" font-size="11" fill="#6b7280">SHA-256 重复，不入队、不入 FTS</text>
+  <rect x="520" y="420" width="340" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="690.0" y="442" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">deleted：墓碑标记</text>
+  <text x="690.0" y="458" text-anchor="middle" font-size="11" fill="#6b7280">保留身份字段，文件回归可复活</text>
+  <rect x="80" y="440" width="280" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="462" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb index run</text>
+  <text x="220.0" y="478" text-anchor="middle" font-size="11" fill="#6b7280">取写锁，串行执行任务队列</text>
+  <rect x="80" y="530" width="280" height="76" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="552" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">四阶段流水线</text>
+  <text x="220.0" y="568" text-anchor="middle" font-size="11" fill="#6b7280">parse → chunk → classify → summarize</text>
+  <text x="220.0" y="584" text-anchor="middle" font-size="11" fill="#6b7280">分块写 FTS5 + 解析缓存；摘要需 LLM</text>
+  <rect x="80" y="650" width="280" height="44" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="220.0" y="672" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb status</text>
+  <text x="220.0" y="688" text-anchor="middle" font-size="11" fill="#6b7280">查看状态 / topics / 待确认队列</text>
+  <polygon points="520,637.0 605.0,672 520,707.0 435.0,672" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="520" y="677" text-anchor="middle" font-size="12.5" font-weight="600" fill="#111827">needs_confirm?</text>
+  <rect x="680" y="640" width="240" height="64" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="800.0" y="662" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb index set-topic</text>
+  <text x="800.0" y="678" text-anchor="middle" font-size="11" fill="#6b7280">Dxxxx Topic 改判，即时生效</text>
+  <text x="800.0" y="694" text-anchor="middle" font-size="11" fill="#6b7280">'-' 清空留待人工</text>
+  <rect x="680" y="740" width="240" height="44" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="800.0" y="762" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">kb index reindex --full</text>
+  <text x="800.0" y="778" text-anchor="middle" font-size="11" fill="#6b7280">清空 FTS，全量重建</text>
+  <text x="430" y="314" text-anchor="middle" font-size="11" fill="#6b7280">moved</text>
+  <text x="440" y="356" text-anchor="middle" font-size="11" fill="#6b7280">duplicate</text>
+  <text x="508" y="436" text-anchor="start" font-size="11" fill="#6b7280">deleted</text>
+  <text x="232" y="416" text-anchor="start" font-size="11" fill="#6b7280">new / modified → 入队 parse</text>
+  <text x="573" y="664" text-anchor="middle" font-size="11" fill="#6b7280">是</text>
+  <text x="520" y="730" text-anchor="middle" font-size="11" fill="#6b7280">否：库已可检索（kb search …）</text>
+  <text x="650" y="236" text-anchor="middle" font-size="11" fill="#6b7280">资料变动后再次扫描（增量）</text>
+  <text x="510" y="534" text-anchor="middle" font-size="11" fill="#6b7280">全量重建</text>
+  <g transform="translate(20, 760)">
+    <line x1="0" y1="6" x2="30" y2="6" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+    <text x="38" y="10" font-size="11.5" fill="#6b7280">主流程</text>
+    <line x1="110" y1="6" x2="140" y2="6" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrow-gray)"/>
+    <text x="148" y="10" font-size="11.5" fill="#6b7280">循环 / 重建</text>
+  </g>
+</svg>
+  <figcaption>图 2 ｜ 索引流水线与日常维护流程</figcaption>
+</figure>
+
+<h3>4.1 准备语料目录</h3>
+<ul>
+  <li>把资料放入 <code>corpus_roots</code> 配置的三个目录（references / research / design）中，可按主题建子目录。</li>
+  <li><strong>支持的格式白名单</strong>：<code>.pdf</code>、<code>.html</code>、<code>.htm</code>、<code>.md</code>、<code>.docx</code>、<code>.txt</code>，其余扩展名直接跳过。</li>
+  <li>扫描时自动跳过：隐藏文件/目录、名为 <code>summaries/</code> 的目录（它是策展摘要存放区，不作为语料）、符号链接，并遵循语料根下 <code>.gitignore</code> 的规则。</li>
+  <li><strong>策展摘要约定</strong>（可选，强烈推荐）：在 <code>&lt;语料根&gt;/&lt;主题&gt;/summaries/</code> 下放人工编写的高质量摘要 Markdown，文件名形如 <code>NN-短标题.md</code>。文件头支持两种格式——YAML frontmatter（含 <code>source_pdf</code> 字段）或引用块头（含 <code>&gt; **完整 PDF 文件名**：xx.pdf</code> 行）。扫描时按 <code>source_pdf</code> 的文件名自动绑定到对应 PDF，绑定后该文档的摘要标记为 <code>curated</code>，跳过 LLM 摘要生成。</li>
+</ul>
+
+<h3>4.2 扫描入队：<code>kb index scan</code></h3>
+<pre><code>kb index scan                    # 扫描全部 corpus_roots
+kb index scan --corpus research  # 只扫指定分区</code></pre>
+<p>扫描对每个文件计算 SHA-256 指纹，按决策表判定五种情形：</p>
+<table>
+  <tr><th>情形</th><th>判定条件</th><th>动作</th></tr>
+  <tr><td>new（新增）</td><td>路径与内容都未见过</td><td>分配 doc_id，登记 files 表，<strong>入队 parse 任务</strong></td></tr>
+  <tr><td>modified（修改）</td><td>路径已登记但内容变了</td><td>保留 doc_id，重新入队；若绑定了策展摘要则标记摘要过期</td></tr>
+  <tr><td>moved（移动/改名）</td><td>内容相同但路径变了</td><td>只更新路径，<strong>零重抽取</strong>（不入队）</td></tr>
+  <tr><td>duplicate（重复）</td><td>内容与库内另一文件相同</td><td>分配 doc_id 登记为 duplicate，<strong>不入队、不入全文索引</strong></td></tr>
+  <tr><td>deleted（删除）</td><td>已登记文件在磁盘上消失</td><td>标记墓碑（保留身份字段；文件回归时自动复活复用原 doc_id）</td></tr>
+</table>
+<p>扫描结束打印变更报告。若策展摘要的 <code>source_pdf</code> 找不到对应文件，会在报告中提示并写 <code>reports/manifest_mismatch_&lt;时间戳&gt;.json</code> 供排查。扫描是幂等的，无变更时输出"无变更，无需入队"。</p>
+
+<h3>4.3 执行流水线：<code>kb index run</code></h3>
+<pre><code>kb index run                 # 取写锁，串行跑完任务队列
+kb index run --wait          # 写锁被占用时阻塞等待（最多 30 秒）
+kb index run --max-tasks 10  # 最多处理 10 个任务就退出（调试用）</code></pre>
+<p>每个 parse 任务串行经过四个阶段：</p>
+<ol>
+  <li><strong>parse</strong>：按格式解析全文与标题结构（PDF 走 PyMuPDF 快路径；扫描件无文本层标记 <code>no_text</code>）；结果缓存到 <code>cache/extracted/&lt;sha256&gt;.json</code>，同内容文件再次解析直接命中缓存。</li>
+  <li><strong>chunk</strong>：结构感知分块——章节是原子单位，超长章节按段落边界切分并保留 200 字符重叠；分块写入 FTS5 全文索引（先删后插，幂等）。</li>
+  <li><strong>classify</strong>：关键词计分定主题（标题命中 ×3 + 正文命中 ×1，默认 top1 ≥ 2 分且 ≥ top2 的 1.5 倍），规则链定 doc_type；<strong>不确定的文档进入 needs_confirm 待确认队列</strong>。doc_type 规则全部落空且有 LLM 时，用 LLM 仲裁一次。</li>
+  <li><strong>summarize</strong>（有 LLM 且摘要非 curated 时自动入队执行）：生成 L1–L3 摘要，写 <code>auto_summaries/&lt;doc_id&gt;.md</code> 并作为 <code>$summary</code> 伪 chunk 进索引。已绑定策展摘要的文档跳过；策展摘要过期时生成临时 auto 摘要但不覆盖原绑定。</li>
+</ol>
+<div class="note">run 是可中断的：Ctrl-C 会把正在执行的任务立即放回队列（退出码 130），下次 run 继续。失败任务按 30s→1m→5m 退避自动重试（最多 4 次），LLM 不可用等临时故障不会丢任务。进程崩溃后，下次 run 或 status 会自动把卡在 running 超 30 分钟的任务重置回 pending。</div>
+
+<h3>4.4 查看库状态：<code>kb status</code></h3>
+<pre><code>kb status</code></pre>
+<p>输出五组信息：总览（版本、schema 版本、任务队列计数、FTS chunk 总数）、files 分状态统计、extract_status 统计、topics 清单（含文档数）、<strong>needs_confirm 待确认队列</strong>（前 20 条，附改判命令提示）。这是日常巡检的主入口。</p>
+
+<h3>4.5 人工改判：<code>kb index set-topic</code></h3>
+<pre><code>kb index set-topic D0007 ContextEngineering   # 改判到指定主题（主题不存在会自动创建）
+kb index set-topic D0007 -                    # 清空主题，留待以后处理</code></pre>
+<p>改判即时生效（状态变为 active），并自动维护各主题的文档计数。改判不需要重新解析。</p>
+
+<h3>4.6 检索：<code>kb search</code></h3>
+<pre><code>kb search "context rot"                        # 默认 hybrid 混合检索，返回 10 条
+kb search "上下文工程" --topic ContextEngineering  # 限定主题（硬过滤）
+kb search "知识图谱" --mode graph               # 仅结构导航（图路）
+kb search "" --mode topic-global               # 主题全景：按主题分组列出文档 + 一句话摘要
+kb search "..." --mode vector                  # 当前显式报错（P1 目标态）
+kb search " Petri net " --limit 20             # 调整返回条数</code></pre>
+<p>hybrid 模式的工作原理（见图 3）：查询先经<strong>查询理解</strong>（归一化、主题词匹配、内置+用户同义词表扩展，有 LLM 时再做一次查询扩展），然后两路召回——<strong>全文路</strong>用 FTS5 trigram 做 BM25 检索并聚合到章节粒度（短查询自动走 LIKE 兜底，标题命中排正文命中之前）；<strong>图路</strong>按主题匹配做结构导航（主题缺失过半时退化为按语料/类型浏览并给出提示）；两路经<strong>加权 RRF</strong> 融合，有 LLM 时再对前 20 条做相关性重排（重排失败自动回退融合原序）。</p>
+<p>每条命中包含：得分、文档路径、<code>section_path</code>、摘要片段。输出末尾提示下钻命令。</p>
+<figure>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" width="1200" height="660">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#9333ea"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="660" fill="#ffffff"/>
+  <text x="600" y="32" text-anchor="middle" font-size="17" font-weight="600" fill="#111827">检索与上下文组装数据流</text>
+  <path d="M 180 300 L 240 300" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 440 285 L 480 200" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 440 315 L 480 430" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 720 170 L 800 170 L 800 270 L 820 270" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 720 468 L 800 468 L 800 330 L 820 330" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 990 300 L 1030 300" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 1105 330 L 1105 400" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 320 584 L 360 584" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 600 584 L 640 584" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 880 584 L 920 584" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <rect x="40" y="270" width="140" height="60" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="110.0" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">查询 query</text>
+  <text x="110.0" y="308" text-anchor="middle" font-size="11" fill="#6b7280">自然语言 / 关键词</text>
+  <rect x="240" y="262" width="200" height="76" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="340.0" y="284" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">查询理解</text>
+  <text x="340.0" y="300" text-anchor="middle" font-size="11" fill="#6b7280">norm 归一化 · 主题词匹配</text>
+  <text x="340.0" y="316" text-anchor="middle" font-size="11" fill="#6b7280">内置+用户同义词表</text>
+  <text x="340.0" y="332" text-anchor="middle" font-size="11" fill="#6b7280">LLM 查询扩展（可选）</text>
+  <rect x="480" y="130" width="240" height="76" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="600.0" y="152" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">全文路（FTS5 trigram）</text>
+  <text x="600.0" y="168" text-anchor="middle" font-size="11" fill="#6b7280">BM25 chunk 召回</text>
+  <text x="600.0" y="184" text-anchor="middle" font-size="11" fill="#6b7280">→ section 聚合</text>
+  <text x="600.0" y="200" text-anchor="middle" font-size="11" fill="#6b7280">短查询 LIKE 兜底 + 分档</text>
+  <rect x="480" y="430" width="240" height="76" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="600.0" y="452" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">图路（结构导航）</text>
+  <text x="600.0" y="468" text-anchor="middle" font-size="11" fill="#6b7280">topic 匹配 → 文档清单</text>
+  <text x="600.0" y="484" text-anchor="middle" font-size="11" fill="#6b7280">→ 章节清单</text>
+  <text x="600.0" y="500" text-anchor="middle" font-size="11" fill="#6b7280">topic 稀疏时退化 corpus 导航</text>
+  <rect x="820" y="270" width="170" height="60" rx="8" ry="8" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="905.0" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">加权 RRF 融合</text>
+  <text x="905.0" y="308" text-anchor="middle" font-size="11" fill="#6b7280">w_fts 1.0 · w_graph 0.5</text>
+  <text x="905.0" y="324" text-anchor="middle" font-size="11" fill="#6b7280">rrf_k = 60</text>
+  <rect x="1030" y="270" width="150" height="60" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="1105.0" y="292" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">LLM 重排</text>
+  <text x="1105.0" y="308" text-anchor="middle" font-size="11" fill="#6b7280">可选 · top-20</text>
+  <text x="1105.0" y="324" text-anchor="middle" font-size="11" fill="#6b7280">失败回退 RRF 序</text>
+  <rect x="1030" y="400" width="150" height="76" rx="8" ry="8" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5"/>
+  <text x="1105.0" y="422" text-anchor="middle" font-size="13" font-weight="600" fill="#111827">SearchHit 列表</text>
+  <text x="1105.0" y="438" text-anchor="middle" font-size="11" fill="#6b7280">锚点</text>
+  <text x="1105.0" y="454" text-anchor="middle" font-size="11" fill="#6b7280">doc_id#section_path</text>
+  <text x="600" y="118" text-anchor="middle" font-size="11" fill="#6b7280">--topic 硬过滤：前置下推 SQL，不进 RRF</text>
+  <rect x="40" y="530" width="1120" height="104" rx="8" ry="8" fill="#f9fafb" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="600" y="552" text-anchor="middle" font-size="12.5" font-weight="600" fill="#374151">kb_assemble_context（MCP 工具 · 确定性路径，全程不调 LLM）</text>
+  <rect x="80" y="562" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="200.0" y="584" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">检索命中</text>
+  <text x="200.0" y="600" text-anchor="middle" font-size="11" fill="#6b7280">search() 不传 llm</text>
+  <text x="200.0" y="616" text-anchor="middle" font-size="11" fill="#6b7280">--topics 逐个硬过滤合并</text>
+  <rect x="360" y="562" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="480.0" y="584" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">按文档去重</text>
+  <text x="480.0" y="600" text-anchor="middle" font-size="11" fill="#6b7280">保留首个命中章节为锚点</text>
+  <rect x="640" y="562" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="760.0" y="584" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">读摘要拼装</text>
+  <text x="760.0" y="600" text-anchor="middle" font-size="11" fill="#6b7280">无摘要回退首节前 200 字</text>
+  <rect x="920" y="562" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="1040.0" y="584" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">预算截断输出</text>
+  <text x="1040.0" y="600" text-anchor="middle" font-size="11" fill="#6b7280">budget×4 字符 ≈ token</text>
+  <text x="1040.0" y="616" text-anchor="middle" font-size="11" fill="#6b7280">{context_block, sources}</text>
+  <g transform="translate(20, 40)">
+    <line x1="0" y1="6" x2="30" y2="6" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="38" y="10" font-size="11.5" fill="#6b7280">主数据流</text>
+  </g>
+</svg>
+  <figcaption>图 3 ｜ 检索与上下文组装数据流</figcaption>
+</figure>
+
+<h3>4.7 查看与阅读：<code>kb show</code> / <code>kb read</code> / <code>kb related</code> / <code>kb compare</code> / <code>kb topics</code></h3>
+<pre><code>kb show D0001                    # 元数据 + 章节树 + 摘要
+kb show "context rot"            # 也可用路径/标题片段；歧义时列出候选
+kb read D0001 '§2 方法'          # 读某章节原文（章节名从 kb show 的章节树复制）
+kb read D0001 '$summary'         # 读摘要全文（$summary 哨兵）
+kb related D0001 --limit 10      # 同主题关联阅读（无主题时退化为全库最近更新）
+kb compare --docs D0001,D0002,D0003   # 多文档对比表（需 LLM；无 LLM 回退并排摘要）
+kb topics                        # 主题清单与规模；主题名归一化碰撞会给出归并建议</code></pre>
+<div class="note">文档引用（show / read / related 的 <code>doc</code> 参数）按以下优先级解析：doc_id 精确 → 路径精确 → 路径后缀 / 标题子串（须唯一命中）。多文档歧义时不猜，报错并列出候选路径。</div>
+
+<h3>4.8 登记库外文件：<code>kb index add</code></h3>
+<pre><code>kb index add /abs/path/to/paper.pdf</code></pre>
+<p>把不在三个语料目录里的文件登记进库（corpus=external），<strong>只登记不拷贝</strong>，请确保原文件路径长期有效。路径已登记会报错（退出码 1）；内容与库内文件重复时按 duplicate 登记，不入队。</p>
+
+<h3>4.9 全量重建：<code>kb index reindex --full</code></h3>
+<pre><code>kb index reindex --full              # 清空全文索引，重新入队全部有效文档
+kb index reindex --full --no-cache   # 连带清空解析缓存（解析器升级后用）</code></pre>
+<p>适用场景：修改了分块参数（chunk_size 等）、分类关键词大改、怀疑索引损坏。重建只影响索引与产物，<strong>不触碰原文与人工改判记录之外的元数据</strong>；doc_id 全部保留。重建后执行一次 <code>kb index run</code> 完成重处理。</p>
+
+<!-- ================================================================ -->
+<h2 id="s5">五、MCP 服务与 AI Agent 集成</h2>
+
+<h3>5.1 启动服务</h3>
+<pre><code>uv sync --extra mcp        # 首次需安装 mcp 依赖（未安装时启动会明确报错提示）
+kb serve mcp               # 以 stdio 传输启动（前台进程，由 Agent 客户端拉起）</code></pre>
+<p>MCP 服务是<strong>只读</strong>的：它只打开注册库读取，不取写锁，与正在运行的 <code>kb index run</code> 互不阻塞（SQLite WAL 支持并发读）。服务进程内缓存配置与连接，<strong>修改 config.yaml 后需重启服务生效</strong>。</p>
+
+<h3>5.2 四个工具</h3>
+<table>
+  <tr><th>工具</th><th>参数</th><th>返回</th><th>用途</th></tr>
+  <tr><td><code>kb_search</code></td><td>query；mode=hybrid|graph|topic-global；topic；limit=10</td><td>hits[doc_id, section_path, title, score, snippet, topic] + note</td><td>章节级检索，拿锚点</td></tr>
+  <tr><td><code>kb_show</code></td><td>doc（doc_id / 路径 / 标题片段）</td><td>元数据 + summary + sections[section_path, title]</td><td>了解一篇文档的结构与摘要</td></tr>
+  <tr><td><code>kb_read</code></td><td>doc；section</td><td>章节原文（<code>$summary</code> 读摘要全文）</td><td>下钻读取原文</td></tr>
+  <tr><td><code>kb_assemble_context</code></td><td>task；budget=8000；topics（可选列表）</td><td>{context_block, budget, used, sources[doc_id, section_path]}</td><td>按任务描述一步到位组装提示词上下文</td></tr>
+</table>
+<p>所有工具出错时不抛协议层异常，统一返回 <code>{error: {code, message, suggestion}}</code>。错误码：<code>DOC_NOT_FOUND</code>（含歧义，附候选与"先 kb_search 消歧"建议）、<code>SECTION_NOT_FOUND</code>（建议先 kb_show 列章节）、<code>MODE_NOT_READY</code>（vector 模式未就绪或非法 mode）、<code>CONFIG_INVALID</code>、<code>INTERNAL</code>。</p>
+<div class="note"><code>kb_assemble_context</code> 走<strong>确定性路径</strong>：内部检索不做 LLM 扩展与重排，延迟可预期；预算按约 4 字符 ≈ 1 token 折算截断；<code>sources</code> 只包含真正拼入 context_block 的文档，每个都带可回读的锚点。</div>
+
+<h3>5.3 在 Agent 客户端中注册</h3>
+<p>以 MCP stdio 方式注册（以 Claude Code 的 <code>.mcp.json</code> 为例，Kimi Code 等客户端同理，字段名以各客户端文档为准）：</p>
+<pre><code>{
+  "mcpServers": {
+    "graphit-kb": {
+      "command": "uv",
+      "args": ["run", "kb", "serve", "mcp"],
+      "cwd": "D:/Users/Yu/Documents/Coding/AI-Coding-Engineering/code/kb-app",
+      "env": { "GRAPHIT_KB_DATA_DIR": "D:/kb-data" }
+    }
+  }
+}</code></pre>
+<p>要点：<code>cwd</code> 指向 kb-app 仓库（保证 <code>uv run</code> 找到环境）；<code>GRAPHIT_KB_DATA_DIR</code> 指向你的数据目录（不设则用 <code>~/.graphit-kb</code>）。</p>
+
+<h3>5.4 典型调用时序</h3>
+<figure>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="32" text-anchor="middle" font-size="17" font-weight="600" fill="#111827">Agent 经 MCP 调用知识库的典型时序</text>
+  <rect x="60" y="50" width="180" height="36" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="150" y="73" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">AI Agent</text>
+  <line x1="150" y1="86" x2="150" y2="520" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="390" y="50" width="180" height="36" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="480" y="73" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">MCP 服务</text>
+  <line x1="480" y1="86" x2="480" y2="520" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="720" y="50" width="180" height="36" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="810" y="73" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">registry.sqlite</text>
+  <line x1="810" y1="86" x2="810" y2="520" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="474" y="112" width="12" height="388" fill="#dbeafe" stroke="#bfdbfe"/>
+  <line x1="150" y1="120" x2="474" y2="120" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="312.0" y="113" text-anchor="middle" font-size="11.5" fill="#374151">kb_search(query, mode="hybrid")</text>
+  <line x1="486" y1="160" x2="810" y2="160" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="648.0" y="153" text-anchor="middle" font-size="11.5" fill="#374151">FTS + 结构导航检索</text>
+  <line x1="474" y1="200" x2="150" y2="200" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+  <text x="312.0" y="193" text-anchor="middle" font-size="11.5" fill="#374151">hits[ doc_id · section_path · snippet · score ]</text>
+  <line x1="150" y1="250" x2="474" y2="250" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="312.0" y="243" text-anchor="middle" font-size="11.5" fill="#374151">kb_show(doc_id)</text>
+  <line x1="474" y1="290" x2="150" y2="290" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+  <text x="312.0" y="283" text-anchor="middle" font-size="11.5" fill="#374151">元数据 + 章节树 + 摘要</text>
+  <line x1="150" y1="340" x2="474" y2="340" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="312.0" y="333" text-anchor="middle" font-size="11.5" fill="#374151">kb_read(doc_id, "§2 …")</text>
+  <line x1="474" y1="380" x2="150" y2="380" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+  <text x="312.0" y="373" text-anchor="middle" font-size="11.5" fill="#374151">章节原文（$summary 读摘要全文）</text>
+  <line x1="150" y1="430" x2="474" y2="430" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="312.0" y="423" text-anchor="middle" font-size="11.5" fill="#374151">kb_assemble_context(task, budget=8000)</text>
+  <line x1="474" y1="470" x2="150" y2="470" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+  <text x="312.0" y="463" text-anchor="middle" font-size="11.5" fill="#374151">{ context_block, used, sources（溯源锚点）}</text>
+  <rect x="150" y="540" width="660" height="56" rx="8" ry="8" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="480" y="562" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">统一错误结构（工具内捕获，不抛协议层异常）</text>
+  <text x="480" y="582" text-anchor="middle" font-size="11.5" fill="#6b7280">{ error: { code, message, suggestion } } — DOC_NOT_FOUND / SECTION_NOT_FOUND / MODE_NOT_READY / CONFIG_INVALID / INTERNAL</text>
+</svg>
+  <figcaption>图 4 ｜ Agent 经 MCP 调用知识库的典型时序</figcaption>
+</figure>
+
+<!-- ================================================================ -->
+<h2 id="s6">六、目标应用场景示例</h2>
+
+<h3>场景 A：论文研究 —— 新增一批论文并快速进入阅读</h3>
+<p><strong>目标</strong>：新下载了 10 篇 arXiv 论文 PDF，希望自动完成解析、分类、摘要，随后按主题浏览并精读。</p>
+<ol>
+  <li>把 PDF 放入 <code>references/&lt;主题&gt;/</code> 目录；如已有配套人工摘要，放入该主题下的 <code>summaries/</code> 并确保头部 <code>source_pdf</code> 与 PDF 文件名一致。</li>
+  <li>确认 <code>classify.topic_keywords</code> 覆盖这批论文的主题词（不配置关键词时所有文档都会进待确认队列）。</li>
+  <li>执行：
+    <pre><code>kb index scan          # 看到"新增 D0042–D0051，入队 10 个 parse"
+kb index run           # 解析 + 分块 + 分类 +（有 LLM 时）摘要
+kb status              # 检查 needs_confirm 队列</code></pre>
+  </li>
+  <li>处理待确认：<code>kb status</code> 列出的条目，用 <code>kb index set-topic D0044 CodeGraph</code> 逐一改判；解析失败（no_text）的扫描件 PDF 当前版本无法检索全文，需人工 OCR 后重新放入。</li>
+  <li>进入阅读：
+    <pre><code>kb search "" --mode topic-global     # 主题全景：哪个主题有哪些论文
+kb show D0042                        # 看章节树和摘要
+kb read D0042 '$summary'             # 读摘要全文
+kb read D0042 '§3 Method'            # 精读某章原文
+kb related D0042                     # 找同主题关联论文
+kb compare --docs D0042,D0043        # 两篇对比（需 LLM）</code></pre>
+  </li>
+</ol>
+<div class="warn">文件名含 arXiv 号（如 <code>2607.03691v2.pdf</code>）会被自动识别为 paper 类型；策展摘要文件名序号应与源 PDF 一致、不带版本号。扫描件 PDF（无文本层）会进入 needs_confirm 且 extract_status=no_text，这是预期行为而非故障。</div>
+
+<h3>场景 B：参考知识库编写设计方案</h3>
+<p><strong>目标</strong>：写一份"XX 系统上下文管理"的设计方案，需要回顾库中相关论文与既有研究报告的观点。</p>
+<ol>
+  <li><strong>广撒网</strong>：先用主题全景和粗检索圈定范围：
+    <pre><code>kb topics                                  # 看主题分布与规模
+kb search "" --mode topic-global           # 每个主题下的文档与一句话索引
+kb search "上下文工程 上下文预算"            # hybrid 检索定位章节</code></pre>
+  </li>
+  <li><strong>定点精读</strong>：对命中文档 <code>kb show</code> 看章节树，<code>kb read</code> 取关键章节原文；对短缩写查询（如 "RAG"）依赖内置同义词表自动扩展全称与中译。</li>
+  <li><strong>横向比较</strong>：对观点相近的若干篇用 <code>kb compare --docs D0005,D0011,D0019</code> 生成对比表（一句话结论 / 适用场景 / 主要观点 / 关键差异）；无 LLM 时回退为并排摘要，人工比对。</li>
+  <li><strong>沉淀</strong>：写出的设计文档放入 <code>design/</code> 语料目录，再 <code>kb index scan && kb index run</code> 入库——它会因 corpus=design 自动判为 design 类型，成为后续检索的语料。</li>
+</ol>
+<div class="tip">检索到的章节引用进设计方案时，直接记录锚点（doc_id + section_path，如 <code>D0005#§2.1</code>），日后可用 <code>kb read</code> 精确回读原文核对。</div>
+
+<h3>场景 C：AI Agent 自动参考知识库</h3>
+<p><strong>目标</strong>：让编码/写作 Agent 在执行任务时自动查询知识库，获得带溯源的上下文，而不是人工粘贴资料。</p>
+<ol>
+  <li>按 5.3 在 Agent 客户端注册 MCP 服务，确认 <code>uv sync --extra mcp --extra parse</code> 已安装、数据目录已完成索引（scan + run 已跑过）。</li>
+  <li>在 Agent 的任务指令中引导使用模式，例如：
+    <pre><code>先用 kb_assemble_context(task="为知识库设计上下文预算分配策略", budget=8000)
+获取参考资料上下文；对其中的关键文档用 kb_read 下钻章节原文核实；
+引用结论时注明 sources 中的 doc_id 锚点。</code></pre>
+  </li>
+  <li>Agent 的典型自助路径（见图 4）：<code>kb_search</code> 粗查 → <code>kb_show</code> 看结构与摘要 → <code>kb_read</code> 精读 → 需要成段背景时直接 <code>kb_assemble_context</code>。</li>
+  <li>消费返回：<code>context_block</code> 直接拼入提示词；<code>sources</code> 中的锚点用于生成引用说明或后续回读。</li>
+</ol>
+<div class="warn">注意四点：① <code>kb_assemble_context</code> 的 <code>budget</code> 是约 token 数（按 4 字符 ≈ 1 token 折算），按你的模型上下文窗口合理设置；② 工具返回 <code>error</code> 结构时按 <code>suggestion</code> 字段行动（如先 kb_search 消歧），不要重试相同参数；③ MCP 服务进程缓存配置，改完 config.yaml 要重启服务；④ 服务只读，索引进度（如 scan 后未 run）不会经 MCP 反映出来——先确认 <code>kb status</code> 队列已清空再让 Agent 使用。</div>
+
+<h3>场景 D：日常维护与故障处理</h3>
+<ul>
+  <li><strong>资料变动</strong>：移动/重命名/删除文件后，跑一次 <code>kb index scan</code>（移动零重抽取、删除留墓碑），有新增或修改再 <code>kb index run</code>。</li>
+  <li><strong>索引重建</strong>：调整分块或分类参数后 <code>kb index reindex --full && kb index run</code>；解析器升级后加 <code>--no-cache</code>。</li>
+  <li><strong>写锁占用</strong>（退出码 2）：确认没有其他 <code>kb index run</code> 在跑；崩溃残留的锁会被自动回收（进程探测 + 1 小时 mtime 兜底），稍候重试或加 <code>--wait</code>。</li>
+  <li><strong>任务失败</strong>：<code>kb status</code> 看 failed 计数；可重试失败（如 LLM 超时）会自动退避重试，终态失败（如文件损坏）需人工处理源文件后重新 scan。</li>
+  <li><strong>策展摘要不匹配</strong>：查 <code>reports/manifest_mismatch_*.json</code>，修正摘要头部的 <code>source_pdf</code> 为库内实际文件名后再 scan。</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2 id="s7">七、注意事项与常见问题</h2>
+<table>
+  <tr><th>主题</th><th>说明</th></tr>
+  <tr><td>平台支持</td><td>Linux / macOS 全功能。Windows 上写锁（依赖 POSIX PID 语义）不可用：<code>index run</code>、<code>config set</code>、<code>set-topic</code> 等写命令可能失败；只读命令可用但未完整验证。</td></tr>
+  <tr><td>网络盘</td><td>数据目录不要放在 NFS/SMB 上，SQLite WAL 在网络盘上有损坏风险。</td></tr>
+  <tr><td>退出码</td><td>0 成功；1 参数/校验错误（如未知配置键、文档不存在）；2 锁冲突或 IO 错误；130 用户 Ctrl-C（任务已安全回队）。脚本中可按退出码分支处理。</td></tr>
+  <tr><td>离线运行</td><td>不装 <code>llm</code> extra 或不配 API key 时：分类走纯规则、无自动摘要（检索回退标题/首节）、无查询扩展与重排；其余功能不受影响。</td></tr>
+  <tr><td>LLM 费用</td><td>每次 LLM 调用记入 llm_usage 表（模型、用途、token 数）；摘要批量生成是主要开销，可用 <code>llm.summary_*</code> 预算键控制。</td></tr>
+  <tr><td>Python 3.11</td><td>3.11.0 捆绑的 SQLite 3.38 对非 ASCII LIKE 查询静默返回空集，中文短查询会零命中——请用 3.12（仓库 .python-version 已钉 3.12）。</td></tr>
+  <tr><td>未落地功能</td><td><code>--mode vector</code>、<code>kb collect</code>、<code>kb serve viz</code>、<code>kb maintenance</code> 当前为显式报错或占位；知识图谱（实体/关系）与 Web UI 属后续里程碑。相关目录（graph/、vectors/、inbox/、sources.yaml）为预留。</td></tr>
+  <tr><td>原文只读</td><td>系统永不修改语料文件；所有产物（缓存、摘要、索引、报告）都在数据目录。语料目录本身请用 git 等手段另行管理。</td></tr>
+  <tr><td>测试验证</td><td>仓库含 242 项自动化测试（<code>uv run pytest</code>）；检索召回率实测约 70–80%（在线档），短查询与缩写建议配合 <code>search.synonyms</code> 配置优化。</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2 id="s8">八、附录：命令与配置速查</h2>
+
+<h3>8.1 命令速查</h3>
+<table>
+  <tr><th>命令</th><th>作用</th><th>关键选项</th></tr>
+  <tr><td><code>kb init</code></td><td>幂等初始化数据目录</td><td><code>--force</code> 重写默认配置</td></tr>
+  <tr><td><code>kb status</code></td><td>库状态总览 + 待确认队列</td><td>—</td></tr>
+  <tr><td><code>kb index scan</code></td><td>扫描语料，变更入队</td><td><code>--corpus</code></td></tr>
+  <tr><td><code>kb index run</code></td><td>串行执行流水线</td><td><code>--wait</code> / <code>--max-tasks</code></td></tr>
+  <tr><td><code>kb index reindex</code></td><td>全量重建索引</td><td><code>--full</code>（必需）/ <code>--no-cache</code></td></tr>
+  <tr><td><code>kb index add</code></td><td>登记库外文件</td><td>路径参数（绝对路径）</td></tr>
+  <tr><td><code>kb index set-topic</code></td><td>人工改判主题</td><td><code>-</code> 表示清空</td></tr>
+  <tr><td><code>kb search</code></td><td>混合检索</td><td><code>--mode</code> / <code>--topic</code> / <code>--limit</code></td></tr>
+  <tr><td><code>kb show</code> / <code>kb read</code></td><td>文档详情 / 章节原文</td><td><code>$summary</code> 哨兵</td></tr>
+  <tr><td><code>kb related</code> / <code>kb compare</code></td><td>关联阅读 / 多文档对比</td><td><code>--limit</code> / <code>--docs a,b,c</code></td></tr>
+  <tr><td><code>kb topics</code></td><td>主题清单与碰撞提示</td><td>—</td></tr>
+  <tr><td><code>kb config show/get/set/diff</code></td><td>配置管理（带审计）</td><td><code>--defaults</code> / <code>--yes</code></td></tr>
+  <tr><td><code>kb serve mcp</code></td><td>启动 MCP 服务（stdio）</td><td>需 mcp extra</td></tr>
+  <tr><td><code>kb collect</code> / <code>kb serve viz</code> / <code>kb maintenance</code></td><td colspan="2">占位（M7 / M6 / M8 里程碑）</td></tr>
+</table>
+
+<h3>8.2 常用配置键速查</h3>
+<table>
+  <tr><th>要做什么</th><th>配置键</th></tr>
+  <tr><td>指定语料目录</td><td><code>corpus_roots.{references,research,design}</code></td></tr>
+  <tr><td>提升分类命中率</td><td><code>classify.topic_keywords</code>、<code>classify.min_keyword_score</code>、<code>classify.top_ratio</code></td></tr>
+  <tr><td>接入 / 更换 LLM</td><td><code>llm.provider</code>、<code>llm.model</code>、<code>llm.api_key_env</code>、<code>llm.fallback</code></td></tr>
+  <tr><td>控制摘要成本</td><td><code>llm.summary_max_tokens</code>、<code>llm.summary_input_budget</code></td></tr>
+  <tr><td>优化短词/缩写检索</td><td><code>search.synonyms</code></td></tr>
+  <tr><td>关闭 LLM 检索增强</td><td><code>search.query_expansion</code>、<code>search.rerank.enabled</code></td></tr>
+  <tr><td>调整上下文组装默认预算</td><td><code>retrieve.context_budget</code></td></tr>
+  <tr><td>调整分块</td><td><code>parse.chunk_size</code>、<code>parse.chunk_overlap</code></td></tr>
+</table>
+
+<footer>
+  <p>GraphIt-KB（kb-app）使用说明 ｜ 依据代码 <code>code/kb-app/</code>（M1–M4 落地状态）与设计文档 <code>design/kb-app/01–14</code> 编写。架构细节另见 <code>docs/architecture.md</code>、<code>docs/data-model.md</code>、<code>docs/milestone-log.md</code>。文中四图源文件见 <code>docs/diagrams/</code>（SVG 可独立复用）。</p>
+</footer>
+
+</div>
+</body>
+</html>

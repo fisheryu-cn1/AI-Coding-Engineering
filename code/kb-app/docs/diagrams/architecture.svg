@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" width="960" height="720">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#9333ea"/>
+    </marker>
+  </defs>
+  <rect width="960" height="720" fill="#ffffff"/>
+  <text x="480" y="34" text-anchor="middle" font-size="17" font-weight="600" fill="#111827">GraphIt-KB 总体架构</text>
+  <path d="M 240 108 L 220 160" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 720 108 L 740 160" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 170 216 L 170 280" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 290 216 L 290 248 L 480 248 L 480 280" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 700 216 L 700 262 L 560 262 L 560 280" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 780 216 L 780 280" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 170 344 L 170 420" stroke="#16a34a" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+  <path d="M 480 344 L 480 420" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 780 344 L 780 420" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 40 588 L 24 588 L 24 312 L 40 312" stroke="#16a34a" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 600 344 L 600 372 L 915 372 L 915 588 L 900 588" stroke="#9333ea" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arrow-purple)"/>
+  <rect x="140" y="60" width="200" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="240.0" y="82" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">研究者（人）</text>
+  <rect x="620" y="60" width="200" height="48" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="720.0" y="82" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">AI Agent</text>
+  <text x="720.0" y="98" text-anchor="middle" font-size="11" fill="#6b7280">Kimi Code / Claude Code 等</text>
+  <rect x="60" y="160" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="180.0" y="182" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">kb CLI（Typer 命令行）</text>
+  <text x="180.0" y="198" text-anchor="middle" font-size="11" fill="#6b7280">init / index / search / show / status …</text>
+  <rect x="620" y="160" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="740.0" y="182" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">MCP 服务（stdio）</text>
+  <text x="740.0" y="198" text-anchor="middle" font-size="11" fill="#6b7280">kb serve mcp · 四只读工具</text>
+  <rect x="60" y="280" width="260" height="64" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="190.0" y="302" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">索引流水线</text>
+  <text x="190.0" y="318" text-anchor="middle" font-size="11" fill="#6b7280">scan → parse → chunk</text>
+  <text x="190.0" y="334" text-anchor="middle" font-size="11" fill="#6b7280">→ classify → summarize</text>
+  <rect x="350" y="280" width="260" height="64" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="480.0" y="302" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">检索引擎</text>
+  <text x="480.0" y="318" text-anchor="middle" font-size="11" fill="#6b7280">FTS5 + 结构导航两路召回</text>
+  <text x="480.0" y="334" text-anchor="middle" font-size="11" fill="#6b7280">加权 RRF · 可选 LLM 重排</text>
+  <rect x="640" y="280" width="260" height="64" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="770.0" y="302" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">上下文组装</text>
+  <text x="770.0" y="318" text-anchor="middle" font-size="11" fill="#6b7280">assemble_for_task</text>
+  <text x="770.0" y="334" text-anchor="middle" font-size="11" fill="#6b7280">按 token 预算截断 + 溯源锚点</text>
+  <rect x="60" y="420" width="840" height="88" rx="8" ry="8" fill="#f9fafb" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="480" y="441" text-anchor="middle" font-size="12.5" font-weight="600" fill="#374151">数据目录（默认 ~/.graphit-kb/）</text>
+  <rect x="80" y="450" width="250" height="46" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="205.0" y="472" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">registry.sqlite（WAL）</text>
+  <text x="205.0" y="488" text-anchor="middle" font-size="11" fill="#6b7280">files / tasks / topics / fts_chunks</text>
+  <rect x="350" y="450" width="250" height="46" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="475.0" y="472" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">文件产物</text>
+  <text x="475.0" y="488" text-anchor="middle" font-size="11" fill="#6b7280">cache/extracted/ · auto_summaries/</text>
+  <rect x="620" y="450" width="260" height="46" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="750.0" y="472" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">config.yaml · reports/</text>
+  <text x="750.0" y="488" text-anchor="middle" font-size="11" fill="#6b7280">graph/ · vectors/（M5/M3+ 预留）</text>
+  <rect x="40" y="560" width="260" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="170.0" y="582" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">语料目录（只读）</text>
+  <text x="170.0" y="598" text-anchor="middle" font-size="11" fill="#6b7280">references/ · research/ · design/</text>
+  <rect x="660" y="560" width="240" height="56" rx="8" ry="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="780.0" y="582" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">LLM API（可选）</text>
+  <text x="780.0" y="598" text-anchor="middle" font-size="11" fill="#6b7280">摘要 · 分类兜底 · 扩展 · 重排</text>
+  <text x="30" y="450" text-anchor="start" font-size="11" fill="#6b7280">只读扫描</text>
+  <text x="770" y="366" text-anchor="middle" font-size="11" fill="#6b7280">LLM 调用（可选）</text>
+  <text x="325" y="405" text-anchor="middle" font-size="11" fill="#6b7280">读 / 写</text>
+  <g transform="translate(20, 648)">
+    <line x1="0" y1="6" x2="30" y2="6" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+    <text x="38" y="10" font-size="11.5" fill="#6b7280">命令 / 工具调用</text>
+    <line x1="0" y1="24" x2="30" y2="24" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+    <text x="38" y="28" font-size="11.5" fill="#6b7280">读</text>
+    <line x1="0" y1="42" x2="30" y2="42" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+    <text x="38" y="46" font-size="11.5" fill="#6b7280">写</text>
+    <line x1="0" y1="60" x2="30" y2="60" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrow-purple)"/>
+    <text x="38" y="64" font-size="11.5" fill="#6b7280">LLM 调用（可选）</text>
+  </g>
+</svg>
