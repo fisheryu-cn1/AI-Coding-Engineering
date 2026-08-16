@@ -6,7 +6,7 @@
 
 ## 📌 What is this?
 
-This repository documents the research, design frameworks, and engineering explorations behind **GraphIt** — a knowledge-graph-driven context management system for AI coding agents.
+This repository documents the research, design frameworks, and engineering explorations behind **GraphIt** — a knowledge-graph-driven context management system for AI coding agents. A working implementation (M1–M6: CLI + knowledge graph + read-only web visualization) lives in [`code/kb-app/`](code/kb-app/README.md), with its engineering design docs in [`design/kb-app/`](design/kb-app/README.md).
 
 The core thesis: *Traditional RAG (Retrieval-Augmented Generation) is insufficient for large-scale software engineering tasks because it lacks structural reasoning capabilities. By converting API documentation, framework guides, and software design documents into structured knowledge graphs, we can provide coding agents with precise, traceable, and dynamically retrievable context.*
 
@@ -27,7 +27,11 @@ GraphIt/
 │   ├── API文档知识图谱构建专题设计.md
 │   ├── Wiki与图数据库混合架构策略笔记.md
 │   ├── 软件详设提取为图谱的方案.md
-│   └── Claude-Code-context-management.md
+│   ├── Claude-Code-context-management.md
+│   └── kb-app/                        # 代码实现的设计文档 01–17（需求/选型/概要/详细/各里程碑评审）
+│
+├── code/                              # Working implementation (M1–M6 完成)
+│   └── kb-app/                        # GraphIt-KB 代码实现：CLI + 图谱(LadybugDB) + Web 可视化
 │
 ├── research/                          # Deep-dive research reports
 │   ├── README.md
@@ -99,6 +103,8 @@ A three-layer information provision strategy:
 | Latest 2026-06 industry consensus and literature scan | `research/arxiv_2026-06_industry_consensus_analysis.md` |
 | Core papers and tools in context engineering | `references/ContextEngineering/` |
 | Code graph and repository-level agent papers | `references/CodeGraph/` |
+| The working code implementation (CLI / graph / web) | [`code/kb-app/README.md`](code/kb-app/README.md) |
+| Engineering design docs for the implementation (01–17) | [`design/kb-app/README.md`](design/kb-app/README.md) |
 
 ---
 
