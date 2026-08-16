@@ -192,14 +192,18 @@ def _run_one(doc_id: str, ctx: PipelineCtx, *, task_kind: str = "parse") -> None
         stage_summarize(doc_id, ctx)
         return
     if task_kind == "index":
-        stage_index_graph(doc_id, ctx)
         # index 任务成功后按 is_core 门控入队 extract（15 §4.1）
         from kbapp.core.registry import get_file
         from kbapp.graph.extract import is_core_doc
 
         with ctx.registry.read_only() as conn:
             row = get_file(conn, doc_id)
-        if row is not None and is_core_doc(
+        # 防御：deleted 文档不再触发图同步，避免复活墓碑（15 §4.1）。
+        if row is None or row.status == "deleted":
+            _logger.info("index 任务跳过：doc_id=%s 不存在或已 deleted", doc_id)
+            return
+        stage_index_graph(doc_id, ctx)
+        if is_core_doc(
             ctx.cfg,
             topic=row.topic,
             doc_type=row.doc_type,

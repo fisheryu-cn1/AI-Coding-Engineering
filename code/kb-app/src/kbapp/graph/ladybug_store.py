@@ -118,10 +118,18 @@ class LadybugStore:
             props = {k: row.get(k, "") for k in rel_def.props}
             params = {"src": src, "dst": dst, **props}
             set_clause = ", ".join(f"r.{k} = ${k}" for k in rel_def.props)
+            # 15 §4.2 冲突消解：同 (src,dst) 同 kind 由 extract 层按证据频次
+            # 去重后取高者；落库层 MERGE 键必须含 kind，让多 kind 边并存，
+            # 否则不同 kind 互相覆盖坍缩。
+            merge_clause = (
+                f"MERGE (a)-[r:{rel} {{kind: $kind}}]->(b)"
+                if rel == "RELATES_TO"
+                else f"MERGE (a)-[r:{rel}]->(b)"
+            )
             self._run(
                 f"MATCH (a:{src_label} {{{src_pk}: $src}}) "
                 f"MATCH (b:{dst_label} {{{dst_pk}: $dst}}) "
-                f"MERGE (a)-[r:{rel}]->(b) SET {set_clause}",
+                f"{merge_clause} SET {set_clause}",
                 params,
             )
 

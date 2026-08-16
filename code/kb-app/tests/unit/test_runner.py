@@ -623,3 +623,39 @@ def test_stage_chunk_writes_composite_title(tmp_path: Path) -> None:
         rows = conn.execute("SELECT title FROM fts_chunks WHERE doc_id = ?", (doc_id,)).fetchall()
     assert len(rows) == 1
     assert rows[0]["title"] == "06-Hong-Context_Rot | Introduction"
+
+
+def test_runner_skips_index_for_deleted_doc(tmp_path: Path) -> None:
+    """R-4：files.status='deleted' 的 index 任务不触发图同步（防御墓碑复活）。"""
+    pytest.importorskip("ladybug")
+
+    from kbapp.core.registry import update_file_fields, upsert_file
+
+    data_dir = tmp_path / "data"
+    paths = DataPaths.from_data_dir(data_dir)
+    paths.ensure_dirs()
+    registry = Registry(paths.registry_db)
+    registry.initialize()
+
+    with registry.transaction() as conn:
+        upsert_file(
+            conn,
+            doc_id="dX",
+            path="x.md",
+            sha256="sX",
+            mtime=0,
+            corpus="references",
+            doc_type="paper",
+            extract_status="ok",
+            status="active",
+            title="t",
+        )
+        update_file_fields(conn, "dX", status="deleted")
+    enqueue_task(registry, kind="index", payload={"doc_id": "dX"})
+
+    ctx = PipelineCtx(cfg=Config.defaults(), paths=paths, registry=registry, llm=None)
+    report = run_pending_tasks(ctx)
+    assert report.tasks_done == 1
+    assert report.tasks_failed == 0
+    # 图库从未被打开 → 入口文件不存在
+    assert not (paths.graph_dir / "graph.lbug").exists()

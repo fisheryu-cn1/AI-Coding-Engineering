@@ -243,3 +243,66 @@ def test_graph_compare_by_kind(default_config, registry, paths, tmp_path) -> Non
         store.close()
     assert "rows" in result
     assert any("uses" in r.get("kinds", []) or r.get("kind") == "uses" for r in result["rows"])
+
+
+def test_graph_related_excludes_tombstoned_documents(
+    default_config, registry, paths, tmp_path
+) -> None:
+    """R-2：墓碑 Document 及其 Section（父文档级联）不进 graph_related 邻域。"""
+    _seed_graph_graph_for_search(default_config, registry, paths, tmp_path)
+
+    from kbapp.graph.store import make_graph_store
+    from kbapp.retrieve.graph_search import graph_related
+
+    store = make_graph_store("ladybug", default_config)
+    store.open(str(paths.graph_dir / "graph.lbug"), "rw")
+    try:
+        # 挂 MENTIONS：D1#1→rag，D2#1→vector-db（D2 经 D2#1 可达）
+        store.upsert_edges(
+            "MENTIONS",
+            [
+                {"src": "D1#1", "dst": "Method:rag", "weight": 1},
+                {"src": "D2#1", "dst": "Tool:vector-db", "weight": 1},
+            ],
+        )
+        # 软删 D2（直接写墓碑值；读路径过滤只看 valid_to）
+        store.upsert_nodes(
+            "Document",
+            [{"doc_id": "D2", "valid_to": "2026-08-16T00:00:00Z"}],
+        )
+    finally:
+        store.close()
+
+    store = make_graph_store("ladybug", default_config)
+    store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    try:
+        result = graph_related(
+            store, target="Method:rag", target_type="Entity", hops=3, limit=20
+        )
+    finally:
+        store.close()
+    ids = {r["id"] for r in result["related"]}
+    assert "D1" in ids  # 活文档仍可达（rag←D1#1→D1）
+    assert "D2" not in ids
+    assert "D2#1" not in ids
+
+
+def test_graph_related_section_ids_not_collapsed_to_parent(
+    default_config, registry, paths, tmp_path
+) -> None:
+    """回归 R-10：related 的 Section 邻居须以 section_id 现身，不被坍缩成父 doc_id。"""
+    _seed_graph_graph_for_search(default_config, registry, paths, tmp_path)
+
+    from kbapp.graph.store import make_graph_store
+    from kbapp.retrieve.graph_search import graph_related
+
+    store = make_graph_store("ladybug", default_config)
+    store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    try:
+        result = graph_related(store, target="D1", target_type="Document", hops=1, limit=10)
+    finally:
+        store.close()
+
+    by_id = {r["id"]: r for r in result["related"]}
+    assert "D1#1" in by_id, f"Section 邻居缺失或被坍缩：{list(by_id)}"
+    assert by_id["D1#1"]["type"] == "Section"

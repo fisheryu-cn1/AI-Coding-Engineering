@@ -32,12 +32,26 @@ def graph_related(
         "Section": "section_id",
         "Topic": "name",
     }.get(target_type, "entity_id")
+    # 墓碑过滤（15 §4.1 软删由查询层负责）：终点为墓碑 Document 直接剔除；
+    # Section 自身无 valid_to，经父 Document（Section.doc_id）级联剔除。
+    # 节点键顺序必须 entity_id → section_id → doc_id → name：Section 同时带
+    # 父 doc_id 与自身 section_id，doc_id 在前会把 Section 坍缩成父 Document
+    # （复核 R-10）；墓碑判定另用 parent_doc（n.doc_id），与 id 互不干扰。
+    # labels(n) 在变长 MATCH 下不可靠（lbug 返回空串），type 由主键列在
+    # Python 层推导（复核 R-10 附随）。
+    tombstoned = {
+        r["doc_id"]
+        for r in store.query(
+            "MATCH (d:Document) WHERE d.valid_to <> '' RETURN d.doc_id AS doc_id"
+        )
+    }
     cypher = (
         f"MATCH (a:{target_type} {{{pk}: $target}}) "
         f"MATCH (a)-[r*..{hops}]-(n) "
         f"WHERE n <> a "
-        f"RETURN labels(n)[0] AS type, "
-        f"       coalesce(n.entity_id, n.doc_id, n.section_id, n.name) AS id, "
+        f"RETURN n.entity_id AS eid, n.section_id AS sid, "
+        f"       n.doc_id AS did, n.name AS nm, "
+        f"       coalesce(n.doc_id, '') AS parent_doc, "
         f"       length(r) AS dist "
         f"ORDER BY dist ASC LIMIT $limit"
     )
@@ -45,14 +59,23 @@ def graph_related(
     seen = set()
     out: list[dict] = []
     for r in rows:
-        rid = r["id"]
+        if r["eid"]:
+            rid, rtype = r["eid"], "Entity"
+        elif r["sid"]:
+            rid, rtype = r["sid"], "Section"
+        elif r["did"]:
+            rid, rtype = r["did"], "Document"
+        else:
+            rid, rtype = r["nm"], "Topic"
+        if rid in tombstoned or r["parent_doc"] in tombstoned:
+            continue  # 墓碑 Document 及其 Section（父文档级联）
         if rid in seen or rid == target:
             continue
         seen.add(rid)
         out.append(
             {
                 "id": rid,
-                "type": r["type"],
+                "type": rtype,
                 "relation": "",  # lbug 不支持 type(rel)，UI 需要时再 fetch
             }
         )

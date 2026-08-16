@@ -194,3 +194,87 @@ def test_tombstone_soft_deletes_document(default_config, registry, paths, tmp_pa
         assert rows[0]["n"] == 2
     finally:
         store.close()
+
+
+def test_tombstone_preserves_document_props(default_config, registry, paths, tmp_path) -> None:
+    """R-1：tombstone 只改 valid_to，title/path/corpus 等既有属性原值保留。"""
+    _seed_doc(registry, paths, default_config)
+
+    from kbapp.graph.store import make_graph_store
+    from kbapp.pipeline.graph_stages import stage_index_graph, stage_tombstone_graph
+    from kbapp.pipeline.runner import PipelineCtx
+
+    ctx = PipelineCtx(cfg=default_config, paths=paths, registry=registry, llm=None)
+    stage_index_graph("d1", ctx)
+    result = stage_tombstone_graph("d1", ctx)
+    assert result.status == "ok"
+
+    store = make_graph_store("ladybug", default_config)
+    store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    try:
+        rows = store.query(
+            "MATCH (d:Document) WHERE d.doc_id = $i "
+            "RETURN d.title AS title, d.path AS path, d.corpus AS corpus, "
+            "       d.doc_type AS doc_type, d.valid_to AS valid_to",
+            {"i": "d1"},
+        )
+        assert len(rows) == 1
+        row = rows[0]
+        assert row["valid_to"] != ""
+        assert row["title"] == "Paper"
+        assert row["path"] == "x.md"
+        assert row["corpus"] == "references"
+        assert row["doc_type"] == "paper"
+    finally:
+        store.close()
+
+
+def test_tombstone_skips_when_document_not_in_graph(
+    default_config, registry, paths, tmp_path
+) -> None:
+    """R-1：从未同步进图的文档 tombstone → skip，且不产生空心 Document 节点。"""
+    _seed_doc(registry, paths, default_config)  # 只种 registry + parse cache，未同步图
+
+    from kbapp.graph.store import make_graph_store
+    from kbapp.pipeline.graph_stages import stage_tombstone_graph
+    from kbapp.pipeline.runner import PipelineCtx
+
+    ctx = PipelineCtx(cfg=default_config, paths=paths, registry=registry, llm=None)
+    result = stage_tombstone_graph("d1", ctx)
+    assert result.status == "skip"
+    assert result.metrics.get("reason") == "document_not_in_graph"
+
+    store = make_graph_store("ladybug", default_config)
+    store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    try:
+        rows = store.query("MATCH (d:Document) RETURN count(d) AS n")
+        assert rows[0]["n"] == 0
+    finally:
+        store.close()
+
+
+def test_sync_after_tombstone_keeps_valid_to(default_config, registry, paths, tmp_path) -> None:
+    """R-4：墓碑不被结构同步复活——sync→tombstone→再 sync，valid_to 仍为墓碑值。"""
+    _seed_doc(registry, paths, default_config)
+
+    from kbapp.graph.store import make_graph_store
+    from kbapp.pipeline.graph_stages import stage_index_graph, stage_tombstone_graph
+    from kbapp.pipeline.runner import PipelineCtx
+
+    ctx = PipelineCtx(cfg=default_config, paths=paths, registry=registry, llm=None)
+    stage_index_graph("d1", ctx)
+    tomb = stage_tombstone_graph("d1", ctx)
+    ts = tomb.metrics["valid_to"]
+    # 再次结构同步（如重复 scan/parse 触发）
+    stage_index_graph("d1", ctx)
+
+    store = make_graph_store("ladybug", default_config)
+    store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    try:
+        rows = store.query(
+            "MATCH (d:Document) WHERE d.doc_id = $i RETURN d.valid_to AS v",
+            {"i": "d1"},
+        )
+        assert rows[0]["v"] == ts
+    finally:
+        store.close()

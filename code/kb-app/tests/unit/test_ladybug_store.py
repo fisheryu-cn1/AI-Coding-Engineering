@@ -91,3 +91,49 @@ def test_close_is_idempotent(default_config, tmp_path) -> None:
     s.open(str(tmp_path / "g3"), "rw")
     s.close()
     s.close()  # 二次不应 raise
+
+
+def test_relates_to_multi_kind_coexists(store) -> None:
+    """R-3：同实体对不同 kind 的 RELATES_TO 并存（MERGE 键含 kind；15 §4.2）。"""
+    store.upsert_nodes(
+        "Entity",
+        [
+            {"entity_id": "a", "name": "A", "type": "Concept", "aliases": "", "description": ""},
+            {"entity_id": "b", "name": "B", "type": "Concept", "aliases": "", "description": ""},
+        ],
+    )
+    store.upsert_edges(
+        "RELATES_TO",
+        [
+            {"src": "a", "dst": "b", "kind": "uses", "weight": 1.0, "evidence_section_id": "s1"},
+            {"src": "a", "dst": "b", "kind": "extends", "weight": 2.0, "evidence_section_id": "s2"},
+        ],
+    )
+    rows = store.query(
+        "MATCH ()-[r:RELATES_TO]->() RETURN r.kind AS kind, r.weight AS w ORDER BY r.kind"
+    )
+    assert [(r["kind"], r["w"]) for r in rows] == [("extends", 2.0), ("uses", 1.0)]
+
+
+def test_relates_to_same_kind_idempotent(store) -> None:
+    """R-3：同 (src,dst,kind) 重 upsert 幂等——仍一条边、属性被覆盖。"""
+    store.upsert_nodes(
+        "Entity",
+        [
+            {"entity_id": "a", "name": "A", "type": "Concept", "aliases": "", "description": ""},
+            {"entity_id": "b", "name": "B", "type": "Concept", "aliases": "", "description": ""},
+        ],
+    )
+    store.upsert_edges(
+        "RELATES_TO",
+        [{"src": "a", "dst": "b", "kind": "uses", "weight": 1.0, "evidence_section_id": "s1"}],
+    )
+    store.upsert_edges(
+        "RELATES_TO",
+        [{"src": "a", "dst": "b", "kind": "uses", "weight": 3.0, "evidence_section_id": "s2"}],
+    )
+    rows = store.query(
+        "MATCH ()-[r:RELATES_TO]->() RETURN r.kind AS kind, r.weight AS w, "
+        "r.evidence_section_id AS ev"
+    )
+    assert rows == [{"kind": "uses", "w": 3.0, "ev": "s2"}]

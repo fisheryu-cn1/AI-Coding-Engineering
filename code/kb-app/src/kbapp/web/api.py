@@ -1,7 +1,7 @@
 """Read-only API endpoints (15 §6.2).
 
-All GET; never expose write methods. Graph endpoints (subgraph/path)
-live in Task 17.
+All GET; never expose write methods. Graph endpoints: subgraph/path
+(Task 17) and neighbors (R-5 节点下钻).
 """
 
 from __future__ import annotations
@@ -62,8 +62,8 @@ def _aggregate_entities(registry, cfg, *, paths, doc_ids: list[str]) -> list[dic
         return []
     try:
         for r in store.query(
-            f"MATCH (s:Section)-[m:MENTIONS]->(e:Entity) "
-            f"WHERE s.doc_id IN [{docs_csv}] "
+            f"MATCH (d:Document)-[:CONTAINS_SECTION]->(s:Section)-[m:MENTIONS]->(e:Entity) "
+            f"WHERE s.doc_id IN [{docs_csv}] AND d.valid_to = '' "
             f"RETURN e.entity_id AS eid, e.name AS name, e.type AS type, m.weight AS w"
         ):
             cur = seen.get(r["eid"]) or {"name": r["name"], "type": r["type"], "count": 0}
@@ -86,7 +86,8 @@ def get_doc(doc_id: str, request: Request) -> dict[str, Any]:
     registry, cfg, paths = _state(request)
     with registry.read_only() as conn:
         row = get_file(conn, doc_id)
-    if row is None:
+    if row is None or row.status in ("deleted", "duplicate"):
+        # 对齐 MCP resolve_doc 口径：deleted/duplicate 一律按不存在处理。
         raise HTTPException(status_code=404, detail="DOC_NOT_FOUND")
     payload = {
         "doc": {
@@ -120,7 +121,8 @@ def _doc_mentions(registry, cfg, *, paths, doc_id: str) -> list[dict]:
         return []
     try:
         rows = store.query(
-            "MATCH (s:Section)-[m:MENTIONS]->(e:Entity) WHERE s.doc_id = $id "
+            "MATCH (d:Document)-[:CONTAINS_SECTION]->(s:Section)-[m:MENTIONS]->(e:Entity) "
+            "WHERE s.doc_id = $id AND d.valid_to = '' "
             "RETURN e.entity_id AS eid, e.name AS name, e.type AS type, m.weight AS w "
             "ORDER BY m.weight DESC",
             {"id": doc_id},
@@ -144,10 +146,11 @@ def _doc_related_docs(registry, cfg, *, paths, doc_id: str) -> list[dict]:
     except (FileNotFoundError, GraphError):
         return []
     try:
-        # 1 跳共享 Entity + 共享 Topic
+        # 1 跳共享 Entity + 共享 Topic；对端文档经父 Document 排墓碑（15 §4.1）
         rows = store.query(
             "MATCH (s:Section)-[:MENTIONS]->(e:Entity)<-[:MENTIONS]-(s2:Section) "
-            "WHERE s.doc_id = $id AND s2.doc_id <> $id "
+            "MATCH (d2:Document)-[:CONTAINS_SECTION]->(s2) "
+            "WHERE s.doc_id = $id AND s2.doc_id <> $id AND d2.valid_to = '' "
             "RETURN DISTINCT s2.doc_id AS did, count(e) AS shared "
             "ORDER BY shared DESC LIMIT 10",
             {"id": doc_id},
@@ -223,6 +226,32 @@ def graph_subgraph(
         ) from None
     try:
         return topic_subgraph(store, topic, hops=hops, max_nodes=max_nodes)
+    finally:
+        store.close()
+
+
+@router.get("/graph/neighbors")
+def graph_neighbors(
+    id: str,
+    type: str,
+    limit: int = 100,
+    request: Request = None,  # type: ignore[assignment]
+) -> dict[str, Any]:
+    """节点 1 跳邻域（图谱页单击下钻；R-5）。墓碑 Document 不出现。"""
+    from kbapp.graph import GraphError, make_graph_store, node_neighbors
+
+    _registry, cfg, paths = _state(request)
+    try:
+        store = make_graph_store(cfg.raw["graph"]["backend"], cfg)
+        store.open(str(paths.graph_dir / "graph.lbug"), "ro")
+    except (FileNotFoundError, GraphError):
+        raise HTTPException(
+            status_code=503, detail="graph unavailable, run kb index reindex --full"
+        ) from None
+    try:
+        return node_neighbors(store, id, type, limit=limit)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from None
     finally:
         store.close()
 

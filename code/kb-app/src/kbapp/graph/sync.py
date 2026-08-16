@@ -49,6 +49,14 @@ def sync_document_structure(
         except (OSError, json.JSONDecodeError):
             sections = []
 
+    # 墓碑保护（15 §4.1）：已软删（valid_to 非空）的 Document 不被结构
+    # 同步复活；全覆盖 SET 语义下须把既有墓碑值原样写回。
+    existing = store.query(
+        "MATCH (d:Document {doc_id: $id}) RETURN d.valid_to AS valid_to",
+        {"id": doc_id},
+    )
+    valid_to = existing[0]["valid_to"] if existing else ""
+
     document_node = {
         "doc_id": row.doc_id,
         "title": row.title or "",
@@ -64,7 +72,7 @@ def sync_document_structure(
         "summary_l2": "",
         "summary_path": row.summary_path or "",
         "valid_from": row.updated_at or _now_iso(),
-        "valid_to": "",
+        "valid_to": valid_to,
     }
     store.upsert_nodes("Document", [document_node])
 

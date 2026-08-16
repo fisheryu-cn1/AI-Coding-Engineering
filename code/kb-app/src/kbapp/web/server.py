@@ -33,26 +33,18 @@ def create_app(*, registry: Registry, cfg: Config, paths: DataPaths) -> FastAPI:
 
     @app.get("/")
     def index() -> FileResponse:
-        from fastapi.responses import FileResponse
-
         return FileResponse(static_dir / "index.html")
 
     @app.get("/document")
     def document_page() -> FileResponse:
-        from fastapi.responses import FileResponse
-
         return FileResponse(static_dir / "document.html")
 
     @app.get("/status")
     def status_page() -> FileResponse:
-        from fastapi.responses import FileResponse
-
         return FileResponse(static_dir / "status.html")
 
     @app.get("/graph")
     def graph_page() -> FileResponse:
-        from fastapi.responses import FileResponse
-
         return FileResponse(static_dir / "graph.html")
 
     app.mount("/static", StaticFiles(directory=static_dir), name="static")

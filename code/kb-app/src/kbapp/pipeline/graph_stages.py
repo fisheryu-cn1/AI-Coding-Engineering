@@ -53,15 +53,35 @@ def stage_index_graph(doc_id: str, ctx: PipelineCtx) -> StageResult:
 
 
 def stage_tombstone_graph(doc_id: str, ctx: PipelineCtx) -> StageResult:
-    """Soft-delete the Document node by stamping ``valid_to``."""
+    """Soft-delete the Document node by stamping ``valid_to``.
+
+    upsert_nodes 为全覆盖语义（缺失属性补 ""），故先读出图中既有
+    Document 全属性行、仅替换 valid_to 后整行写回，避免软删抹掉
+    title/path/summary 等属性。节点不存在（从未同步过）时跳过，
+    不制造空心节点。
+    """
     from datetime import UTC, datetime
+
+    from kbapp.graph.schema import GRAPH_NODES
 
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     store = _open_store(ctx)
     try:
+        doc_props = next(n for n in GRAPH_NODES if n.label == "Document").props
+        cols = ", ".join(f"d.{p} AS {p}" for p in doc_props)
+        rows = store.query(
+            f"MATCH (d:Document {{doc_id: $id}}) RETURN {cols}",
+            {"id": doc_id},
+        )
+        if not rows:
+            return StageResult(
+                "skip",
+                detail=f"doc_id={doc_id} not in graph",
+                metrics={"reason": "document_not_in_graph"},
+            )
         store.upsert_nodes(
             "Document",
-            [{"doc_id": doc_id, "valid_to": now}],
+            [{"doc_id": doc_id, **rows[0], "valid_to": now}],
         )
     except GraphError as e:
         raise TerminalError(f"图库不可用：{e}") from e

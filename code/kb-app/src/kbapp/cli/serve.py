@@ -38,9 +38,12 @@ def viz_cmd(
     """启动 Web UI（FastAPI + G6 v5 bound 127.0.0.1；15 §6.1）。"""
     try:
         import uvicorn
+
+        from kbapp.web import create_app
     except ImportError as e:
         name = e.name or ""
-        if name != "uvicorn" and not name.startswith("uvicorn."):
+        viz_mods = ("uvicorn", "fastapi", "starlette")
+        if not any(name == m or name.startswith(f"{m}.") for m in viz_mods):
             raise
         typer.echo("未安装 viz extra：请先 `uv sync --extra viz` 后重试。")
         raise typer.Exit(code=1) from None
@@ -48,7 +51,6 @@ def viz_cmd(
     from kbapp.core.config import load_config
     from kbapp.core.paths import DataPaths
     from kbapp.core.registry import Registry
-    from kbapp.web import create_app
 
     data_dir: Path = ctx.obj["data_dir"]
     paths = DataPaths.from_data_dir(data_dir)
