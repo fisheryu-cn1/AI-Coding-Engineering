@@ -50,8 +50,15 @@ def _seed_full_graph(default_config, registry, paths):
         sync_document_structure(store, registry, paths, "D1")
         store.upsert_nodes(
             "Entity",
-            [{"entity_id": "Method:rag", "name": "RAG", "type": "Method",
-              "aliases": "", "description": ""}],
+            [
+                {
+                    "entity_id": "Method:rag",
+                    "name": "RAG",
+                    "type": "Method",
+                    "aliases": "",
+                    "description": "",
+                }
+            ],
         )
         store.upsert_edges(
             "MENTIONS",
@@ -92,16 +99,28 @@ def test_topic_subgraph_truncates(default_config, registry, paths) -> None:
     try:
         # 注入 600 个 dummy Entity 增加规模
         entities = [
-            {"entity_id": f"Concept:e{i}", "name": f"E{i}", "type": "Concept",
-             "aliases": "", "description": ""}
+            {
+                "entity_id": f"Concept:e{i}",
+                "name": f"E{i}",
+                "type": "Concept",
+                "aliases": "",
+                "description": "",
+            }
             for i in range(600)
         ]
         store.upsert_nodes("Entity", entities)
         for i in range(600):
             store.upsert_edges(
                 "RELATES_TO",
-                [{"src": "Concept:e0", "dst": f"Concept:e{i}", "kind": "uses",
-                  "weight": 1.0, "evidence_section_id": ""}],
+                [
+                    {
+                        "src": "Concept:e0",
+                        "dst": f"Concept:e{i}",
+                        "kind": "uses",
+                        "weight": 1.0,
+                        "evidence_section_id": "",
+                    }
+                ],
             )
     finally:
         store.close()

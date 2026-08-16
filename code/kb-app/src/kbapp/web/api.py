@@ -128,8 +128,7 @@ def _doc_mentions(registry, cfg, *, paths, doc_id: str) -> list[dict]:
     finally:
         store.close()
     return [
-        {"id": r["eid"], "name": r["name"], "type": r["type"], "weight": int(r["w"])}
-        for r in rows
+        {"id": r["eid"], "name": r["name"], "type": r["type"], "weight": int(r["w"])} for r in rows
     ]
 
 
@@ -167,8 +166,7 @@ def list_topics_api(request: Request) -> dict[str, Any]:
         rows = list_topics(conn)
     return {
         "topics": [
-            {"name": t.name, "doc_count": t.doc_count, "description": t.description}
-            for t in rows
+            {"name": t.name, "doc_count": t.doc_count, "description": t.description} for t in rows
         ]
     }
 

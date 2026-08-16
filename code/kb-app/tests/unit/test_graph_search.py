@@ -28,8 +28,15 @@ def _seed_graph_graph_for_search(default_config, registry, paths, tmp_path):
         "parser": "markdown",
         "structure": "headers",
         "full_text": "RAG uses Vector DB",
-        "sections": [{"section_path": "1", "level": 1, "title": "Intro",
-                      "page_range": "", "text": "RAG uses Vector DB"}],
+        "sections": [
+            {
+                "section_path": "1",
+                "level": 1,
+                "title": "Intro",
+                "page_range": "",
+                "text": "RAG uses Vector DB",
+            }
+        ],
         "warnings": [],
         "chunks": [],
         "extracted_at": "2026-08-15",
@@ -65,8 +72,15 @@ def _seed_graph_graph_for_search(default_config, registry, paths, tmp_path):
             "parser": "markdown",
             "structure": "headers",
             "full_text": "Vector DB",
-            "sections": [{"section_path": "1", "level": 1, "title": "Intro",
-                          "page_range": "", "text": "Vector DB"}],
+            "sections": [
+                {
+                    "section_path": "1",
+                    "level": 1,
+                    "title": "Intro",
+                    "page_range": "",
+                    "text": "Vector DB",
+                }
+            ],
             "warnings": [],
             "chunks": [],
             "extracted_at": "2026-08-15",
@@ -94,16 +108,33 @@ def _seed_graph_graph_for_search(default_config, registry, paths, tmp_path):
         store.upsert_nodes(
             "Entity",
             [
-                {"entity_id": "Method:rag", "name": "RAG", "type": "Method",
-                 "aliases": "", "description": ""},
-                {"entity_id": "Tool:vector-db", "name": "Vector DB", "type": "Tool",
-                 "aliases": "", "description": ""},
+                {
+                    "entity_id": "Method:rag",
+                    "name": "RAG",
+                    "type": "Method",
+                    "aliases": "",
+                    "description": "",
+                },
+                {
+                    "entity_id": "Tool:vector-db",
+                    "name": "Vector DB",
+                    "type": "Tool",
+                    "aliases": "",
+                    "description": "",
+                },
             ],
         )
         store.upsert_edges(
             "RELATES_TO",
-            [{"src": "Method:rag", "dst": "Tool:vector-db", "kind": "uses",
-              "weight": 1.0, "evidence_section_id": ""}],
+            [
+                {
+                    "src": "Method:rag",
+                    "dst": "Tool:vector-db",
+                    "kind": "uses",
+                    "weight": 1.0,
+                    "evidence_section_id": "",
+                }
+            ],
         )
     finally:
         store.close()
@@ -146,19 +177,39 @@ def test_graph_related_hops_caps(default_config, registry, paths, tmp_path) -> N
         store.upsert_nodes(
             "Entity",
             [
-                {"entity_id": "Concept:x", "name": "X", "type": "Concept",
-                 "aliases": "", "description": ""},
-                {"entity_id": "Concept:y", "name": "Y", "type": "Concept",
-                 "aliases": "", "description": ""},
+                {
+                    "entity_id": "Concept:x",
+                    "name": "X",
+                    "type": "Concept",
+                    "aliases": "",
+                    "description": "",
+                },
+                {
+                    "entity_id": "Concept:y",
+                    "name": "Y",
+                    "type": "Concept",
+                    "aliases": "",
+                    "description": "",
+                },
             ],
         )
         store.upsert_edges(
             "RELATES_TO",
             [
-                {"src": "Concept:x", "dst": "Method:rag", "kind": "part-of",
-                 "weight": 1.0, "evidence_section_id": ""},
-                {"src": "Tool:vector-db", "dst": "Concept:y", "kind": "uses",
-                 "weight": 1.0, "evidence_section_id": ""},
+                {
+                    "src": "Concept:x",
+                    "dst": "Method:rag",
+                    "kind": "part-of",
+                    "weight": 1.0,
+                    "evidence_section_id": "",
+                },
+                {
+                    "src": "Tool:vector-db",
+                    "dst": "Concept:y",
+                    "kind": "uses",
+                    "weight": 1.0,
+                    "evidence_section_id": "",
+                },
             ],
         )
     finally:

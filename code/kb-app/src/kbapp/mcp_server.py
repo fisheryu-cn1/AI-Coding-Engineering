@@ -241,8 +241,7 @@ def _kb_topics() -> dict[str, Any]:
         rows = list_topics(conn)
     return {
         "topics": [
-            {"name": t.name, "doc_count": t.doc_count, "description": t.description}
-            for t in rows
+            {"name": t.name, "doc_count": t.doc_count, "description": t.description} for t in rows
         ]
     }
 

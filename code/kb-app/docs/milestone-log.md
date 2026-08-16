@@ -244,6 +244,49 @@ P1×6 修复 + DoD 执行闭环（12 报告"DoD 测试执行与闭环"节）：2
 | `.python-version` 3.11→3.12 | 14 §10 复核 N-2：Python 3.11.0 捆绑 SQLite 3.38.4，FTS5 虚表非 ASCII LIKE 静默空集（CJK 短查询零命中）；3.12.13/SQLite 3.50.4 修复。requires-python `>=3.11,<3.13` 不变 | `.python-version` |
 | Windows 测试兼容 | 14 §10 复核 N-3：test_registry 4 项补 `conn.close()`（sqlite3 with 只提交不关闭，Windows 临时目录清理必败）；test_lock 2 项加 win32 skipif（lock 模块声明 POSIX-only，Windows 下 stale 锁仅靠 1h mtime 兜底回收） | `tests/unit/test_registry.py` / `test_lock.py` |
 
+## M5+M6 图谱 + 可视化（2026-08-16，合并里程碑）
+
+> 依据：`design/kb-app/15-M5M6合并补充设计.md`（v2.3 权威设计）+ `16-M5M6合并里程碑开发计划.md`（20 任务）。图库单一选型 LadybugDB（D15-10）、Schema 四节点四边（D15-2）、实体消歧=entity_id 碰撞（D15-13）、Web 只读四页（D15-3/4）、G6 UMD vendored（D15-5）。四阶段 DoD（A1–D5）全绿即里程碑关闭；评审报告见 `17-M5M6代码评审报告.md`。
+
+### M5+M6 关键落地点（15 §2–§6）
+
+| 设计 | 落地点 | 验证 |
+|---|---|---|
+| GraphStore 协议 + 单一后端 | `graph/store.py`（Protocol + `make_graph_store` 仅 ladybug）+ `graph/ladybug_store.py`（DDL 从 schema 生成） | `test_graph_store.py`/`test_ladybug_store.py`/`test_graph_contract.py` |
+| Schema 四节点四边 | `graph/schema.py`（Document/Section/Entity/Topic + CONTAINS_SECTION/MENTIONS/ABOUT_TOPIC/RELATES_TO） | `test_graph_schema.py` |
+| 结构同步挂 index | `graph/sync.py` + `pipeline/runner.py`（index 分支先同步再按 `is_core_doc` 门控入队 extract） | `test_graph_sync.py` |
+| 实体抽取 + entity_id 消歧 | `graph/extract.py`（`entity_id=type:norm(name)`，无 embedding/SAME_AS） | `test_extract.py` |
+| CLI 图语义 | `cli/search.py`（`related`/`compare` 走 graph_search，缺图 `Exit(2)` 不静默回退） | `test_graph_search.py` |
+| MCP 三只读工具 | `mcp_server.py`（`kb_related`/`kb_compare`/`kb_topics`） | `test_mcp.py` |
+| Web 只读四页 | `web/server.py` + `web/api.py`（search/docs/topics/status/graph 端点，127.0.0.1） | `test_web_server.py`/`test_web_api.py` |
+| reindex --full 清图 | `cli/index.py`（`reset_graph` + 全量重入队） | `test_index_e2e.py::test_reindex_full_clears_fts` + 实机 |
+
+### M5+M6 验收清单（15 §8 DoD A1–D5 + 门禁）
+
+| 项 | 结果 |
+|---|---|
+| A1 GraphStore + Ladybug 后端单测 | ✅ |
+| A2 schema DDL 契约测试集（单后端） | ✅ 4 用例 |
+| A3 图库全量重建 | ✅ `reindex --full` 实机 graph/ 删除 |
+| B1 结构同步 + tombstone 软删 | ✅ |
+| B2 抽取质量门（真实 LLM） | ✅ 类型准确率 ~90%（≥85%）、无错并、kind 最大 25%（无 >70% 坍缩） |
+| B3 related/compare 图语义 + 缺图报错 | ✅ |
+| B4 MCP 三工具可调 | ✅ |
+| C1–C3 Web 底座三页 + G6 vendored | ✅（浏览器实测留档 `.playwright-mcp/`） |
+| D1–D5 图谱页 + 词云/侧栏 | ✅ |
+| 全量门禁 | ✅ pytest 284 passed + 2 skipped；ruff check / ruff format 全绿 |
+
+### M5+M6 补充设计登记（设计文档外的实现决策）
+
+| 决策 | 说明 | 落地点 |
+|---|---|---|
+| 抽取 prompt 有界 | 单次 LLM 抽取 body 上限 `_EXTRACT_INPUT_BUDGET=12000`（超长 prompt 会让推理模型返回空） | `graph/extract.py` |
+| `llm.extract_max_tokens=4096` | 推理模型 `<think>` 吃预算，抽取输出预算需放大（默认 1024 返回空） | `core/config.py` |
+| litellm 显式传 api_key | `_call_once` 读 `api_key_env` 后须显式 `api_key=`（openai/ 兼容端点否则误用 OPENAI_API_KEY） | `llm/litellm_client.py` |
+| `section_id = doc_id#section_path` | 全局唯一章节 id（抽取/检索/图谱同口径） | `graph/sync.py` |
+| LadybugDB 单文件入口 | graph 路径取 `graph_dir/graph.lbug`（ladybug 按单文件 mmap，目录路径会拒绝） | `pipeline/graph_stages.py:_open_store` |
+| 契约测试集保留为换库保险 | 单一选型下仍留同一套 schema DDL + 固定查询契约测试，换库时以同测试集验收新 Store | `test_graph_contract.py` |
+
 ## 后续里程碑锚点
 
 参见 [`architecture.md`](architecture.md) "未来锚点" 一节。

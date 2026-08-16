@@ -38,13 +38,9 @@ def make_graph_store(backend: str, cfg) -> GraphStore:
         try:
             from kbapp.graph.ladybug_store import LadybugStore
         except ImportError as e:
-            raise GraphError(
-                "ladybug 依赖缺失：uv sync --extra graph-ladybug"
-            ) from e
+            raise GraphError("ladybug 依赖缺失：uv sync --extra graph-ladybug") from e
         return LadybugStore(cfg)
-    raise GraphError(
-        f"不支持的后端 {backend!r}（单一选型 ladybug，15 D15-10）"
-    )
+    raise GraphError(f"不支持的后端 {backend!r}（单一选型 ladybug，15 D15-10）")
 
 
 __all__ = ["GraphError", "GraphStore", "make_graph_store"]

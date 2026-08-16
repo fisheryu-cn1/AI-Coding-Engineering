@@ -73,8 +73,11 @@ def test_upsert_edges_requires_both_endpoints(store) -> None:
         "RELATES_TO",
         [
             {
-                "src": "nope", "dst": "also_nope", "kind": "uses",
-                "weight": 1.0, "evidence_section_id": "",
+                "src": "nope",
+                "dst": "also_nope",
+                "kind": "uses",
+                "weight": 1.0,
+                "evidence_section_id": "",
             }
         ],
     )

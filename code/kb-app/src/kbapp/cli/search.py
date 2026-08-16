@@ -211,9 +211,7 @@ def related_cmd(
     try:
         store.open(str(paths.graph_dir / "graph.lbug"), "ro")
     except (FileNotFoundError, GraphError) as e:
-        err_console.print(
-            f"[red]图库不可用[/red] {e}；请先 `kb index reindex --full`"
-        )
+        err_console.print(f"[red]图库不可用[/red] {e}；请先 `kb index reindex --full`")
         raise typer.Exit(code=2) from None
 
     try:
@@ -264,9 +262,7 @@ def compare_cmd(
     try:
         store.open(str(paths.graph_dir / "graph.lbug"), "ro")
     except (FileNotFoundError, GraphError) as e:
-        err_console.print(
-            f"[red]图库不可用[/red] {e}；请先 `kb index reindex --full`"
-        )
+        err_console.print(f"[red]图库不可用[/red] {e}；请先 `kb index reindex --full`")
         raise typer.Exit(code=2) from None
 
     try:

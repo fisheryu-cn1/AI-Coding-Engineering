@@ -136,9 +136,7 @@ def test_contract_shortest_path(store) -> None:
     )
     store.upsert_edges(
         "RELATES_TO",
-        [
-            {"src": "x", "dst": "y", "kind": "uses", "weight": 1.0, "evidence_section_id": ""}
-        ],
+        [{"src": "x", "dst": "y", "kind": "uses", "weight": 1.0, "evidence_section_id": ""}],
     )
     paths = store.shortest_path(("Entity", "x"), ("Entity", "y"))
     assert paths and paths[0]["length"] >= 1

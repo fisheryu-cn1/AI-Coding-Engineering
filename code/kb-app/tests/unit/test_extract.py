@@ -116,20 +116,37 @@ def test_run_extract_writes_entities_mentions_relations(
 
     payload = {
         "entities": [
-            {"name": "RAG", "type": "Method", "aliases": [],
-             "description": "Retrieval-Augmented Generation"},
-            {"name": "Vector DB", "type": "Tool", "aliases": [],
-             "description": "Vector store"},
-            {"name": "RAG", "type": "Method", "aliases": ["RAG"],
-             "description": "dup"},  # 重复
+            {
+                "name": "RAG",
+                "type": "Method",
+                "aliases": [],
+                "description": "Retrieval-Augmented Generation",
+            },
+            {"name": "Vector DB", "type": "Tool", "aliases": [], "description": "Vector store"},
+            {"name": "RAG", "type": "Method", "aliases": ["RAG"], "description": "dup"},  # 重复
         ],
         "relations": [
-            {"src": "RAG", "dst": "Vector DB", "kind": "uses",
-             "weight": 1.0, "evidence_section_id": "d1#1"},
-            {"src": "RAG", "dst": "Vector DB", "kind": "uses",
-             "weight": 0.5, "evidence_section_id": "d1#1"},  # 同对同 kind
-            {"src": "RAG", "dst": "Vector DB", "kind": "kungfu",
-             "weight": 1.0, "evidence_section_id": "d1#1"},  # 未知 kind
+            {
+                "src": "RAG",
+                "dst": "Vector DB",
+                "kind": "uses",
+                "weight": 1.0,
+                "evidence_section_id": "d1#1",
+            },
+            {
+                "src": "RAG",
+                "dst": "Vector DB",
+                "kind": "uses",
+                "weight": 0.5,
+                "evidence_section_id": "d1#1",
+            },  # 同对同 kind
+            {
+                "src": "RAG",
+                "dst": "Vector DB",
+                "kind": "kungfu",
+                "weight": 1.0,
+                "evidence_section_id": "d1#1",
+            },  # 未知 kind
         ],
     }
     llm = _FakeLLM(payload)
@@ -194,9 +211,7 @@ def test_run_extract_writes_entities_mentions_relations(
         store.close()
 
 
-def test_run_extract_idempotent_replay(
-    default_config, registry, paths, tmp_path
-) -> None:
+def test_run_extract_idempotent_replay(default_config, registry, paths, tmp_path) -> None:
     """重复调用：不产生重复 Entity/RELATES_TO，无 SAME_AS（15 D15-13 唯一去重口径）。"""
     _seed_doc_for_extract(registry, paths, default_config)
 
@@ -245,9 +260,7 @@ def test_run_extract_idempotent_replay(
         store.close()
 
 
-def test_run_extract_skip_on_missing_llm(
-    default_config, registry, paths, tmp_path
-) -> None:
+def test_run_extract_skip_on_missing_llm(default_config, registry, paths, tmp_path) -> None:
     """LLM 不可用 → skip，不抛异常。"""
     _seed_doc_for_extract(registry, paths, default_config)
 
@@ -273,6 +286,9 @@ def test_run_extract_skip_on_missing_llm(
     finally:
         store.close()
     assert metrics == {
-        "entities": 0, "mentions": 0, "relates_to": 0,
-        "dropped_kind": 0, "skipped": 1,
+        "entities": 0,
+        "mentions": 0,
+        "relates_to": 0,
+        "dropped_kind": 0,
+        "skipped": 1,
     }

@@ -22,6 +22,7 @@
 | [14-M4代码评审报告](14-M4代码评审报告.md) | 对 `code/kb-app` M4 实现的代码评审：门禁实测（pytest 239 绿 / ruff 2×E501 红，DoD-8 登记回退）、DoD 逐项核查（DoD-1/3 测试闭环半缺口、实机验收三项未执行）、与设计一致性确认（R-1/R-2/R-3 与 MCP 契约高度一致）、P0×1/P1×2/P2×6/P3×9 问题清单、MVP 差距评估（2026-08-14，结论：有条件通过，M4 不满足关闭条件） |
 | [15-M5M6合并补充设计](15-M5M6合并补充设计.md) | M5（图谱）+M6（可视化）合并里程碑权威设计（v2.3）：合并可行性论证与三方案比较、范围收窄（Inbox 页/设置页/Web 写交互）、四类节点四类边落图 Schema（砍 Chunk/CITES/SUPERSEDES/SAME_AS，不落 Section→Topic）、GraphStore 协议与单后端契约测试集、流水线扩展（结构同步/实体抽取/entity_id 碰撞消歧/extract.extra_docs 单独标记/reindex 全量重建）、CLI `kb related`/`kb compare` 图语义切换与 MCP 三只读工具、`kb serve viz` 四页只读 Web（G6 vendored 兜底序列）、P-A~P-D 四阶段 DoD、03/05/04/02/11 回写清单、**M5M6 已交付**（2026-08-16，DoD A1–D5 全绿） |
 | [16-M5M6合并里程碑开发计划](16-M5M6合并里程碑开发计划.md) | 15 v2.3 的实现计划：20 个任务按 P-A（图谱底座 T1–T6）/ P-B（流水线+CLI+MCP T7–T12）/ P-C（Web 底座三页 T13–T16，可与 P-B 并行）/ P-D（图谱页 T17–T20）组织，每任务含文件锚点（行号）、接口契约、TDD 步骤与提交点；含 DoD 映射与 15 §9 回写执行步骤 |
+| [17-M5M6代码评审报告](17-M5M6代码评审报告.md) | 对 `code/kb-app` M5+M6 合并里程碑实现的代码评审：门禁实测（pytest 284 / ruff check / ruff format 全绿）、DoD A1–D5 逐项核查、设计一致性抽查（四节点四边/单一后端/entity_id 消歧/Web 只读/reindex 清图）、真实 LLM 端到端验收（MiniMax minimax-m2.7，261 实体/160 关系，质量门 ~90% 类型准确率）；验收暴露并修复 3 缺陷（api_key 透传/抽取 prompt 有界/extract_max_tokens），2 项遗留观察（推理模型空响应/摘要预算）登记 P3；**结论：通过，M5M6 可关闭**（2026-08-16） |
 
 ## 设计依据
 

@@ -80,10 +80,7 @@ def _extract_prompt(title: str, sections: list[dict]) -> str:
     parts: list[str] = []
     used = 0
     for s in sections:
-        line = (
-            f"## {s.get('section_path', '?')} {s.get('title', '')}\n"
-            f"{s.get('text', '')[:1500]}"
-        )
+        line = f"## {s.get('section_path', '?')} {s.get('title', '')}\n{s.get('text', '')[:1500]}"
         if used + len(line) > _EXTRACT_INPUT_BUDGET and parts:
             break
         parts.append(line)

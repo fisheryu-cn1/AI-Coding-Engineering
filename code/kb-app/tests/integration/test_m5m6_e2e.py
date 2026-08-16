@@ -158,11 +158,7 @@ def test_m5m6_e2e_full_pipeline(tmp_path: Path, monkeypatch) -> None:
         )
         docs_with_entities = {r["did"] for r in entity_rows}
 
-        core_ids = {
-            f["doc_id"]
-            for f in files
-            if (f["topic"] or "") in cfg.raw["core_topics"]
-        }
+        core_ids = {f["doc_id"] for f in files if (f["topic"] or "") in cfg.raw["core_topics"]}
         # 断言 2：is_core 文档全部有 Entity
         assert core_ids and core_ids <= docs_with_entities, (
             f"core docs missing entities: {core_ids - docs_with_entities}"

@@ -74,9 +74,7 @@ class LadybugStore:
 
     @staticmethod
     def _ddl_node(node: NodeDef) -> str:
-        cols = [f"{node.pk} STRING"] + [
-            f"{k} {v}" for k, v in node.props.items()
-        ]
+        cols = [f"{node.pk} STRING"] + [f"{k} {v}" for k, v in node.props.items()]
         return (
             f"CREATE NODE TABLE IF NOT EXISTS {node.label}"
             f"({', '.join(cols)}, PRIMARY KEY({node.pk}))"
@@ -86,10 +84,7 @@ class LadybugStore:
     def _ddl_rel(rel: RelDef) -> str:
         cols = [f"{k} {v}" for k, v in rel.props.items()]
         cols_part = f", {', '.join(cols)}" if cols else ""
-        return (
-            f"CREATE REL TABLE IF NOT EXISTS {rel.label}("
-            f"FROM {rel.src} TO {rel.dst}{cols_part})"
-        )
+        return f"CREATE REL TABLE IF NOT EXISTS {rel.label}(FROM {rel.src} TO {rel.dst}{cols_part})"
 
     # -- mutations --------------------------------------------------------
 

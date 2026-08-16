@@ -85,8 +85,7 @@ def test_sync_writes_doc_section_topic(default_config, registry, paths, tmp_path
 
         # Topic 节点 + ABOUT_TOPIC
         rows = store.query(
-            "MATCH (d:Document)-[:ABOUT_TOPIC]->(t:Topic) WHERE d.doc_id = $i "
-            "RETURN t.name AS n",
+            "MATCH (d:Document)-[:ABOUT_TOPIC]->(t:Topic) WHERE d.doc_id = $i RETURN t.name AS n",
             {"i": "d1"},
         )
         assert rows == [{"n": "ContextEngineering"}]
@@ -161,9 +160,7 @@ def test_runner_enqueues_index_after_parse(default_config, registry, paths, tmp_
     assert any(t.kind == "index" for t in ts)
 
 
-def test_tombstone_soft_deletes_document(
-    default_config, registry, paths, tmp_path
-) -> None:
+def test_tombstone_soft_deletes_document(default_config, registry, paths, tmp_path) -> None:
     """stage_tombstone_graph 软删 Document：valid_to 非空 + CONTAINS_SECTION 边保留。"""
     _seed_doc(registry, paths, default_config)
 
