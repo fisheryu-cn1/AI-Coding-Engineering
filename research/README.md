@@ -15,6 +15,10 @@ research/
 ├── architecture/             # 传统架构与 AI 自动化的冲突/演进
 ├── theory/                   # 信息理论、形式化方法与任务拆分安全性
 ├── industry/                 # AI 对行业/劳动力市场的影响分析
+├── custom-agent/             # 【实验方向一】基于 pi/DSH 快速构建定制化专用 Agent 的方法
+├── agent-software-design/    # 【实验方向二】从软件构建原理重新审视 Agent 软件设计方法
+├── AGENTS.md                 # 对话式研究项目工作约定（话题分类、归档规则、资料来源）
+├── 调研任务台账.md            # 理论框架调研的并行任务状态与续跑要点
 └── README.md                 # 本文件
 ```
 
@@ -122,6 +126,20 @@ research/
 | 文件 | 核心问题 | 关键结论 |
 |---|---|---|
 | `AI_Layoff_Trap_中国互联网行业分析.md` | AI 替代人力对互联网行业及劳动力市场的影响 | 需求外部性陷阱：企业个体理性选择自动化可能导致集体非理性，侵蚀消费需求；存在过度自动化的囚徒困境结构 |
+
+---
+
+### 8. 定制化专用 Agent 构建方法（`custom-agent/`）【实验方向一，进行中】
+
+以 pi（badlogic/pi-mono）和 DSH（DeepSeek Harness）两类"极简内核 + 插件/扩展"框架为载体，研究面向特定场景快速形成定制化专用 agent 的方法：可复用组件模型、场景分析框架、组装工作流程。
+
+详见 `custom-agent/README.md`；当前处于讨论阶段，关键开放问题：首发框架选择、首个实验场景、评估方式。
+
+### 9. Agent 软件设计方法论（`agent-software-design/`）【实验方向二，进行中】
+
+对比 Agent 设计范式，从软件工程基本原理视角重走"需求 → 需求描述 → 架构设计"过程。子问题 A：LLM 与传统代码/向量库/知识图谱的系统构成方式；子问题 B：为有效利用 LLM 能力，中间产物规范与设计过程的调整。
+
+详见 `agent-software-design/README.md`；与 sdd、context-engineering、architecture 主题深度衔接。
 
 ---
 
