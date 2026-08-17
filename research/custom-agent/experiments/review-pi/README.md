@@ -41,11 +41,13 @@ pi
 
 评分：`python scripts/score_review.py --reviews reviews/ --cases evals/cases.jsonl [--commit <hash>]`
 
-## 已知校准项（v0 风险登记）
+## 已知校准项与运行状态（2026-08-18 暂停点更新）
 
-1. **review-guard.ts 的事件负载字段名**为按调研材料推断（toolCall/name/arguments 多候选读取），首次运行需对照所装 pi 版本 `docs/extensions.md` 校准；未找到阻止 API 时降级为告警（不静默失败）。
-2. skill 的意见卡以 Markdown 落盘 `reviews/`——评分器为关键词启发式（v0），语义召回需人工复核或后续引入 judge（按可观测清单 §5 的 judge 信度协议）。
-3. 评估案例锚定"修复提交的父状态"，重现方法见 `evals/README.md`。
+1. **review-guard.ts 已按 pi 0.84.2 实版校准**（2026-08-17 第 2 场）：阻断用返回值 `{ block: true, reason }`，事件字段 `event.toolName` / `event.input`；实测拦截生效（意见卡之外的写路径被拒并回传理由）。
+2. **运行必带 `-a`**（--approve）：`-p` 非交互模式无信任决策时会静默忽略 `.pi/` 资源（skill 与守卫全不加载）；工作区信任已写入 `~/.pi/agent/trust.json`，交互模式可直接用。
+3. **已验证的运行记录**：run1–run3（锚点 f62f287，禁读修复提交）——19/21/23 条意见，P0 均命中 R-1；run2/run3 为 skill v2（RR-4 机械化 + RR-8）。轨迹报告见 `traces/`。
+4. 评分器 `score_review.py` 为启发式（上界口径），语义召回需人工复核（当前语义明确命中 6/11，待核 R-8/R-10/R-12）；跨 run 一致性用 `compare_runs.py`；pass^k 只能同 skill 版本内计算。
+5. 评估案例锚定"修复提交的父状态"，重现方法见 `evals/README.md`；F/N 系列案例须用各自锚点（6e1abeb / e7c9aa9）补跑，勿与 f62f287 混算。
 
 ## 组件登记（迁移参照，D1-S5）
 
