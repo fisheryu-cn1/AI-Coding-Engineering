@@ -9,7 +9,11 @@
 ```
 review-pi/
 ├── .pi/
-│   ├── skills/code-review/SKILL.md     # L2 评审规范 skill（SOP+维度+意见卡模板+红线）
+│   ├── skills/code-review/
+│   │   ├── SKILL.md                    # L2 评审规范 skill（SOP+维度+红线；相对引用 assets，自包含可分发）
+│   │   └── assets/
+│   │       ├── review-rules.md         # RR-1~7 规则摘录（自包含，含检查方法与反例信号）
+│   │       └── opinion-card-template.md# 意见卡模板 + 分级口径
 │   ├── prompts/review-commit.md        # L2 提示模板（{{commit}} 变量）
 │   └── extensions/review-guard.ts      # L1/L5 守卫：工具白名单外的写路径阻止（v0，需按 pi 版本校准）
 ├── evals/
@@ -47,7 +51,7 @@ pi
 
 | 工件 | 层/档位 | DSH 等价形态 | 接入成本预估 |
 |---|---|---|---|
-| code-review skill | L2 / F-通用 | `.agents/skills/code-review/SKILL.md` | 近零（目录约定相同） |
+| code-review skill（含 assets/ 规则与模板，自包含） | L2 / F-通用 | `.agents/skills/code-review/` 整目录同构（assets 约定相同） | 近零（目录约定相同） |
 | review-commit 模板 | L2 / F-通用 | 配置/插件注入 | 低 |
 | review-guard 扩展 | L1+L5 / F-绑定 | ctx.tools 作用域 + ctx.fs provider / fs 事件 | 中（接缝模型不同，语义可平移） |
 | 评分器 | L5 / F-通用（纯 python） | 生态插件或脚本 | 近零 |
