@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>研究初始状态分析 — Agent 构建方法研究项目</title>
+<style>
+  :root{
+    --d1:#2563eb; --d1-bg:#eff6ff; --d2:#7c3aed; --d2-bg:#f5f3ff; --d3:#0d9488; --d3-bg:#f0fdfa;
+    --ink:#1e293b; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; --card:#ffffff;
+    --gap-red:#dc2626; --gap-amber:#d97706; --gap-green:#16a34a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",-apple-system,sans-serif;background:var(--bg);color:var(--ink);line-height:1.65;padding:32px 24px 64px}
+  .wrap{max-width:1360px;margin:0 auto}
+  header{margin-bottom:28px}
+  h1{font-size:26px;letter-spacing:.5px}
+  .sub{color:var(--muted);font-size:14px;margin-top:6px}
+  .summary-bar{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px}
+  .pill{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:13px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .pill b{display:block;font-size:20px}
+  h2{font-size:19px;margin:38px 0 14px;padding-left:10px;border-left:4px solid var(--ink)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:14px}
+  .legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  /* 方向区块 */
+  .dir{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:18px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+  .dir-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .dir-head h3{font-size:17px}
+  .dir-tag{font-size:12px;padding:2px 10px;border-radius:999px;color:#fff}
+  .dir-desc{color:var(--muted);font-size:13.5px;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:12px}
+  .sub-card{border:1px solid var(--line);border-radius:11px;padding:14px 16px;background:#fff;position:relative;transition:box-shadow .15s}
+  .sub-card:hover{box-shadow:0 3px 10px rgba(15,23,42,.10)}
+  .sub-card .sid{font-size:11.5px;font-weight:700;letter-spacing:.4px}
+  .sub-card h4{font-size:14.5px;margin:2px 0 6px}
+  .sub-card p{font-size:12.8px;color:#334155}
+  .rq{font-size:11.5px;color:var(--muted);background:#f1f5f9;border-radius:6px;padding:1px 8px;display:inline-block;margin-bottom:6px}
+  .score-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .score-num{font-weight:700;font-size:15px;width:26px;text-align:right}
+  .score-track{flex:1;height:9px;background:#eef2f7;border-radius:99px;overflow:hidden}
+  .score-fill{height:100%;border-radius:99px}
+  .gap{font-size:12.3px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+  .gap b{font-weight:600}
+  .evid{font-size:12.3px;color:#475569;margin-top:6px}
+  .evid::before{content:"依据 ";font-weight:700;color:var(--muted)}
+  .xlink{font-size:11.5px;color:#fff;border-radius:5px;padding:1px 7px;display:inline-block;margin:6px 4px 0 0}
+
+  /* 关联图 */
+  .graph-panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(15,23,42,.05);overflow-x:auto}
+  svg text{font-family:"Segoe UI","Microsoft YaHei",sans-serif}
+  .node rect{cursor:pointer;transition:opacity .15s}
+  .edge{fill:none;stroke-width:2;transition:opacity .15s}
+  .edge-label{font-size:11px;fill:#475569}
+  .dim{opacity:.12}
+  .base-band{fill:#f1f5f9;stroke:#cbd5e1}
+
+  /* 条形图 */
+  .bars{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 24px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+  .bar-row{display:grid;grid-template-columns:210px 1fr 34px;align-items:center;gap:12px;margin:7px 0;font-size:13px}
+  .bar-name{text-align:right;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-track{height:16px;background:#eef2f7;border-radius:6px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:6px;transition:width .6s ease}
+  .bar-val{font-weight:700}
+
+  footer{margin-top:40px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:14px}
+  .note{font-size:12.8px;color:var(--muted);background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px 14px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Agent 构建方法研究项目 — 研究初始状态分析</h1>
+  <div class="sub">生成日期 2026-08-17 · 覆盖三个研究方向（方向三为 2026-08-17 新增）· 资料完整性评分口径见页脚</div>
+  <div class="summary-bar">
+    <div class="pill">次级方向总数<b>18</b></div>
+    <div class="pill">跨方向关联<b>8 条</b></div>
+    <div class="pill">调研材料<b>7 份</b>（台账 #1–#8）</div>
+    <div class="pill">精读论文<b>36 篇</b>（references 两新主题）</div>
+    <div class="pill">总体阶段<b>理论框架 v0.2 完成 / 实验未启动</b></div>
+  </div>
+</header>
+
+<div class="legend">
+  <span><span class="sw" style="background:var(--d1)"></span>方向一 custom-agent（专用 Agent 构建方法）</span>
+  <span><span class="sw" style="background:var(--d2)"></span>方向二 agent-software-design（Agent 软件设计方法论）</span>
+  <span><span class="sw" style="background:var(--d3)"></span>方向三 llm-observability（可观测性与过程观测，新增）</span>
+  <span><span class="sw" style="background:var(--gap-red)"></span>资料薄弱（≤4）</span>
+  <span><span class="sw" style="background:var(--gap-amber)"></span>初步覆盖（5–6）</span>
+  <span><span class="sw" style="background:var(--gap-green)"></span>较完整（≥7）</span>
+</div>
+
+<h2>一、次级方向全景与关联图</h2>
+<div class="graph-panel">
+<svg id="graph" viewBox="0 0 1340 780" width="1340" height="780" xmlns="http://www.w3.org/2000/svg">
+  <text x="166" y="34" text-anchor="middle" font-size="15" font-weight="700" fill="#2563eb">方向一 · 专用 Agent 构建</text>
+  <text x="666" y="34" text-anchor="middle" font-size="15" font-weight="700" fill="#7c3aed">方向二 · 设计方法论</text>
+  <text x="1170" y="34" text-anchor="middle" font-size="15" font-weight="700" fill="#0d9488">方向三 · 可观测性（新增）</text>
+  <g id="edges">
+    <path class="edge" data-e="e1" d="M 560 223 C 470 223, 370 113, 272 113" stroke="#94a3b8"/>
+    <path class="edge" data-e="e2" d="M 560 113 C 470 113, 370 223, 272 223" stroke="#94a3b8"/>
+    <path class="edge" data-e="e3" d="M 560 663 C 450 663, 380 333, 272 333" stroke="#94a3b8"/>
+    <path class="edge" data-e="e4" d="M 272 443 C 620 443, 860 333, 1064 333" stroke="#94a3b8"/>
+    <path class="edge" data-e="e5" d="M 272 663 C 620 685, 860 470, 1064 443" stroke="#94a3b8"/>
+    <path class="edge" data-e="e6" d="M 772 333 C 880 333, 950 223, 1064 223" stroke="#94a3b8"/>
+    <path class="edge" data-e="e7" d="M 772 443 C 880 443, 950 333, 1064 333" stroke="#94a3b8"/>
+    <path class="edge" data-e="e8" d="M 772 223 C 880 200, 950 120, 1064 113" stroke="#94a3b8"/>
+  </g>
+  <text class="edge-label" data-e="e1" x="416" y="190" text-anchor="middle">共享组件模型</text>
+  <text class="edge-label" data-e="e2" x="416" y="146" text-anchor="middle">范式框架 → 场景分析</text>
+  <text class="edge-label" data-e="e3" x="416" y="510" text-anchor="middle">案例检验 ↔ 组装流程</text>
+  <text class="edge-label" data-e="e4" x="668" y="396" text-anchor="middle">评估口径 ↔ 质量观测闭环</text>
+  <text class="edge-label" data-e="e5" x="668" y="612" text-anchor="middle">团队管理面 → 过程观测</text>
+  <text class="edge-label" data-e="e6" x="918" y="270" text-anchor="middle">产物规范 ↔ 数据治理</text>
+  <text class="edge-label" data-e="e7" x="918" y="400" text-anchor="middle">evals → 迭代决策</text>
+  <text class="edge-label" data-e="e8" x="918" y="152" text-anchor="middle">契约边界 → 观测点设计</text>
+  <g class="node" data-id="d1s1">
+    <rect x="60" y="85" width="212" height="56" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+    <text x="76" y="108" font-size="12.5" font-weight="700" fill="#2563eb">D1-S1 组件模型与定制机制</text>
+    <text x="76" y="127" font-size="12" fill="#475569">五层定制 · H1 已验证</text>
+    <text x="252" y="127" font-size="13" font-weight="700" fill="#16a34a" text-anchor="end">8</text>
+  </g>
+  <g class="node" data-id="d1s2">
+    <rect x="60" y="195" width="212" height="56" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+    <text x="76" y="218" font-size="12.5" font-weight="700" fill="#2563eb">D1-S2 场景分析框架</text>
+    <text x="76" y="237" font-size="12" fill="#475569">任务分型+团队维度 9 问</text>
+    <text x="252" y="237" font-size="13" font-weight="700" fill="#16a34a" text-anchor="end">7</text>
+  </g>
+  <g class="node" data-id="d1s3">
+    <rect x="60" y="305" width="212" height="56" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+    <text x="76" y="328" font-size="12.5" font-weight="700" fill="#2563eb">D1-S3 组装工作流程</text>
+    <text x="76" y="347" font-size="12" fill="#475569">场景→选配→组装→评估</text>
+    <text x="252" y="347" font-size="13" font-weight="700" fill="#d97706" text-anchor="end">5</text>
+  </g>
+  <g class="node" data-id="d1s4">
+    <rect x="60" y="415" width="212" height="56" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+    <text x="76" y="438" font-size="12.5" font-weight="700" fill="#2563eb">D1-S4 评估与验证</text>
+    <text x="76" y="457" font-size="12" fill="#475569">成功率口径·复用率·耗时</text>
+    <text x="252" y="457" font-size="13" font-weight="700" fill="#dc2626" text-anchor="end">4</text>
+  </g>
+  <g class="node" data-id="d1s5">
+    <rect x="60" y="525" width="212" height="56" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+    <text x="76" y="548" font-size="12.5" font-weight="700" fill="#2563eb">D1-S5 方法可迁移性</text>
+    <text x="76" y="567" font-size="12" fill="#475569">框架无关组件·Skills</text>
+    <text x="252" y="567" font-size="13" font-weight="700" fill="#d97706" text-anchor="end">5</text>
+  </g>
+  <g class="node" data-id="d1s6">
+    <rect x="60" y="635" width="212" height="56" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+    <text x="76" y="658" font-size="12.5" font-weight="700" fill="#2563eb">D1-S6 团队工程管理方法</text>
+    <text x="76" y="677" font-size="12" fill="#475569">规范落地·知识同步</text>
+    <text x="252" y="677" font-size="13" font-weight="700" fill="#d97706" text-anchor="end">6</text>
+  </g>
+  <g class="node" data-id="d2s1">
+    <rect x="560" y="85" width="212" height="56" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+    <text x="576" y="108" font-size="12.5" font-weight="700" fill="#7c3aed">D2-S1 设计范式对比与两维框架</text>
+    <text x="576" y="127" font-size="12" fill="#475569">控制流×状态·26 篇精读</text>
+    <text x="752" y="127" font-size="13" font-weight="700" fill="#16a34a" text-anchor="end">9</text>
+  </g>
+  <g class="node" data-id="d2s2">
+    <rect x="560" y="195" width="212" height="56" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+    <text x="576" y="218" font-size="12.5" font-weight="700" fill="#7c3aed">D2-S2 系统构成与组件契约</text>
+    <text x="576" y="237" font-size="12" fill="#475569">子问题A：划界/接口</text>
+    <text x="752" y="237" font-size="13" font-weight="700" fill="#16a34a" text-anchor="end">7</text>
+  </g>
+  <g class="node" data-id="d2s3">
+    <rect x="560" y="305" width="212" height="56" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+    <text x="576" y="328" font-size="12.5" font-weight="700" fill="#7c3aed">D2-S3 中间产物规范</text>
+    <text x="576" y="347" font-size="12" fill="#475569">子问题B：可机检+可验证</text>
+    <text x="752" y="347" font-size="13" font-weight="700" fill="#d97706" text-anchor="end">6</text>
+  </g>
+  <g class="node" data-id="d2s4">
+    <rect x="560" y="415" width="212" height="56" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+    <text x="576" y="438" font-size="12.5" font-weight="700" fill="#7c3aed">D2-S4 prompt 作为规约与验证</text>
+    <text x="576" y="457" font-size="12" fill="#475569">promptware·evals·MT</text>
+    <text x="752" y="457" font-size="13" font-weight="700" fill="#16a34a" text-anchor="end">7</text>
+  </g>
+  <g class="node" data-id="d2s5">
+    <rect x="560" y="525" width="212" height="56" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+    <text x="576" y="548" font-size="12.5" font-weight="700" fill="#7c3aed">D2-S5 经典 SE 原理对照</text>
+    <text x="576" y="567" font-size="12" fill="#475569">Parnas/Brooks/DbC</text>
+    <text x="752" y="567" font-size="13" font-weight="700" fill="#16a34a" text-anchor="end">8</text>
+  </g>
+  <g class="node" data-id="d2s6">
+    <rect x="560" y="635" width="212" height="56" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+    <text x="576" y="658" font-size="12.5" font-weight="700" fill="#7c3aed">D2-S6 案例分析与实践检验</text>
+    <text x="576" y="677" font-size="12" fill="#475569">kb-app 回溯·框架映射</text>
+    <text x="752" y="677" font-size="13" font-weight="700" fill="#dc2626" text-anchor="end">3</text>
+  </g>
+  <g class="node" data-id="d3s1">
+    <rect x="1064" y="85" width="212" height="56" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+    <text x="1080" y="108" font-size="12.5" font-weight="700" fill="#0d9488">D3-S1 系统可观测设计</text>
+    <text x="1080" y="127" font-size="12" fill="#475569">RQ-A1 观测点·日志契约</text>
+    <text x="1256" y="127" font-size="13" font-weight="700" fill="#d97706" text-anchor="end">6</text>
+  </g>
+  <g class="node" data-id="d3s2">
+    <rect x="1064" y="195" width="212" height="56" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+    <text x="1080" y="218" font-size="12.5" font-weight="700" fill="#0d9488">D3-S2 观测数据收集整理</text>
+    <text x="1080" y="237" font-size="12" fill="#475569">RQ-A2 trace·数据模型</text>
+    <text x="1256" y="237" font-size="13" font-weight="700" fill="#d97706" text-anchor="end">5</text>
+  </g>
+  <g class="node" data-id="d3s3">
+    <rect x="1064" y="305" width="212" height="56" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+    <text x="1080" y="328" font-size="12.5" font-weight="700" fill="#0d9488">D3-S3 系统迭代决策支持</text>
+    <text x="1080" y="347" font-size="12" fill="#475569">RQ-A3 evals 闭环·门禁</text>
+    <text x="1256" y="347" font-size="13" font-weight="700" fill="#d97706" text-anchor="end">5</text>
+  </g>
+  <g class="node" data-id="d3s4">
+    <rect x="1064" y="415" width="212" height="56" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+    <text x="1080" y="438" font-size="12.5" font-weight="700" fill="#0d9488">D3-S4 开发过程观测设计</text>
+    <text x="1080" y="457" font-size="12" fill="#475569">RQ-B1 观测点·落地</text>
+    <text x="1256" y="457" font-size="13" font-weight="700" fill="#d97706" text-anchor="end">5</text>
+  </g>
+  <g class="node" data-id="d3s5">
+    <rect x="1064" y="525" width="212" height="56" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+    <text x="1080" y="548" font-size="12.5" font-weight="700" fill="#0d9488">D3-S5 三对象量化体系</text>
+    <text x="1080" y="567" font-size="12" fill="#475569">RQ-B2 人/工具/协同</text>
+    <text x="1256" y="567" font-size="13" font-weight="700" fill="#d97706" text-anchor="end">6</text>
+  </g>
+  <g class="node" data-id="d3s6">
+    <rect x="1064" y="635" width="212" height="56" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+    <text x="1080" y="658" font-size="12.5" font-weight="700" fill="#0d9488">D3-S6 过程反馈迭代方法</text>
+    <text x="1080" y="677" font-size="12" fill="#475569">RQ-B3 归因·门禁·基线</text>
+    <text x="1256" y="677" font-size="13" font-weight="700" fill="#dc2626" text-anchor="end">4</text>
+  </g>
+  <rect class="base-band" x="60" y="712" width="1216" height="46" rx="9"/>
+  <text x="668" y="732" text-anchor="middle" font-size="12.5" font-weight="700" fill="#475569">既有研究底座（直接输入）</text>
+  <text x="668" y="749" text-anchor="middle" font-size="11.5" fill="#64748b">sdd/ 规范驱动 · context-engineering/ 上下文与图谱 · architecture/ Spring 案例 · theory/ 形式化 · design/kb-app/ 文档链 · references/ 论文库（36 篇精读）</text>
+  <path class="edge" d="M 166 712 L 166 691" stroke="#cbd5e1" stroke-dasharray="4 4"/>
+  <path class="edge" d="M 666 712 L 666 691" stroke="#cbd5e1" stroke-dasharray="4 4"/>
+  <path class="edge" d="M 1170 712 L 1170 691" stroke="#cbd5e1" stroke-dasharray="4 4"/>
+</svg>
+<div class="note">将鼠标悬停在节点上可高亮其关联边与对端节点。方向三为 2026-08-17 新增方向（首轮调研当日完成），其评分反映"首轮资料已齐、体系未建"的状态。</div>
+</div>
+
+<h2>二、各方向次级方向明细</h2>
+
+<div class="dir">
+  <div class="dir-head"><span class="dir-tag" style="background:var(--d1)">方向一 · D1</span><h3>定制化专用 Agent 构建方法</h3><span style="color:var(--muted);font-size:13px">平均资料完整性 <b>5.8</b> / 10</span></div>
+  <div class="dir-desc">基于 pi/DSH 两类"极简内核+扩展"框架，研究面向特定场景快速组装专用 agent 的可复用方法：组件模型、场景分析、工作流程、验证迁移。</div>
+  <div class="grid">
+    <div class="sub-card" style="border-top:3px solid var(--gap-green)">
+      <span class="sid" style="color:var(--d1)">D1-S1 · 8 分</span>
+      <h4>组件模型与定制机制</h4><span class="rq">RQ1</span>
+      <p>可复用组件的粒度与分层（行为干预/知识技能/工具/界面/会话状态），pi 五层定制与 DSH 三层挂载的实证，H1 假设已验证并修订。</p>
+      <div class="evid">pi-mono 代码级调研（extensions 25 类钩子/SDK/70+ 示例）＋ DSH 深研（cordis/生态 10 类插件）＋ AI Skills 两篇论文＋ Wang 四模块映射。</div>
+      <div class="gap"><b>缺口</b>：组件接口规范未形式化；"配置式组装组件"中间档的实例目录未建。</div>
+      <span class="xlink" style="background:var(--d2)">↔ D2-S2 组件契约</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-green)">
+      <span class="sid" style="color:var(--d1)">D1-S2 · 7 分</span>
+      <h4>场景分析框架</h4><span class="rq">RQ2</span>
+      <p>拿到新场景问哪些问题即可决定组件选配：任务分型 5 问（外部交互/可验证反馈/组合搜索/静态分解/时间跨度）+ 团队协作 4 问（稳定性约束/资历结构/规范载体/多工具分层）。</p>
+      <div class="evid">学术梳理任务分型 + 团队实践调研（DORA/METR 实证注入）＋ 02 v0.2 已合并成 9 问框架。</div>
+      <div class="gap"><b>缺口</b>：未在真实场景实例上校验问项的充分性；"项目特点梳理"维度与 9 问的合并关系待消化。</div>
+      <span class="xlink" style="background:var(--d2)">← D2-S1 范式框架</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-amber)">
+      <span class="sid" style="color:var(--d1)">D1-S3 · 5 分</span>
+      <h4>组装工作流程</h4><span class="rq">RQ3</span>
+      <p>场景画像 → 能力清单 → 组件选配/补缺 → 系统提示与约束组装 → 评估集构建 → 迭代。</p>
+      <div class="evid">机制侧资料充分：pi SDK createAgentSession 全维度覆盖 + 13 渐进示例 + Pi Packages 分发 + DSH profile/bundle 组装。</div>
+      <div class="gap"><b>缺口</b>：流程方法本身未设计成文，无一次端到端装配实践记录。</div>
+      <span class="xlink" style="background:var(--d2)">↔ D2-S6 案例检验</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-red)">
+      <span class="sid" style="color:var(--d1)">D1-S4 · 4 分</span>
+      <h4>评估与验证</h4><span class="rq">RQ4</span>
+      <p>专用 agent"可用"的判定：任务成功率（pass@1/pass^k 口径）、人工接管率、组件复用率、构建耗时。</p>
+      <div class="evid">口径文献齐：τ-bench pass^k、METR 时间地平线、ICAE-Bench 交互式评测、More Agents 基线原则。</div>
+      <div class="gap"><b>缺口</b>：评估集设计零进展；与方向三质量观测面的指标融合未做。整体依赖实验启动。</div>
+      <span class="xlink" style="background:var(--d3)">↔ D3-S3 质量观测闭环</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-amber)">
+      <span class="sid" style="color:var(--d1)">D1-S5 · 5 分</span>
+      <h4>方法可迁移性</h4><span class="rq">RQ5</span>
+      <p>pi 上沉淀的方法/组件向 DSH 及其他 harness（Kimi Code、Claude Code）迁移的成本与框架无关部分。</p>
+      <div class="evid">Agent Skills 标准双框架同构证据 + claude-bridge 类迁移插件生态 + H1 修订（知识层天然可迁移）。</div>
+      <div class="gap"><b>缺口</b>：其他 harness 定制机制对比在 materials 待补充清单中未做；无迁移实测。</div>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-amber)">
+      <span class="sid" style="color:var(--d1)">D1-S6 · 6 分</span>
+      <h4>团队工程管理方法</h4><span class="rq">动机三研究面之一</span>
+      <p>规范落地、知识同步、岗位衔接的工具化与标准化（团队协作维度）。</p>
+      <div class="evid">团队级 AI 编码实践调研（采纳/治理/工作流建制化全景）＋ AGENTS.md 证据三联（07/29/45 号论文）＋ Spec Kit/Kiro 实践。</div>
+      <div class="gap"><b>缺口</b>：管理方法的工具化方案未设计；量化部分已移交方向三主题 B 承接。</div>
+      <span class="xlink" style="background:var(--d3)">→ D3-S4/S5 过程观测</span>
+    </div>
+  </div>
+</div>
+
+<div class="dir">
+  <div class="dir-head"><span class="dir-tag" style="background:var(--d2)">方向二 · D2</span><h3>Agent 软件设计方法论</h3><span style="color:var(--muted);font-size:13px">平均资料完整性 <b>6.7</b> / 10</span></div>
+  <div class="dir-desc">从软件工程基本原理重走"需求 → 需求描述 → 架构设计"，研究 LLM 与传统组件的系统构成方式与中间产物规范。核心论点：代码退居为人/系统与 LLM 的衔接层。</div>
+  <div class="grid">
+    <div class="sub-card" style="border-top:3px solid var(--gap-green)">
+      <span class="sid" style="color:var(--d2)">D2-S1 · 9 分</span>
+      <h4>设计范式对比与两维框架</h4><span class="rq">02-理论框架 §3</span>
+      <p>以"控制流归属 × 状态管理"两正交维度组织范式谱系，并映射到 7 个工业框架验证解释力；发现"显式编排回归、状态成分水岭"趋势。</p>
+      <div class="evid">AgentParadigms 26 篇精读（范式+失败+benchmark）＋ agent框架-工业设计对比（7 框架实抓）＋两维框架验证结论。</div>
+      <div class="gap"><b>缺口</b>：无代码级实现对比（00 ❓ 待决策）；谱系未覆盖 SDD 式与 harness 路线的两维定位细化。</div>
+      <span class="xlink" style="background:var(--d1)">→ D1-S2 场景分析</span><span class="xlink" style="background:var(--d3)">→ D3-S1 观测点设计</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-green)">
+      <span class="sid" style="color:var(--d2)">D2-S2 · 7 分</span>
+      <h4>LLM 组件的系统构成与契约（子问题 A）</h4><span class="rq">00 §3</span>
+      <p>LLM 与代码/向量库/知识图谱的划界依据、接口契约形态、不确定性管理与组合模式。</p>
+      <div class="evid">LLM-as-component taxonomy（13 维）、promptware、neuro-symbolic 混合架构、协议驱动 DbC、框架状态管理对比、MAST/τ² 协调证据。</div>
+      <div class="gap"><b>缺口</b>：context-engineering 既有 5 份报告未按子问题 A 的"知识组件架构模式"重组；划界依据（可验证性/错误成本）停留候选状态。</div>
+      <span class="xlink" style="background:var(--d1)">↔ D1-S1 组件模型</span><span class="xlink" style="background:var(--d3)">→ D3-S1</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-amber)">
+      <span class="sid" style="color:var(--d2)">D2-S3 · 6 分</span>
+      <h4>中间产物规范（子问题 B 核心）</h4><span class="rq">00 §4 · 02 §4</span>
+      <p>需求描述、架构描述、产物链各环节的格式设计标准：可机检 + 可验证性承担"代码+评审"的正确性职能。</p>
+      <div class="evid">证据链四条（MAST FC1 44.2%、MetaGPT 产物契约、Hassan 工件支柱、SWE-bench 口径教训）＋库内同类工作（Formal Architecture Descriptors、Codified Context、TraceDev）。</div>
+      <div class="gap"><b>缺口</b>：kb-app 回溯式案例分析未做（00 ❓）；规范模板集未设计。</div>
+      <span class="xlink" style="background:var(--d3)">↔ D3-S2 观测数据治理</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-green)">
+      <span class="sid" style="color:var(--d2)">D2-S4 · 7 分</span>
+      <h4>prompt 作为规约与验证方法论</h4><span class="rq">02 §4 对照</span>
+      <p>"prompt 是比 SRS 弱、比代码强的中间态"；操作性规约下放到 evals 与蜕变关系；DbC 概率化变形。</p>
+      <div class="evid">Promptware Engineering、Hamel Husain evals、蜕变测试三篇（191 条 MR + LLMORPH）、三方观点（乐观/审慎/混合）梳理完整。</div>
+      <div class="gap"><b>缺口</b>：规约-验证对的实例化（在本项目实验中落地一套）未开始。</div>
+      <span class="xlink" style="background:var(--d3)">→ D3-S3 迭代决策</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-green)">
+      <span class="sid" style="color:var(--d2)">D2-S5 · 8 分</span>
+      <h4>经典 SE 原理对照</h4><span class="rq">02 §4 经典对照</span>
+      <p>Parnas 信息隐藏、Brooks 本质/偶然复杂度、CBSE/DbC、形式化规约为何未成主流——为"prompt 作为规约"提供历史类比坐标。</p>
+      <div class="evid">软件工程原理与LLM系统.md：经典/新文献二分、六维契约差异表、形式化规约史证据（INRIA 2020 调查等）、命题定位（延续+分工转移）已成结论。</div>
+      <div class="gap"><b>缺口</b>：仅思想对照，未做经典方法的改造实验（如 DbC 模板在 agent 的试用）。</div>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-red)">
+      <span class="sid" style="color:var(--d2)">D2-S6 · 3 分</span>
+      <h4>案例分析与实践检验</h4><span class="rq">01-实验计划草案（骨架）</span>
+      <p>kb-app 完整文档链的回溯式案例分析、LangGraph/AgentScope 上的范式落地映射——检验理论框架的实际解释力。</p>
+      <div class="evid">design/kb-app/ 01–17 文档链在库可作素材；01-实验计划仅有骨架。</div>
+      <div class="gap"><b>缺口</b>：回溯分析未启动、无任何实验记录（experiments/ 为空）——全项目当前最大短板。</div>
+      <span class="xlink" style="background:var(--d1)">↔ D1-S3 组装流程</span>
+    </div>
+  </div>
+</div>
+
+<div class="dir">
+  <div class="dir-head"><span class="dir-tag" style="background:var(--d3)">方向三 · D3（新增）</span><h3>LLM 系统可观测性与过程观测</h3><span style="color:var(--muted);font-size:13px">平均资料完整性 <b>5.2</b> / 10</span></div>
+  <div class="dir-desc">LLM 核心软件的可观测性（运行情况+任务质量）与 AI 辅助开发过程的观测（人/AI 工具/人-AI 协同），建立观测方法、量化体系与反馈迭代方法。2026-08-17 建档并完成首轮调研。</div>
+  <div class="grid">
+    <div class="sub-card" style="border-top:3px solid var(--gap-amber)">
+      <span class="sid" style="color:var(--d3)">D3-S1 · 6 分</span>
+      <h4>系统可观测设计（RQ-A1）</h4><span class="rq">主题 A</span>
+      <p>观测点五层模型（agent 循环/provider/工具/会话/产物）；日志契约设计空间（DSH"模型可见即落盘" ↔ OTel"内容默认关"）；开销采样与隐私治理。</p>
+      <div class="evid">llm系统可观测性调研.md：OTel GenAI 语义约定、OpenInference、治理工具链；框架内机制（pi telemetry/evals、DSH 日志不变量、VISTA）。</div>
+      <div class="gap"><b>缺口</b>：观测设计模式未系统化成方法；隐私治理仅工具级盘点。</div>
+      <span class="xlink" style="background:var(--d2)">← D2-S2 契约边界</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-amber)">
+      <span class="sid" style="color:var(--d3)">D3-S2 · 5 分</span>
+      <h4>观测数据收集与整理（RQ-A2）</h4><span class="rq">主题 A</span>
+      <p>trace 语义标准、轨迹与产物的统一数据模型、聚合检索与数据集化。</p>
+      <div class="evid">GenAI 约定/OpenInference 规范要点、8 个工业平台 trace 模型盘点、轨迹→标注数据集实证样板（MAST/Who&When）。</div>
+      <div class="gap"><b>缺口</b>：统一数据模型未设计；与本仓库 manifest+摘要链的类比未实例化。</div>
+      <span class="xlink" style="background:var(--d2)">↔ D2-S3 产物规范</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-amber)">
+      <span class="sid" style="color:var(--d3)">D3-S3 · 5 分</span>
+      <h4>系统迭代决策支持（RQ-A3）</h4><span class="rq">主题 A</span>
+      <p>离线 evals 与在线观测闭环、质量回归门禁（Agentic QA）、A/B 灰度、能力预算锚点。</p>
+      <div class="evid">Agent-as-a-Judge 与 judge 偏差实证、漂移检测（embedding-MMD）、promptfoo CI 门禁、Agentic QA 动机证据齐备。</div>
+      <div class="gap"><b>缺口</b>：闭环方法未设计未实验——"质量面与在线接管信号无标准"是调研确认的研究空白。</div>
+      <span class="xlink" style="background:var(--d2)">← D2-S4 evals</span><span class="xlink" style="background:var(--d1)">↔ D1-S4 评估</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-amber)">
+      <span class="sid" style="color:var(--d3)">D3-S4 · 5 分</span>
+      <h4>开发过程观测设计（RQ-B1）</h4><span class="rq">主题 B</span>
+      <p>过程观测点（仓库事件/会话轨迹/评审记录/提示词与文档变更/工单流）与团队落地方法。</p>
+      <div class="evid">四大工具团队级遥测盘点（Claude Code 走 OTel、Copilot/Cursor/Codex 面板）；DORA 小批量+强版本控制教训。</div>
+      <div class="gap"><b>缺口</b>："人的过程事件"无标准（调研确认空白）；落地设计未做。</div>
+      <span class="xlink" style="background:var(--d1)">← D1-S6 团队管理面</span>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-amber)">
+      <span class="sid" style="color:var(--d3)">D3-S5 · 6 分</span>
+      <h4>三对象量化体系（RQ-B2）</h4><span class="rq">主题 B</span>
+      <p>人的工作 / AI 工具工作 / 人-AI 协同交互（文档、提示词）的指标体系；感知与客观数据三角验证。</p>
+      <div class="evid">DORA 七项 AI 能力模型、DX 利用/影响/成本框架、Meta 评审 RCT、Anthropic 理解债 RCT、采纳率误导性结论、METR 自感知偏差。</div>
+      <div class="gap"><b>缺口</b>：三对象指标本体未成体系；协同交互质量（规范遵循度/上下文有效性）无量纲。</div>
+    </div>
+    <div class="sub-card" style="border-top:3px solid var(--gap-red)">
+      <span class="sid" style="color:var(--d3)">D3-S6 · 4 分</span>
+      <h4>过程反馈迭代方法（RQ-B3）</h4><span class="rq">主题 B</span>
+      <p>观测数据驱动过程改进：提示词/规范资产版本化与效果归因、AI 先审门禁调参、组织级基线。</p>
+      <div class="evid">方法论素材零散（prompt 质量分阶段归因 arXiv:2606.19644、AI 先审实践、GitClear/GIST 债务追踪）。</div>
+      <div class="gap"><b>缺口</b>：归因方法与完整迭代案例缺失；过程挖掘×开发遥测为调研确认的空白。</div>
+    </div>
+  </div>
+</div>
+
+<h2>三、资料完整性评分总览</h2>
+<div class="bars" id="bars"></div>
+
+<footer>
+  <p><b>评分口径</b>（资料完整性 1–10，评估对象为"截至 2026-08-17 已收集资料对该次级方向的支撑程度"）：
+  9–10 系统完整且有验证结论｜7–8 主干资料齐全、结论已提炼｜5–6 首轮覆盖、体系未建｜3–4 仅有骨架或素材零散｜1–2 几乎空白。
+  实验执行情况不计入资料分，但在缺口中注明（当前三方向 experiments/ 均为空）。</p>
+  <p><b>资料基础</b>：research/ 两方向 materials 共 5 份调研 + 方向三 2 份首轮调研；references/ 新增两主题 36 篇全文精读摘要 + 既有 7 主题论文库；台账 #1–#8 全部完成。</p>
+  <p><b>生成</b>：2026-08-17 · 由研究项目状态自动梳理生成 · 数据与依据详见各方向 README / notes / materials。</p>
+</footer>
+</div>
+
+<script>
+// ===== 评分数据（与上方卡片一致） =====
+const scores = [
+  ["D2-S1 设计范式对比与两维框架", 9, "#7c3aed"],
+  ["D2-S5 经典 SE 原理对照", 8, "#7c3aed"],
+  ["D1-S1 组件模型与定制机制", 8, "#2563eb"],
+  ["D2-S2 系统构成与组件契约", 7, "#7c3aed"],
+  ["D2-S4 prompt 作为规约与验证", 7, "#7c3aed"],
+  ["D1-S2 场景分析框架", 7, "#2563eb"],
+  ["D2-S3 中间产物规范", 6, "#7c3aed"],
+  ["D1-S6 团队工程管理方法", 6, "#2563eb"],
+  ["D3-S1 系统可观测设计", 6, "#0d9488"],
+  ["D3-S5 三对象量化体系", 6, "#0d9488"],
+  ["D1-S3 组装工作流程", 5, "#2563eb"],
+  ["D1-S5 方法可迁移性", 5, "#2563eb"],
+  ["D3-S2 观测数据收集整理", 5, "#0d9488"],
+  ["D3-S3 系统迭代决策支持", 5, "#0d9488"],
+  ["D3-S4 开发过程观测设计", 5, "#0d9488"],
+  ["D1-S4 评估与验证", 4, "#2563eb"],
+  ["D3-S6 过程反馈迭代方法", 4, "#0d9488"],
+  ["D2-S6 案例分析与实践检验", 3, "#7c3aed"],
+];
+function barColor(v){ return v>=7 ? "#16a34a" : (v>=5 ? "#d97706" : "#dc2626"); }
+const bars = document.getElementById("bars");
+scores.forEach(([name, v, dirColor])=>{
+  const row = document.createElement("div");
+  row.className = "bar-row";
+  row.innerHTML = `<div class="bar-name"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${dirColor};margin-right:6px"></span>${name}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${v*10}%;background:${barColor(v)}"></div></div>
+    <div class="bar-val" style="color:${barColor(v)}">${v}</div>`;
+  bars.appendChild(row);
+});
+
+// ===== 关联图交互：悬停节点高亮相关边 =====
+const EDGE_MAP = {
+  e1:["d2s2","d1s1"], e2:["d2s1","d1s2"], e3:["d2s6","d1s3"],
+  e4:["d1s4","d3s3"], e5:["d1s6","d3s4"], e6:["d2s3","d3s2"],
+  e7:["d2s4","d3s3"], e8:["d2s2","d3s1"],
+};
+const nodes = [...document.querySelectorAll("#graph .node")];
+const edges = [...document.querySelectorAll("#graph .edge")];
+const labels = [...document.querySelectorAll("#graph .edge-label")];
+nodes.forEach(n=>{
+  n.addEventListener("mouseenter", ()=>{
+    const id = n.dataset.id;
+    const active = new Set([id]); const ae = {};
+    for(const [eid,[a,b]] of Object.entries(EDGE_MAP)){
+      if(a===id||b===id){ ae[eid]=true; active.add(a); active.add(b); }
+    }
+    nodes.forEach(x=>x.classList.toggle("dim", !active.has(x.dataset.id)));
+    edges.forEach(x=>x.classList.toggle("dim", !(x.dataset.e in ae)));
+    labels.forEach(x=>x.classList.toggle("dim", !(x.dataset.e in ae)));
+  });
+  n.addEventListener("mouseleave", ()=>{
+    nodes.forEach(x=>x.classList.remove("dim"));
+    edges.forEach(x=>x.classList.remove("dim"));
+    labels.forEach(x=>x.classList.remove("dim"));
+  });
+});
+</script>
+</body>
+</html>
