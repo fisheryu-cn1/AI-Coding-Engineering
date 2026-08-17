@@ -47,6 +47,7 @@
 - [x] ~~LLM 软件工程（SE for LLM / LLM for SE）的近期综述，如 agentic software engineering 方向~~（2026-08-16 完成，含 Wang/Liu/Hassan 三篇综述，见上表）
 - [ ] 经典软件工程对照：基于构件的软件工程（CBSE）、规约方法、需求工程相关文献
 - [ ] 开源 Agent 系统架构案例：LangGraph、AutoGen、CrewAI 等的架构文档（对比已见 `materials/agent框架-工业设计对比.md`）
+- [ ] 非常见范式空位扫描（**有界**：限已收 26 篇精读 + 工业对比谱系内，服务研究目的②——候选：计划-执行-验证外循环的标准化、code-as-action 与工具调用混合、级联路由作为默认控制流；发现候选作场景一可选组件，不单独立项）
 - [ ] references/ 目录中 AIOS、CodeGraph、ontology 等论文的针对性摘录（AgentParadigms/SEforLLM 两主题已随 2026-08 入库完成初评摘要）
 
 ## 归档规范
