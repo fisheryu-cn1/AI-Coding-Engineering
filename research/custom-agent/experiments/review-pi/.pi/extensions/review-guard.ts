@@ -1,33 +1,45 @@
 /**
  * review-guard：场景一（review-pi）的只读守卫扩展。
+ * 已按 pi 0.84.2 实版 docs/extensions.md 校准（2026-08-17 第 2 场）：
+ *  - tool_call 事件：event.toolName / event.input（可变）；阻断用返回值 { block: true, reason }。
+ *  - 写工具 input：write = { path, content }，edit = { path, old_string, new_string }。
  *
- * 职责（对应装配流程 ⑤ 的门禁组件）：
- * 1. 白名单工具：仅允许 read / bash / write / edit 四个默认工具（评审不需要注册新工具）；
- * 2. 写路径约束：write/edit 仅允许目标 `reviews/` 目录（意见卡输出），其余一律阻止；
- * 3. 防御性编码：事件负载字段名以多重候选读取——首次运行时需对照所装 pi 版本的
- *    docs/extensions.md 校准（本文件为 v0，字段名按调研材料的记载推断）。
+ * 职责：
+ * 1. write/edit 仅允许目标 `reviews/`（意见卡输出目录）；
+ * 2. bash 阻止破坏性命令（rm -rf / git push / git reset --hard / git checkout -- / git clean）。
  *
- * 迁移参照（D1-S5）：DSH 等价形态 = ctx.tools 注册表的作用域限制 + ctx.fs provider
- * （能力接缝层）；本扩展的"写路径约束"语义在 DSH 中以 fs/* 事件实现。
+ * 迁移参照（D1-S5）：DSH 等价形态 = ctx.tools 作用域限制 + ctx.fs provider / fs 事件；
+ * "写路径约束 + 危险命令黑名单"语义可平移，接缝模型不同。
  */
 export default function (pi: any) {
-  const WRITE_TOOLS = new Set(["write", "edit"]);
-  const ALLOWED_WRITE_PREFIX = "reviews/";
+  const ALLOWED_PREFIX = "reviews/";
+  // 不 import isToolCallEventType（避免扩展加载时的包解析依赖），直接按 toolName 字符串分派——
+  // 事件字段名以 docs §tool_call 为准。
+  const BAD_BASH = /\b(rm\s+(-\w*\s+)*-rf|git\s+push\b|git\s+reset\s+--hard\b|git\s+checkout\s+--\b|git\s+clean\b|git\s+branch\s+-D\b)/;
 
-  pi.on("tool_call", (event: any) => {
-    const call = event?.toolCall ?? event?.call ?? event ?? {};
-    const name: string = call?.name ?? "";
-    const args: Record<string, unknown> = call?.arguments ?? call?.args ?? call?.input ?? {};
+  pi.on("tool_call", async (event: any) => {
+    const tool: string = event?.toolName ?? "";
+    const input: any = event?.input ?? {};
 
-    if (WRITE_TOOLS.has(name)) {
-      const raw = String(args?.path ?? args?.file_path ?? args?.filename ?? "");
+    if (tool === "write" || tool === "edit") {
+      const raw = String(input?.path ?? "");
       const norm = raw.replace(/\\/g, "/");
-      const ok = norm === ALLOWED_WRITE_PREFIX + norm.split("/").pop() || norm.startsWith(ALLOWED_WRITE_PREFIX);
-      if (!ok) {
-        const reason = `[review-guard] 拒绝写入 ${raw || "(空路径)"}：评审模式只允许写 ${ALLOWED_WRITE_PREFIX}`;
-        if (typeof event?.block === "function") event.block(reason);
-        else if (typeof event?.preventDefault === "function") { event.preventDefault(); event.blockedReason = reason; }
-        else console.warn(reason + "（未找到阻止 API，仅告警——需按 pi 版本校准）");
+      const rel = norm.startsWith("./") ? norm.slice(2) : norm;
+      if (!rel.startsWith(ALLOWED_PREFIX)) {
+        return {
+          block: true,
+          reason: `[review-guard] 评审模式只允许写 ${ALLOWED_PREFIX}（意见卡输出目录），拒绝：${raw || "(空路径)"}`,
+        };
+      }
+    }
+
+    if (tool === "bash") {
+      const cmd = String(input?.command ?? "");
+      if (BAD_BASH.test(cmd)) {
+        return {
+          block: true,
+          reason: `[review-guard] 评审模式禁止破坏性命令：${cmd.slice(0, 120)}`,
+        };
       }
     }
   });
