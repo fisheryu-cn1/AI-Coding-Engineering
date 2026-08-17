@@ -1,7 +1,7 @@
 # 论文摘要：On the Impact of AGENTS.md Files on the Efficiency of AI Coding Agents（AGENTS.md 对 AI 编码 Agent 效率的影响）
 
 > **原论文标题**：On the Impact of AGENTS.md Files on the Efficiency of AI Coding Agents
-> **完整 PDF 文件名**：`07-Lulla-Impact_of_AGENTS_md.pdf`
+> **完整 PDF 文件名**：`07-Lulla-Impact_of_AGENTS_md.pdf`（另有 2026-08-17 增补的 v2 版本 `07-Lulla-Impact_of_AGENTS_md_v2.pdf`）
 > 作者 / 年份 / 出版：Jai Lal Lulla, Seyedmoein Mohsenimofidi, Matthias Galster, Jie M. Zhang, Sebastian Baltes, Christoph Treude（SMU / Heidelberg / Bamberg / KCL），2026，arXiv:2601.20404v1，ICSE JAWs 2026
 > 摘要类型：Agent 设计参考 + 内容索引
 > 生成日期：2026-08-12

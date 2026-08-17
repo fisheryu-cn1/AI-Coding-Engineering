@@ -100,6 +100,9 @@ A three-layer information provision strategy:
 | Agentic coding landscape and paper disagreements | `research/agentic_coding_paper_disagreements.md` |
 | Latest 2026-07 arXiv literature scan and reading plan | `arxiv_2026-07_literature_scan.md` |
 | Downloaded paper versions and checksums | `references/arxiv_2026-07_manifest.md` |
+| 2026-08 agent-paradigm & SE-for-LLM paper batch (37 PDFs) | `references/arxiv_2026-08_manifest.md` |
+| Agent design paradigm papers (surveys, ReAct/ToT/MAS, benchmarks) | `references/AgentParadigms/` |
+| SE × LLM papers (LLM-as-component, promptware, MT, RCT) | `references/SEforLLM/` |
 | Latest 2026-06 industry consensus and literature scan | `research/arxiv_2026-06_industry_consensus_analysis.md` |
 | Core papers and tools in context engineering | `references/ContextEngineering/` |
 | Code graph and repository-level agent papers | `references/CodeGraph/` |

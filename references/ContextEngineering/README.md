@@ -51,6 +51,12 @@ references/ContextEngineering/
 
 > 新增文件名中的 `_vN` 表示 arXiv 版本号；论文优先级和下载校验信息见 [`../arxiv_2026-07_manifest.md`](../arxiv_2026-07_manifest.md)。
 
+### 2026 年 8 月版本更新
+
+| 编号 | 文件 | 说明 |
+|---|---|---|
+| 07 | `07-Lulla-Impact_of_AGENTS_md_v2.pdf` | 07 号论文（arXiv:2601.20404）的 v2 版本记录（v1 原文件保留）。下载校验信息见 [`../arxiv_2026-08_manifest.md`](../arxiv_2026-08_manifest.md) |
+
 ### G 组：Prompt 压缩专题（独立子目录）
 
 为了避免主目录 PDF 数量膨胀，专门建立 [`PromptCompression/`](PromptCompression/) 子目录聚焦「**本地小模型前置处理、削减无效 Token、完善提示词完整性**」方向：
