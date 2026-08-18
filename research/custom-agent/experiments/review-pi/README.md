@@ -41,13 +41,14 @@ pi
 
 评分：`python scripts/score_review.py --reviews reviews/ --cases evals/cases.jsonl [--commit <hash>]`
 
-## 已知校准项与运行状态（2026-08-18 暂停点更新）
+## 已知校准项与运行状态（2026-08-18 第 6 场后更新）
 
-1. **review-guard.ts 已按 pi 0.84.2 实版校准**（2026-08-17 第 2 场）：阻断用返回值 `{ block: true, reason }`，事件字段 `event.toolName` / `event.input`；实测拦截生效（意见卡之外的写路径被拒并回传理由）。
-2. **运行必带 `-a`**（--approve）：`-p` 非交互模式无信任决策时会静默忽略 `.pi/` 资源（skill 与守卫全不加载）；工作区信任已写入 `~/.pi/agent/trust.json`，交互模式可直接用。
-3. **已验证的运行记录**：run1–run3（锚点 f62f287，禁读修复提交）——19/21/23 条意见，P0 均命中 R-1；run2/run3 为 skill v2（RR-4 机械化 + RR-8）。轨迹报告见 `traces/`。
-4. 评分器 `score_review.py` 为启发式（上界口径），语义召回需人工复核（当前语义明确命中 6/11，待核 R-8/R-10/R-12）；跨 run 一致性用 `compare_runs.py`；pass^k 只能同 skill 版本内计算。
-5. 评估案例锚定"修复提交的父状态"，重现方法见 `evals/README.md`；F/N 系列案例须用各自锚点（6e1abeb / e7c9aa9）补跑，勿与 f62f287 混算。
+1. **review-guard.ts 已按 pi 0.84.2 实版校准**：阻断用返回值 `{ block: true, reason }`，事件字段 `event.toolName` / `event.input`；实测拦截生效。
+2. **运行必带 `-a`**（项目信任）；信任已写入 `~/.pi/agent/trust.json`。
+3. **运行记录（8 runs）**：run1–3（f62f287 × v1/v2）、run4（6e1abeb × v3）、run5（e7c9aa9 × v3）、run6（f62f287 × v4，**污染 run**——读了先前意见卡，召回数字不可引用）、run7/run8（f62f287 × v4 **清洁双 run**——8 核心主题双 100%、配对双向 100%）。历史意见卡在 `reviews/archive/`。
+4. **评估运行清洁规程**（第 5 场起强制）：运行前 `mv reviews/*.md reviews/archive/`；指令双禁（锚点后提交 + research/evals/reviews/scripts 目录）；pass^k 只在同 skill 版本内算。
+5. **评分器现状**：`score_review.py` v1（启发式上界，--anchor/--commit 过滤）；`compare_runs.py` 签名 v1 有伪影——**配对分析用"规则编号∪关联文件"稳定标识**（方法见 run78 轨迹报告）；评分器 v2 需求已登记（稳定标识 + 溯源字段机器可解析单行化）。
+6. 评估案例锚定"修复提交的父状态"（`evals/README.md`，含语义核定表与新发现复核）；F/N 系列用各自锚点，勿混。
 
 ## 组件登记（迁移参照，D1-S5）
 
