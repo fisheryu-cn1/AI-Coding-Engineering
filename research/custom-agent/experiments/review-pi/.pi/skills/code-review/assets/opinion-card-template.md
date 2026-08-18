@@ -5,7 +5,7 @@
 
 ```markdown
 # 评审意见卡：<目标（commit/PR 标识）>
-- 日期：YYYY-MM-DD / 评审者：<agent 名与版本>
+- 日期：YYYY-MM-DD / 评审者：<agent 名与版本 + 模型标识（provider/model）>
 - 基线：<被评审代码状态的 commit hash（评审输入锚点）>
 - 变更地图：<文件数 × 类型分布（新增/修改/删除/移动），一句话>
 - 启用规则：<按 review-rules 适用性判定启用的规则编号列表；未启用规则及原因一行>
