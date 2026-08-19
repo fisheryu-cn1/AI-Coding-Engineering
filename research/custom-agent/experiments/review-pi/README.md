@@ -20,7 +20,7 @@ review-pi/
 │   ├── cases.jsonl                     # 评估标注集（从 5 份评审报告 × git 历史构造）
 │   └── README.md                       # schema 与构造方法
 ├── scripts/
-│   └── score_review.py                 # 召回评分器（启发式 v0）
+│   └── score_review.py                 # 评估工具 v2（score 召回评分 / pair 意见配对；原 compare_runs.py 已并入）
 ├── reviews/                            # 意见卡输出目录（守卫允许的唯一写位置；运行后生成）
 └── README.md                           # 本文件
 ```
@@ -39,7 +39,8 @@ pi
 
 无交互批跑（评估）：`pi -p "<review-commit 模板内容，填入 commit>"`（print 模式，stdin 可管道）；每案例跑 3 次取 pass^k 一致性（画像卡 §5 口径）。
 
-评分：`python scripts/score_review.py --reviews reviews/ --cases evals/cases.jsonl [--commit <hash>]`
+评分：`python scripts/score_review.py score --reviews reviews/ --cases evals/cases.jsonl [--commit <标识>] [--anchor <hash>] [--json out.json]`
+配对：`python scripts/score_review.py pair reviews/A.md reviews/B.md [...]`（pass^k 近似；自动配对为高精度子集，未配对清单供人工核验）
 
 ## 已知校准项与运行状态（2026-08-18 第 6 场后更新）
 
@@ -47,7 +48,7 @@ pi
 2. **运行必带 `-a`**（项目信任）；信任已写入 `~/.pi/agent/trust.json`。
 3. **运行记录（8 runs）**：run1–3（f62f287 × v1/v2）、run4（6e1abeb × v3）、run5（e7c9aa9 × v3）、run6（f62f287 × v4，**污染 run**——读了先前意见卡，召回数字不可引用）、run7/run8（f62f287 × v4 **清洁双 run**——8 核心主题双 100%、配对双向 100%）。历史意见卡在 `reviews/archive/`。
 4. **评估运行清洁规程**（第 5 场起强制）：运行前 `mv reviews/*.md reviews/archive/`；指令双禁（锚点后提交 + research/evals/reviews/scripts 目录）；pass^k 只在同 skill 版本内算。
-5. **评分器现状**：`score_review.py` v1（启发式上界，--anchor/--commit 过滤）；`compare_runs.py` 签名 v1 有伪影——**配对分析用"规则编号∪关联文件"稳定标识**（方法见 run78 轨迹报告）；评分器 v2 需求已登记（稳定标识 + 溯源字段机器可解析单行化）。
+5. **评估工具 v2（2026-08-19 第 8 场）**：`score_review.py` 双子命令——`score`（口径A 启发式上界 / 口径B 签名[文件键重合] / 错误排除检测[仅签名未命中时报] / B1 待语义核定工作清单）与 `pair`（意见配对：签名=规则∪文件末两段键，重叠系数≥0.5 且标题共享具体标识符——精确率优先，错配会无声污染 pass^k）。原 `compare_runs.py` 已删除（签名 v1 伪影根治）。已知容错：合并式"溯源 + 证据"字段（run7 偏差，已登记模板 v4 契约）。
 6. 评估案例锚定"修复提交的父状态"（`evals/README.md`，含语义核定表与新发现复核）；F/N 系列用各自锚点，勿混。
 
 ## 组件登记（迁移参照，D1-S5）
