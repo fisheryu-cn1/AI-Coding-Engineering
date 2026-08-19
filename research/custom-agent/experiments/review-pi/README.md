@@ -53,7 +53,7 @@ pi
 
 1. **review-guard.ts 已按 pi 0.84.2 实版校准**：阻断用返回值 `{ block: true, reason }`，事件字段 `event.toolName` / `event.input`；实测拦截生效。
 2. **运行必带 `-a`**（项目信任）；信任已写入 `~/.pi/agent/trust.json`。
-3. **运行记录（8 runs）**：run1–3（f62f287 × v1/v2）、run4（6e1abeb × v3）、run5（e7c9aa9 × v3）、run6（f62f287 × v4，**污染 run**——读了先前意见卡，召回数字不可引用）、run7/run8（f62f287 × v4 **清洁双 run**——8 核心主题双 100%、配对双向 100%）。历史意见卡在 `reviews/archive/`。
+3. **运行记录（11 runs + 闭环首跑）**：run1–3（f62f287 × v1/v2）、run4（6e1abeb × v3）、run5（e7c9aa9 × v3）、run6（f62f287 × v4，**污染 run**——召回数字不可引用）、run7/run8（f62f287 × v4 **清洁双 run**——8 核心主题双 100%）、run9（f62f287 × skill v5，语义 7/11）、run10（`../review-control/` **无 skill 对照**，语义 3/11、原始格式不符契约经适配器评分）、闭环首跑（run9 → 应答卡 run9-respond → 历史修复 3ffebf0 → 复审卡 3ffebf0-recheck：已修复 5/部分 1/未修复 12/新发现 4——**复审发现历史修复未完全落地**，挂起待确认）。历史意见卡在 `reviews/archive/`。
 4. **评估运行清洁规程**（第 5 场起强制）：运行前 `mv reviews/*.md reviews/archive/`；指令双禁（锚点后提交 + research/evals/reviews/scripts 目录）；pass^k 只在同 skill 版本内算。
 5. **评估工具 v2（2026-08-19 第 8 场）**：`score_review.py` 双子命令——`score`（口径A 启发式上界 / 口径B 签名[文件键重合] / 错误排除检测[仅签名未命中时报] / B1 待语义核定工作清单）与 `pair`（意见配对：签名=规则∪文件末两段键，重叠系数≥0.5 且标题共享具体标识符——精确率优先，错配会无声污染 pass^k）。原 `compare_runs.py` 已删除（签名 v1 伪影根治）。已知容错：合并式"溯源 + 证据"字段（run7 偏差，已登记模板 v4 契约）。
 6. 评估案例锚定"修复提交的父状态"（`evals/README.md`，含语义核定表与新发现复核）；F/N 系列用各自锚点，勿混。
