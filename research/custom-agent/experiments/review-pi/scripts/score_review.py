@@ -10,6 +10,8 @@
            · 未命中案例输出同域候选清单（与 expected_finding 标识符重合 ≥1 的意见标题）——
              B1"待确认问题"人工归类的输入，非自动判定。
   pair  —— 意见卡 × 意见卡：意见配对与 pass^k 近似（原 compare_runs.py 并入，该脚本已删除）。
+  groups —— 意见卡 × 意见卡：按文件分组输出核验清单（同文件下两侧意见并列 + 组内候选对），
+           作为语义配对（大模型判定/人工终审）的确定性基底——见装配实录 §8.5 三层结构。
 
 v1→v2（2026-08-19 第 8 场；依据第 6 场签名伪影诊断 + P2 阶段评审决策）：
   1. 意见身份 =（规则编号集合 ∪ 规范化文件路径集合）稳定标识——级别漂移、措辞改写、
@@ -286,6 +288,60 @@ def cmd_pair(args, paths):
               f"{len(common)} / 并集 {len(union)} = {len(common)/max(len(union),1):.0%}")
 
 
+# -------------------------------------------------------------- groups ----
+
+def cmd_groups(args, paths):
+    """按文件分组输出两卡意见的核验清单：文件是两次评审共享的对齐键，
+    组内条目 1–5 条——语义配对（大模型/人工）在组内进行，避免长列表漂移。"""
+    if len(paths) < 2:
+        sys.exit("groups 需要≥两张意见卡")
+    cards = [load_card(p) for p in paths[:2]]
+    a, b = cards
+
+    def groups_of(card):
+        g = {}
+        for idx, op in enumerate(card["opinions"]):
+            for k in (op["keys"] or ["（无文件）"]):
+                g.setdefault(k, []).append((idx, op))
+        return g
+
+    ga, gb = groups_of(a), groups_of(b)
+    out = [f"# 按文件分组核验清单（{os.path.basename(a['path'])} × {os.path.basename(b['path'])}）",
+           f"A {len(a['opinions'])} 条 / B {len(b['opinions'])} 条 / 共 {len(set(ga) | set(gb))} 个文件组",
+           "",
+           "> 用法：组内判定『哪些意见指向同一缺陷』；候选对仅按签名重叠系数提示（≥0.3），"
+           "不作结论。宽意见（涉及多文件）会出现在多个组，判定后全局去重。", ""]
+    for k in sorted(set(ga) | set(gb)):
+        oa, ob = ga.get(k, []), gb.get(k, [])
+        if not oa or not ob:
+            continue  # 单侧独有组无配对判定需求，尾部汇总列出
+        out.append(f"## {k}（A×{len(oa)}，B×{len(ob)}）")
+        for idx, op in oa:
+            out.append(f"- A{idx + 1} [{op['sev']}] {op['title']}")
+        for idx, op in ob:
+            out.append(f"- B{idx + 1} [{op['sev']}] {op['title']}")
+        for ia, opa in oa:
+            for ib, opb in ob:
+                sa, sb = signature(opa), signature(opb)
+                if sa and sb:
+                    ov = len(sa & sb) / min(len(sa), len(sb))
+                    if ov >= 0.3:
+                        out.append(f"  - 候选: A{ia + 1} ↔ B{ib + 1}（重叠系数 {ov:.2f}）")
+        out.append("")
+    only_a = sorted(k for k in ga if k not in gb)
+    only_b = sorted(k for k in gb if k not in ga)
+    if only_a:
+        out.append(f"## 仅 A 侧出现的文件组（{len(only_a)}）：" + "、".join(only_a))
+    if only_b:
+        out.append(f"## 仅 B 侧出现的文件组（{len(only_b)}）：" + "、".join(only_b))
+    text = "\n".join(out) + "\n"
+    if args.out:
+        io.open(args.out, "w", encoding="utf-8", newline="\n").write(text)
+        print(f"已写出 {args.out}（{len(set(ga) | set(gb))} 文件组）")
+    else:
+        print(text)
+
+
 def main():
     ap = argparse.ArgumentParser(description="评审意见卡评估工具 v2（score/pair）")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -297,9 +353,14 @@ def main():
     s.add_argument("--json", default=None, help="结果写出 JSON 文件")
     p = sub.add_parser("pair", help="意见卡 × 意见卡配对（pass^k 近似）")
     p.add_argument("cards", nargs="+", help="两张及以上意见卡路径")
+    g = sub.add_parser("groups", help="按文件分组核验清单（语义配对的确定性基底）")
+    g.add_argument("cards", nargs=2, help="两张意见卡路径")
+    g.add_argument("--out", default=None, help="清单写出为 markdown 文件")
     args = ap.parse_args()
     if args.cmd == "score":
         cmd_score(args)
+    elif args.cmd == "groups":
+        cmd_groups(args, args.cards)
     else:
         cmd_pair(args, args.cards)
 

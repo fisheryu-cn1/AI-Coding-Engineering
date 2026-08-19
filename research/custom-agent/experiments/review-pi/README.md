@@ -13,15 +13,22 @@ review-pi/
 │   │   ├── SKILL.md                    # L2 评审规范 skill（SOP+维度+红线；相对引用 assets，自包含可分发）
 │   │   └── assets/
 │   │       ├── review-rules.md         # RR-1~7 规则摘录（自包含，含检查方法与反例信号）
-│   │       └── opinion-card-template.md# 意见卡模板 + 分级口径
-│   ├── prompts/review-commit.md        # L2 提示模板（{{commit}} 变量）
-│   └── extensions/review-guard.ts      # L1/L5 守卫：工具白名单外的写路径阻止（v0，需按 pi 版本校准）
+│   │       ├── opinion-card-template.md# 意见卡模板 v5 + 分级口径 + 格式契约
+│   │       ├── issue-type-guide.md     # 问题类型判定指南（判定程序 + 已核定样例）
+│   │       └── rule-revision-worksheet.md # 规则修订工作单（新案例→规则变更受控流程）
+│   ├── prompts/
+│   │   ├── review-commit.md            # 评审提示模板（{{commit}} 变量）
+│   │   ├── review-respond.md           # A 复核应答模板（接受/部分/驳回+反证）
+│   │   └── review-recheck.md           # B 复审模板（四档结论 + 驳回独立复核 + 回归检查）
+│   └── extensions/review-guard.ts      # L1/L5 守卫：reviews/ 外写路径阻止（已按 pi 0.84.2 校准）
 ├── evals/
 │   ├── cases.jsonl                     # 评估标注集（从 5 份评审报告 × git 历史构造）
-│   └── README.md                       # schema 与构造方法
+│   ├── README.md                       # schema 与构造方法
+│   └── 待确认问题卡-模板.md             # B1 流程工件（三触发点/人工四况归类/误检原因分析）
 ├── scripts/
-│   └── score_review.py                 # 评估工具 v2（score 召回评分 / pair 意见配对；原 compare_runs.py 已并入）
-├── reviews/                            # 意见卡输出目录（守卫允许的唯一写位置；运行后生成）
+│   └── score_review.py                 # 评估工具 v2（score / pair / groups；原 compare_runs.py 已并入）
+├── reviews/                            # 意见卡/应答卡/复审卡输出目录（守卫允许的唯一写位置）
+├── A-B评审闭环工作流.md                 # 闭环 SOP（五步/入口出口判则/模型路由/待确认流程）
 └── README.md                           # 本文件
 ```
 
@@ -50,6 +57,7 @@ pi
 4. **评估运行清洁规程**（第 5 场起强制）：运行前 `mv reviews/*.md reviews/archive/`；指令双禁（锚点后提交 + research/evals/reviews/scripts 目录）；pass^k 只在同 skill 版本内算。
 5. **评估工具 v2（2026-08-19 第 8 场）**：`score_review.py` 双子命令——`score`（口径A 启发式上界 / 口径B 签名[文件键重合] / 错误排除检测[仅签名未命中时报] / B1 待语义核定工作清单）与 `pair`（意见配对：签名=规则∪文件末两段键，重叠系数≥0.5 且标题共享具体标识符——精确率优先，错配会无声污染 pass^k）。原 `compare_runs.py` 已删除（签名 v1 伪影根治）。已知容错：合并式"溯源 + 证据"字段（run7 偏差，已登记模板 v4 契约）。
 6. 评估案例锚定"修复提交的父状态"（`evals/README.md`，含语义核定表与新发现复核）；F/N 系列用各自锚点，勿混。
+7. **A-B 评审闭环工件（2026-08-19 第 9 场）**：`A-B评审闭环工作流.md`（五步：评审 → A 复核应答 → 修复 → B 复审 → 收口；含入口/出口判据、模型路由、待确认问题流程）+ 提示模板 `review-respond.md` / `review-recheck.md` + `evals/待确认问题卡-模板.md`。闭环首跑随批次 4 对照实验或独立安排；评分器 `groups` 子命令输出按文件分组核验清单，为语义配对（大模型判定 → 人工终审）提供确定性基底（实录 §8.5）。
 
 ## 组件登记（迁移参照，D1-S5）
 
@@ -59,4 +67,5 @@ pi
 | review-commit 模板 | L2 / F-通用 | 配置/插件注入 | 低 |
 | review-guard 扩展 | L1+L5 / F-绑定 | ctx.tools 作用域 + ctx.fs provider / fs 事件 | 中（接缝模型不同，语义可平移） |
 | 评分器 | L5 / F-通用（纯 python） | 生态插件或脚本 | 近零 |
+| A-B 评审闭环（工作流文档 + respond/recheck 提示模板 + 待确认问题卡） | L2 流程 / F-通用 | 提示注入 + 流程文档（无框架绑定） | 低（提示模板需按目标框架提示机制接入） |
 | cases.jsonl | L5 数据 / F-通用 | 同 | 零 |
