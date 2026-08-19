@@ -237,8 +237,8 @@ def cmd_pair(args, paths):
             for j, ob in enumerate(b["opinions"]):
                 sa, sb = signature(oa), signature(ob)
                 if sa and sb:
-                    # 重叠系数（|A∩B|/min(|A|,|B|)）：两 run 意见粒度不对称（一条宽意见 vs
-                    # 多条窄意见）时 Jaccard 会被大签名稀释，重叠系数只看较小一方的覆盖度
+                    # 重叠系数（交集 / 较小一方）：两次评审对同一问题常一条写得宽、一条拆得窄，
+                    # 用 Jaccard（交集 / 并集）会因并集变大而把真实配对拉到阈值之下
                     ov = len(sa & sb) / min(len(sa), len(sb))
                     if ov > 0:
                         pairs.append((ov, i, j))
