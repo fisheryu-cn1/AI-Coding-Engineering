@@ -40,3 +40,7 @@
 
 - 工作区 README（本文件）；运行记录与工件按 review-pi 同命名约定放目标仓库 `reviews/`（随 run 拷回本工作区归档）；
 - B3 迭代停止条件已补写（`../review-pi/.pi/skills/code-review/assets/rule-revision-worksheet.md` §4，2026-08-20）——P3 前置项清零。
+
+## 6. 协议修正（2026-08-20，fs-run3 发现）：定位命令不得携带修复提交信息
+
+`git show <fix> --stat` 默认输出提交信息与主题行——而修复提交的主题行往往直接陈述缺陷（如"add flock to prevent cron retry overlap"），构成**提示词指令自带的答案渗漏通道**（历次运行均存在；fs-run3 的证据公开引用了该信息而暴露此通道）。修正：变更地图定位一律改用 `git diff <fix>^ <fix> --stat`（仅文件与行数统计，无提交信息）。fs-run1/fs-run3 的命中数字标注"修复主题行经 --stat 可见"存疑注；后续补一次信息盲复跑（fs-run1b，用修正协议）以校准影响。
