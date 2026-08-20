@@ -44,7 +44,7 @@ pi
 > /prompt review-commit {{commit}}   # 或直接粘贴模板内容并填入目标 commit
 ```
 
-无交互批跑（评估）：`pi -p "<review-commit 模板内容，填入 commit>"`（print 模式，stdin 可管道）；每案例跑 3 次取 pass^k 一致性（画像卡 §5 口径）。
+无交互批跑（评估，2026-08-19 升级）：`pi -a -nc -p "<review-commit 模板内容>"`——`-nc` 禁用上下文文件注入（防 research/AGENTS.md 研究上下文静默进入评审，见 notes/08 §2）；每次新会话、不复用不压缩；隔离纪律另禁读 reviews/archive、evals/、scripts/、~/.pi/agent/sessions 与会话文件本身。
 
 评分：`python scripts/score_review.py score --reviews reviews/ --cases evals/cases.jsonl [--commit <标识>] [--anchor <hash>] [--json out.json]`
 配对：`python scripts/score_review.py pair reviews/A.md reviews/B.md [...]`（pass^k 近似；自动配对为高精度子集，未配对清单供人工核验）
