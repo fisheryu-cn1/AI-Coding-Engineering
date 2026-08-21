@@ -1,0 +1,7 @@
+{
+  "mode": "observe",
+  "deny_globs": ["reviews-final/**"],
+  "framework_deny": ["~/.pi/agent/sessions"],
+  "fix_hash": "（评估运行的修复提交哈希，或经环境变量 EVAL_FIX_HASH 传入）",
+  "markers": ["（可选）诱饵标记串，仅观察记录"]
+}

@@ -29,7 +29,7 @@
 
 ## 1. 02-技术选型方案
 
-1. **产物定位**：需求（01）之后、概要设计之前的技术决策文档。给出 13 项选型决策（D1–D13），每项含选择/主要备选/理由/溯源（对应 `design/` 既有设计文档结论或分歧裁决）。已吸收评审修订（§11 溯源表中 D2/D10/D7 标注"评审修订"）。
+1. **产物定位**：需求（01）之后、概要设计之前的技术决策文档。给出 13 项选型决策（D1–D13），每项含选择/主要备选/理由/溯源（对应 `design/` 既有设计文档结论或分歧裁定）。已吸收评审修订（§11 溯源表中 D2/D10/D7 标注"评审修订"）。
 2. **关键内容**：
    - D2 图数据库 LadybugDB（Kùzu 社区继任 fork，Python 包名 `ladybug`），四层风险对策（全量重建对冲 / 薄 GraphStore 适配层 / 换库路径 / uv.lock 钉版本）；
    - D7 MCP 官方 SDK **v1 稳定线 `mcp>=1.29,<2`**（2026-07-28 v2 破坏性改名 FastMCP→MCPServer，显式锁版）；
@@ -102,39 +102,39 @@
 2. **关键内容**：
    - §1 总体结论："8 处实现级错误/自相矛盾（按此详设直接开发会踩坑）"，修正后可进 M1；
    - §2 严重问题 S1–S8：S1 LanceDB `add(mode="overwrite")` 整表覆盖；S2 FTS5 无 upsert；S3 图 Schema 三处自相矛盾（软删除列缺失/摘要元数据列缺失/注释陈旧）；S4 文档级摘要无存储位置；S5 accept 锁口径与 03 冲突；S6 分类公式把绝对阈值与差值混为一谈 + 阈值未入 config；S7 写锁无 stale 回收 + `os.read` 签名错；S8 Kùzu 系无属性二级索引（联网核实后删三条 CREATE INDEX）；
-   - §3 覆盖缺口：相对 03 七项（MCP Resources/Prompts、CITES/SUPERSEDES 无生产者、flat 补章节归属、关系冲突裁决、llm_usage 表、MVP 图路分化、sources.yaml schema）；相对 01 四项（FR-1.1 TXT、FR-1.5 页数、FR-4.5 目录监听、FR-2.2 类型参与归并）；相对 04/06 六项；
+   - §3 覆盖缺口：相对 03 七项（MCP Resources/Prompts、CITES/SUPERSEDES 无生产者、flat 补章节归属、关系冲突裁定、llm_usage 表、MVP 图路分化、sources.yaml schema）；相对 01 四项（FR-1.1 TXT、FR-1.5 页数、FR-4.5 目录监听、FR-2.2 类型参与归并）；相对 04/06 六项；
    - §6 FR/NFR→05 落点覆盖度核查清单（约 33 行，逐行 ✅/⚠️ 状态）；
    - §7 处置：S1–S8 全部采纳修复；里程碑级延后（MCP resources→M4、kb_compare→M5、Web API→M6、CITES→P1）。
 3. **上下游衔接**：上游以 01/02/03/04/06 为对照基线逐条映射；下游驱动 05 v0.1 修订（§7.1 修订位置列明 05 §2.2/§2.3/§4.2/§4.5/§7.1 等）并放行 M1 开发。
 4. **验证机制**：FR/NFR 逐项对齐矩阵（可机检的覆盖核查）；问题三级分级（严重/覆盖缺口/合理性）+ §5 按优先级处理建议；§7.5 二轮补正 R1–R4 对"修复引入/遗留不一致"的再检查（Embedder 接口、txt.py、stage_tombstone、enqueue_pipeline）。
-5. **演进记录**：暴露并修复 05 的 8 处实现级错误；裁决"冲突处以 05 为准"不能覆盖 03 的刻意折衷（S5）；S8 通过联网核实推翻 05 的 DDL 假设；R4 纠正 §4.6 修改路径只入队 index 的错误（须完整流水线）。
+5. **演进记录**：暴露并修复 05 的 8 处实现级错误；裁定"冲突处以 05 为准"不能覆盖 03 的刻意折衷（S5）；S8 通过联网核实推翻 05 的 DDL 假设；R4 纠正 §4.6 修改路径只入队 index 的错误（须完整流水线）。
 
 ## 7. 09-M2补充设计
 
 1. **产物定位**：M2（解析+分类）补充设计——由 08 评审识别的"M2 设计空白"经决策形成；对 M2 范围权威，冲突处以本文档为准，并已回写 03/04/05 与 `code/kb-app/docs/`（§14 同步清单）。
 2. **关键内容**：
-   - §0 六项裁决：①分类/embedding 里程碑倒挂→M2 关键词降级；②补 topics 表；③M2 落地 LLM client（两级重试）；④doc_id 全局顺序编号 `D%04d`；⑤M2 做分块并填充 FTS；⑥Runner 串行；
+   - §0 六项裁定：①分类/embedding 里程碑倒挂→M2 关键词降级；②补 topics 表；③M2 落地 LLM client（两级重试）；④doc_id 全局顺序编号 `D%04d`；⑤M2 做分块并填充 FTS；⑥Runner 串行；
    - §2 doc_id 永不复用规则表（新增/修改/移动/重复/删除五情形）；`files.status` 枚举 `{new, active, needs_confirm, duplicate, deleted}`；
    - §3 扫描规则：白名单扩展名、`summaries/` 不入语料库仅作 manifest 源、不跟随符号链接、遵循 .gitignore（引入 pathspec）；
    - §6 分块算法：章节原子、超 2048 字符按段落递归切分、重叠 200、`chunk_id=<doc_id>#c%03d`、重解析按 doc_id 物理删旧重写；
    - §7 降级分类算法：标题命中×3+正文×1、top1≥min_keyword_score(2) 且 top1≥top2×top_ratio(1.5)，否则 `needs_confirm`；`kb index set-topic` 改判入口；
    - §9 LLM 两级重试语义（第一级调用内指数退避 4 轮 1s→2s→4s；第二级 fallback 一主一备最多切换 1 次；全败抛 RetryableError；不做限流）；
    - §11 `kb init` 七条行为（幂等、不覆盖既有文件、播种 topics、不下载模型）。
-3. **上下游衔接**：上游 08 评审"M2 设计空白评估"+ 决策记录；引用 05 §2.1/§4.2、03 §6.1/§9；下游 10 号评审以本文为权威依据逐裁决核对；§14 列出对 05 §1/§2.1/§2.5/§4.0/§10.3、04 §2.1、data-model、milestone-log 的 8 处回写。
-4. **验证机制**：§13 M2 DoD 九项（pytest/ruff 门禁、五格式各 3+ fixtures、幂等重放/移动零重抽取/duplicate 不入队、LLM mock 测试、NFR-4 本机计时）；§14 同步清单逐条可核对；"设计者在细化中做出的判断"九条显式登记（doc_id 位数裁决、关键词表独立、cost 记 NULL 等）。
+3. **上下游衔接**：上游 08 评审"M2 设计空白评估"+ 决策记录；引用 05 §2.1/§4.2、03 §6.1/§9；下游 10 号评审以本文为权威依据逐裁定核对；§14 列出对 05 §1/§2.1/§2.5/§4.0/§10.3、04 §2.1、data-model、milestone-log 的 8 处回写。
+4. **验证机制**：§13 M2 DoD 九项（pytest/ruff 门禁、五格式各 3+ fixtures、幂等重放/移动零重抽取/duplicate 不入队、LLM mock 测试、NFR-4 本机计时）；§14 同步清单逐条可核对；"设计者在细化中做出的判断"九条显式登记（doc_id 位数裁定、关键词表独立、cost 记 NULL 等）。
 5. **演进记录**：修正 05 doc_id 开放表述；消解 03 §4 / 05 §10.3 / data-model 三处分块时点矛盾；依赖 docling→python-docx 替换（M2 实施修订）；PDF 三级判定塌缩为两级（快路径/`no_text`）——该变更后被 10 P1-3 认定为"未登记的设计变更"要求补登记。
 
 ## 8. 10-M2代码评审报告
 
 1. **产物定位**：M2 代码评审——静态审查+全量测试+lint+关键缺陷实机复现；结论"已通过（复核后修复）"，含修复记录（2026-08-14）与评审人独立复核记录。
 2. **关键内容**：
-   - 设计符合性摘要表：09 §0 六裁决、DDL、扫描规则、分块/FTS、降级分类、LLM 重试、init/add/set-topic 逐条"符合/基本符合/不符合"判定；
+   - 设计符合性摘要表：09 §0 六裁定、DDL、扫描规则、分块/FTS、降级分类、LLM 重试、init/add/set-topic 逐条"符合/基本符合/不符合"判定；
    - P0-1 移动文件在同轮 scan 被删除检测墓碑化（旧快照比对；实机复现三行输出）；P0-2 同轮双删触发 `files.path` UNIQUE 约束崩溃（墓碑清空 path/sha256）；
    - P1 三项静默缺失：`summary_stale=1` 检测缺失、`SUMMARY_MANIFEST_MISMATCH` 不报不写、PDF 三级判定塌缩未登记；
    - P2 五项（parse 四 config 未接线、§7.3⑤ LLM 兜底未实现、needs_confirm 残留旧 topic、`action.sha` 字段名崩溃、milestone-log 两处失准）；P3 十项（连接泄漏、litellm 远程 cost map 噪音、09 §9 "1s→2s→4s→8s"文本矛盾等）；
    - 修复记录 21 项 + 15 个新增回归测试；复核记录：174 项测试、两个 P0 实机复现（含墓碑复活场景）、逐项 file:line 取证。
 3. **上下游衔接**：评审依据 09（权威）、05 §1/§2/§4、03 §4/§6.1、milestone-log；下游结论"M2 正式关闭，可进入 M3"；PDF fixtures 与 NFR-4 计时两项 DoD 缺口按原计划延至 M3。
-4. **验证机制**：逐裁决符合性对照表；DoD（09 §13）核查表（❌/⚠️/✅）；修复全部固化 scan 级 e2e 回归（`test_move_preserves_doc_id`、`test_delete_two_files_no_crash` 等）；复核人独立重跑 + 代码取证 + 文档回写抽查；复核中直接订正两处文档残留（05:298 parser 枚举、报告开头测试数）。
+4. **验证机制**：逐裁定符合性对照表；DoD（09 §13）核查表（❌/⚠️/✅）；修复全部固化 scan 级 e2e 回归（`test_move_preserves_doc_id`、`test_delete_two_files_no_crash` 等）；复核人独立重跑 + 代码取证 + 文档回写抽查；复核中直接订正两处文档残留（05:298 parser 枚举、报告开头测试数）。
 5. **演进记录**：暴露 09 §2 两条核心承诺被击穿（"移动保留 doc_id"与"删除墓碑"）；暴露"设计有、代码无、milestone-log 未提"的静默缺失模式；暴露设计文本自相矛盾（09 §9）与依赖变更未回写（P3-7，定性为"M1 fastmcp 教训的同类问题"）。
 
 ## 9. 11-M3补充设计
@@ -145,38 +145,38 @@
    - §2.1 图路确切语义：`norm()` 双向归一化、词边界/子串匹配规则、norm 碰撞取并集、有界化（max_docs=20/max_sections=40）、加权 RRF（w_fts=1.0/w_graph=0.5）、`--topic T` 转前置硬过滤、topic 稀疏退化（NULL 占比高→corpus/doc_type 导航）；
    - §2.2 全文路：chunk→section 聚合取 max(bm25)；短查询双路兜底（CJK LIKE 子串 / ASCII 走 `BUILTIN_SYNONYMS`+`search.synonyms` 扩展，禁裸 LIKE）；
    - §2.3/§2.4 查询扩展与重排：扩展词"并集增召回"（v6 补）、推理模型 token 预算（默认 1024）、输出剥 `<think>` 与围栏（v6 补）；
-   - §3 自动摘要：stale-curated 裁决 (b)（生成临时 auto 摘要但 `summary_source` 保持 curated，provenance 不丢）；伪 chunk `chunk_id=<doc_id>#summary`、`section_path='$summary'`；
+   - §3 自动摘要：stale-curated 裁定 (b)（生成临时 auto 摘要但 `summary_source` 保持 curated，provenance 不丢）；伪 chunk `chunk_id=<doc_id>#summary`、`section_path='$summary'`；
    - §2.6 检索模式与 `--topic` 交互语义表；§10 M3 DoD 十项（含召回抽检 success@10 ≥80% 的样本/指标/阈值定义）。
-3. **上下游衔接**：上游 03 §5.1、05 §2.6/§4.2、09 §7/§9/§10、01 §8；§12 回写清单 11 处（01 §8/FR-3.1/FR-5.1a、02 D3/D4、03 §5.1/§2、04 §2.1、05 §10.3/§4.2/§8、09 §9、README、milestone-log）；下游 12 号评审逐节核对、13 号接收 DoD-7 裁决回收。
+3. **上下游衔接**：上游 03 §5.1、05 §2.6/§4.2、09 §7/§9/§10、01 §8；§12 回写清单 11 处（01 §8/FR-3.1/FR-5.1a、02 D3/D4、03 §5.1/§2、04 §2.1、05 §10.3/§4.2/§8、09 §9、README、milestone-log）；下游 12 号评审逐节核对、13 号接收 DoD-7 裁定回收。
 4. **验证机制**：§10 DoD 十项（六命令 `--help` 与 04 §2.1 逐字一致、检索 e2e 五类用例含假阳性断言、RRF 权重断言、摘要管线行为、embedding 档校验、**召回抽检口径精确定义**（20 条标注查询、success@10 ≥80%、recall@10 附记）、NFR-4 双口径计时）；§13.1–13.4 四轮处置表（每条意见"属实/部分属实"+处置）。
-5. **演进记录**：一轮 P0×3（图路未定义+RRF 粒度不匹配、摘要子特性悬空、无 DoD）；二轮 3 条（图路无界列表淹没 RRF、FR-5.1a 降级未正面裁决、LIKE 对英文 2 字符过匹配）；三轮 6 条（抽检口径、runner summarize 分派、auto_summaries 目录布局、`$summary` 渲染、norm 离线归一、表头笔误）；四轮 4 条（stale-curated provenance、synonyms 播种位置、norm 碰撞、mode 交互）；v6 由 12 号报告 D-1~D-5 实测修复回写。
+5. **演进记录**：一轮 P0×3（图路未定义+RRF 粒度不匹配、摘要子特性悬空、无 DoD）；二轮 3 条（图路无界列表淹没 RRF、FR-5.1a 降级未正面裁定、LIKE 对英文 2 字符过匹配）；三轮 6 条（抽检口径、runner summarize 分派、auto_summaries 目录布局、`$summary` 渲染、norm 离线归一、表头笔误）；四轮 4 条（stale-curated provenance、synonyms 播种位置、norm 碰撞、mode 交互）；v6 由 12 号报告 D-1~D-5 实测修复回写。
 
 ## 10. 12-M3代码评审报告
 
-1. **产物定位**：M3 代码评审——结论"有条件通过"；含修复记录、独立复核，以及**评审人亲自执行的 DoD 测试与闭环**（真实语料 203 文件全量重建 + 真实 LLM 抽检），最终裁决 M3 按基线关闭。
+1. **产物定位**：M3 代码评审——结论"有条件通过"；含修复记录、独立复核，以及**评审人亲自执行的 DoD 测试与闭环**（真实语料 203 文件全量重建 + 真实 LLM 抽检），最终裁定 M3 按基线关闭。
 2. **关键内容**：
    - 设计符合性摘要（11 v5 逐节对照：两路召回/图路/全文路/摘要管线/配置/命令/记账）；
    - P1×6：图路退化触发条件错误（纯关键词查询注入全库最新 20 篇，实机复现）、`--topic` 后置过滤致召回损失、graph 模式忽略 `--topic`、skip-as-done 丢伪 chunk、curated 非 stale 伪 chunk 从未创建、再策展后无清理重建；
    - P2×8（related 推荐 deleted 文档、FTS MATCH 引号未消毒、norm 碰撞提示未实现、LLM 主题词不进图路、embedding 警告接线不全、stale 清单出口未实现、reindex 无缓存短路、入队无去重）；P3×10；
    - DoD 执行结果：success@10 在线档 80.0%→70.0% 压线波动；NFR-4 实测 31 页 PDF 不含摘要 16.2s；门禁 219 passed；
    - 执行中新发现 D-1~D-5：D-1（P0）PDF TOC 分节正文全空（pymupdf4llm `metadata.page` 为 None，80/203 篇零 chunk，修复后 fts_chunks 4041→9182）；D-2（P0）推理模型 `<think>` 混入 content；D-3 扩展/重排预算被推理开销吃光；D-4（P0）扩展词并入 AND 组致零命中→重构为并集增召回；D-5 data_dir 不随环境变量（审计断链）；
-   - misses 归因表（context rot/LLMLingua/AI/图谱 等 6 条）与裁决记录：采纳 (a) 变体，排序三项改进并入 M4（连续两轮 ≥80% 复测门槛）。
-3. **上下游衔接**：评审依据 11 v5、05 §2.6/§5、04 §2.1、01 §8、milestone-log；下游输出：DoD-7 裁决直接触发 13 §3 的 R-1/R-2/R-3 设计；D-4 并集语义回写 11 v6（§2.3）。
+   - misses 归因表（context rot/LLMLingua/AI/图谱 等 6 条）与裁定记录：采纳 (a) 变体，排序三项改进并入 M4（连续两轮 ≥80% 复测门槛）。
+3. **上下游衔接**：评审依据 11 v5、05 §2.6/§5、04 §2.1、01 §8、milestone-log；下游输出：DoD-7 裁定直接触发 13 §3 的 R-1/R-2/R-3 设计；D-4 并集语义回写 11 v6（§2.3）。
 4. **验证机制**：DoD 核查表（登记 vs 评审复核双列）；召回抽检工具链（`scripts/recall_sweep.py` + `tests/integration/fixtures/recall_queries.yaml`，20 条人工标注、四类型分布）；实机计时记录；全量门禁；修复全部配回归测试；复核人实机复现两场景。
-5. **演进记录**：暴露 11 v5 图路边界条件与摘要闭环尾部在实现层走样；D-4 属"设计未定义、评审补设计"（并集增召回语义）；milestone-log 4 处名不副实；暴露"压线指标+LLM 非确定性"的验收稳定性问题并形成裁决机制。
+5. **演进记录**：暴露 11 v5 图路边界条件与摘要闭环尾部在实现层走样；D-4 属"设计未定义、评审补设计"（并集增召回语义）；milestone-log 4 处名不副实；暴露"压线指标+LLM 非确定性"的验收稳定性问题并形成裁定机制。
 
 ## 11. 13-M4补充设计
 
-1. **产物定位**：M4（收窄版）补充设计——基础 MCP 子集（stdio+四只读工具）+ 检索排序质量三项改进（回收 12 号 DoD-7 裁决），"M4 完成即 MVP 达成"；v2 经一轮设计评审修订。
+1. **产物定位**：M4（收窄版）补充设计——基础 MCP 子集（stdio+四只读工具）+ 检索排序质量三项改进（回收 12 号 DoD-7 裁定），"M4 完成即 MVP 达成"；v2 经一轮设计评审修订。
 2. **关键内容**：
    - §0 八项决策：收窄四工具；工具命名与 CLI 同名（`kb_show`/`kb_read`，回写 05 §6 旧名）；命令形态 `kb serve mcp`；SDK 钉 v1；MCP 进程对 registry 只读、**不持应用级写锁**（SQLite busy 归 INTERNAL，LOCK_HELD 留 P1 写工具）；排序三项改进；assemble 走**确定性路径**（不触发 LLM）；R-1 复合 title 契约（存 `{stem} | {章节标题}`、展示/匹配出口剥离 stem）；
    - §2.2 四工具契约表 + 错误码子集五码（DOC_NOT_FOUND 含歧义/SECTION_NOT_FOUND/MODE_NOT_READY/CONFIG_INVALID/INTERNAL）+ 统一错误结构三键 `{code,message,suggestion}`；
    - §3 排序改进 R-1（文档标识 stem 进 FTS，对应 `context rot` miss）/R-2 精确命中保护（`search.exact_boost=1.3`，先 boost 原查询路再并集保 provenance）/R-3 LIKE 路分档（title 1.0/text 0.5）；回归约束：不得改变无扩展词时的既有相对序；
    - §4 `assemble_for_task` 编排（search 不传 llm、4 字符/token、sources 只含实际拼入文档与截断严格一致）；
    - §7 MVP 达成判定（对照 01 §8 逐项终核）。
-3. **上下游衔接**：上游 12 裁决（排序三项回收）、11 §9（M4 收窄范围定义）、05 §6、03 §7、01 §8；§8 回写清单五行（04 §2.1/§4、03 §7.1/§7.3、05 §6/§5.2、README）；下游 14 号评审依据。
-4. **验证机制**：§6 DoD 九项（stdio 握手 e2e 用 MCP client 会话非 mock、四工具契约断言含复合/剥离 title 对立面、错误三码形状断言、未装 extra 显式报错、R-1 实机验证 `context rot` 命中 D0032、在线档连续两轮 ≥80%、组装 <10s、全量门禁、文档同步）；§9 评审处置表（每条附 file:line 取证与裁决）。
-5. **演进记录**：接收并回收 12 号三项 miss 的改进；工具名统一裁决（CLI 与 MCP 同名降低认知差）；R-1 复合 title 为评审裁决 (b) 的新设计（发现 `_enrich`/`section_tree` 会被污染）；LOCK_HELD 语义双关澄清；`exact_boost` 需补 DEFAULTS（评审 P2-4）。
+3. **上下游衔接**：上游 12 裁定（排序三项回收）、11 §9（M4 收窄范围定义）、05 §6、03 §7、01 §8；§8 回写清单五行（04 §2.1/§4、03 §7.1/§7.3、05 §6/§5.2、README）；下游 14 号评审依据。
+4. **验证机制**：§6 DoD 九项（stdio 握手 e2e 用 MCP client 会话非 mock、四工具契约断言含复合/剥离 title 对立面、错误三码形状断言、未装 extra 显式报错、R-1 实机验证 `context rot` 命中 D0032、在线档连续两轮 ≥80%、组装 <10s、全量门禁、文档同步）；§9 评审处置表（每条附 file:line 取证与裁定）。
+5. **演进记录**：接收并回收 12 号三项 miss 的改进；工具名统一裁定（CLI 与 MCP 同名降低认知差）；R-1 复合 title 为评审裁定 (b) 的新设计（发现 `_enrich`/`section_tree` 会被污染）；LOCK_HELD 语义双关澄清；`exact_boost` 需补 DEFAULTS（评审 P2-4）。
 
 ## 12. 14-M4代码评审报告
 
@@ -203,7 +203,7 @@
    - §8 四阶段 DoD（P-A 底座/P-B 流水线+CLI+MCP/P-C Web 三页/P-D 图谱页，任一阶段不过不进入下一阶段）。
 3. **上下游衔接**：上游 02 D2/D10、03 §3/§4、04 §3/§6、05 §2.2/§3.1/§4.4/§6、11 §2.5/§5；下游 16 号开发计划的 Spec 锚点（15 §0/§3–§8）、17 号评审依据；§9 回写清单 12 行（完成时执行，17 §6 逐行核对）。
 4. **验证机制**：§8 阶段 DoD 闸门；§4.3 量化抽检门槛；§3.3 契约测试集（同一套 schema DDL + 固定查询：建点建边/2 跳遍历/最短路径/软删过滤，纳入 CI）；spike 结论记录制度（§6.4 G6 UMD 验证结论与 v2.4 实测注记）；§7 配置键（graph.backend 唯一合法值 ladybug、viz.max_nodes=500 等）。
-5. **演进记录**：v2 曾裁决"H1 消歧改用云服务 API embedding"，v2.3 撤销（D15-11，`embedding.backend` 保持 none）；v2.2 裁决单一选型（覆盖 02 D2 的降级对策）；Schema 从保留 Chunk 节点（v2.1）收敛为四节点四边（v2.3）；04 的 Inbox/设置页/写交互被收窄；11 §2.5 的 related/compare 从文档级推荐升为图遍历语义（行为回归显式登记）。
+5. **演进记录**：v2 曾裁定"H1 消歧改用云服务 API embedding"，v2.3 撤销（D15-11，`embedding.backend` 保持 none）；v2.2 裁定单一选型（覆盖 02 D2 的降级对策）；Schema 从保留 Chunk 节点（v2.1）收敛为四节点四边（v2.3）；04 的 Inbox/设置页/写交互被收窄；11 §2.5 的 related/compare 从文档级推荐升为图遍历语义（行为回归显式登记）。
 
 ## 14. 16-M5M6合并里程碑开发计划
 
@@ -270,18 +270,18 @@
 | 3 | NFR-1 纯本地 | 01 → 02 D2/D7/D11（无降级为服务）→ 03 §6.4/§7.3（HTTP 默认关、绑 127.0.0.1）→ 13 决策 5（MCP 只读不取锁）→ 15 §6.1（viz 恒 127.0.0.1）→ 16 Global Constraints |
 | 4 | D2 图库单一选型 LadybugDB | 02 D2（原含降级对策四层）→ 03 §3 GraphStore 引言 → 05 §3.1 make_graph_store → 07 S8（删属性二级索引）→ 15 D15-10 撤销降级后端 → 16 Task 3/5 → 17 §4 验证 + R-3 修 MERGE 键 |
 | 5 | GraphStore 六方法接口签名 | 05 §3.1 定义（open/upsert_nodes/upsert_edges/query/shortest_path+工厂）→ 15 §3.1"维持 05 §3.1 接口面不变" → 16 Task 3 逐字复用 → 17 §4 store.py 单一后端确认 |
-| 6 | 四节点四边图 Schema | 03 §3.1–3.2 → 05 §2.2 DDL → 07 S3 裁决"软删除只到 Document 级"→ 15 §3.2/D15-2 收敛并附砍除理由表 → 16 Task 2（`test_no_removed_edges` 断言）→ 17 R-3（RELATES_TO MERGE 键补 kind） |
+| 6 | 四节点四边图 Schema | 03 §3.1–3.2 → 05 §2.2 DDL → 07 S3 裁定"软删除只到 Document 级"→ 15 §3.2/D15-2 收敛并附砍除理由表 → 16 Task 2（`test_no_removed_edges` 断言）→ 17 R-3（RELATES_TO MERGE 键补 kind） |
 | 7 | entity_id = type:norm(name) 消歧 | 15 D15-13 定义 → 回写 03 §4 P4 与 05 §4.4 → 16 Task 9（`test_norm_collides`）→ 17 §4（extract.py:65-67 验证；D3 人审"RAG"漏归并记为接受的 MVP 局限） |
 | 8 | RELATES_TO.kind 受控词表（9 值） | 03 §4 P4 定义 → 05 §2.2 → 15 §3.2 → 16 Task 2 `REL_KINDS` 常量 → 17 B2 质量门（kind 最大占比 25%，门槛"无单一类 >70% 坍缩"） |
 | 9 | MCP 工具名与错误结构 | 03 §7.1（含 kb_get_document/kb_read_section）→ 04 §4.3 `{error, suggestion}` → 05 §6 契约表 → 13 决策 2 改名 kb_show/kb_read 并回写 04/05 → 14 §6 回写核对 → 15 §5.2/17 B4 扩展三只读工具 |
 | 10 | SUMMARY_MANIFEST_MISMATCH 错误码 | 06 §4.4 定义（三方一致性机检）→ 07 §3.3 要求收入 05 错误码表 → 05 §6 补 → 09 §5 定为 M2 三职责之一 → 10 P1-2 暴露"不报不写"→ 修复落 `reports/manifest_mismatch_*.json` |
-| 11 | summary_source/summary_stale 字段族 | 05 §2.6 ①②（none/curated/auto + stale）→ 06 §8（sha256 检测标 stale）→ 09 §5（M2 绑定+stale 检测）→ 11 §3.1 stale-curated 裁决 (b)（provenance 保持）→ 12 P1-5/P1-6 补伪 chunk 生命周期闭环 |
+| 11 | summary_source/summary_stale 字段族 | 05 §2.6 ①②（none/curated/auto + stale）→ 06 §8（sha256 检测标 stale）→ 09 §5（M2 绑定+stale 检测）→ 11 §3.1 stale-curated 裁定 (b)（provenance 保持）→ 12 P1-5/P1-6 补伪 chunk 生命周期闭环 |
 | 12 | FTS5 trigram 分词 | 02 D8 决策（不用 unicode61）→ 03 §5.1 → 05 §2.1 fts_chunks DDL → 09 §6（M2 填充时点归一）→ 11 §2.2 短查询双路兜底 → 12 D-1 / 14 N-2（SQLite 版本敏感性：3.38.4 CJK LIKE 失效） |
-| 13 | 召回抽检 success@10 ≥80% | 11 §10-7 定义（20 条标注、指标、阈值）→ 12 实测 80%→70% 压线 + 裁决 (a) 变体 → 13 §3 R-1~R-3 + §6 DoD-6（连续两轮 ≥80%）→ 14 P0-1（未执行待实机）——同一指标跨四份文档演进 |
+| 13 | 召回抽检 success@10 ≥80% | 11 §10-7 定义（20 条标注、指标、阈值）→ 12 实测 80%→70% 压线 + 裁定 (a) 变体 → 13 §3 R-1~R-3 + §6 DoD-6（连续两轮 ≥80%）→ 14 P0-1（未执行待实机）——同一指标跨四份文档演进 |
 | 14 | tasks 表 kind 枚举与 runner 分派 | 05 §2.1 DDL（含 index/extract/tombstone）→ 07 R3 补 stage_tombstone → 09 §10 串行 runner、一文一任务 → 10 P3-6（非 parse 被吞）→ 11 §3.1（runner 按 kind 分派 summarize）→ 15 §4.1"不新增 kind、无 DDL 变更"→ 16 Global Constraints（SCHEMA_VERSION=2 不变） |
 | 15 | RRF 常量（rrf_k=60 / w_fts=1.0 / w_graph=0.5） | 03 §5.1（RRF，k=60）→ 05 §5.1（rrf_k 进 config）→ 11 §2.1 二轮评审增加权与 `search.graph` 配置 → 12 DoD-4 断言权重与章节归并 |
 
-**代表性最强的三个锚点**（供案例分析引用）：#4/#6（图库选型与 Schema 从"多后端+七节点"收敛到"单一后端+四节点四边"，02→03→05→07→15→16→17 全链可追）、#10/#11（摘要体系：06 规范 → 05 机制 → 09 绑定 → 11 stale 裁决 → 12 闭环修复，字段名 `summary_source/summary_stale` 贯穿设计与两轮代码评审）、#13（success@10 指标：11 定义 → 12 实测压线与裁决 → 13 改进回收 → 14 待实机验收，展示"指标生命周期"）。
+**代表性最强的三个锚点**（供案例分析引用）：#4/#6（图库选型与 Schema 从"多后端+七节点"收敛到"单一后端+四节点四边"，02→03→05→07→15→16→17 全链可追）、#10/#11（摘要体系：06 规范 → 05 机制 → 09 绑定 → 11 stale 裁定 → 12 闭环修复，字段名 `summary_source/summary_stale` 贯穿设计与两轮代码评审）、#13（success@10 指标：11 定义 → 12 实测压线与裁定 → 13 改进回收 → 14 待实机验收，展示"指标生命周期"）。
 
 ---
 
