@@ -2,10 +2,12 @@
 // 默认 observe（只记日志）；enforce 模式经 .pi/eval-hygiene.config.json 开启。
 // 职责（物理隔离约定之上的残余通道）：①禁读定稿报告目录；②git 命令形态（定位仅 diff --stat）；③框架会话路径。
 // 会话产物自许可：本会话 write 工具创建的文件自动放行（补3 备选机制，临时目录不可用时）。
+import { readFileSync } from "node:fs";
+
 export default function (pi: any) {
   const cfgPath = ".pi/eval-hygiene.config.json";
   let cfg: any = { mode: "observe", deny_globs: ["reviews-final/**"], framework_deny: ["~/.pi/agent/sessions"] };
-  try { cfg = { ...cfg, ...JSON.parse(Deno.readTextFileSync(cfgPath)) }; } catch { /* 默认配置 */ }
+  try { cfg = { ...cfg, ...JSON.parse(readFileSync(cfgPath, "utf-8")) }; } catch (e) { console.error(`[eval-hygiene] 配置加载失败，用默认: ${e}`); }
 
   const sessionArtifacts = new Set<string>(); // 会话产物（write 目击创建）
   const log = (kind: string, msg: string) => console.error(`[eval-hygiene:${cfg.mode}:${kind}] ${msg}`);
@@ -38,7 +40,7 @@ export default function (pi: any) {
       // git 形态：定位仅放行 diff <X>^ <X> --stat；含 $EVAL_FIX_HASH 的其他 git 命令拦截
       const fix = cfg.fix_hash ?? Deno.env.get("EVAL_FIX_HASH");
       if (fix && /git\s+(show|log|diff)/.test(c) && c.includes(fix)) {
-        const isLocate = new RegExp(`git\s+diff\s+\S*${fix}\^?\s*${fix}\s+--stat`).test(c);
+        const isLocate = new RegExp(String.raw`git\s+diff\s+\S*${fix}\^?\s*${fix}\s+--stat`).test(c);
         if (!isLocate) return forbid(`git 命令含修复提交 ${fix}（定位仅限 diff --stat 形态）`);
       }
       if (hitGlob(c) && !/git\s+(diff|show)/.test(c)) return forbid("bash 访问禁读目录");
