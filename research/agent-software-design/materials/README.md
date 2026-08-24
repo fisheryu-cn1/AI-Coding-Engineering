@@ -36,6 +36,7 @@
 | Agent 设计范式学术梳理（2026-08-16） | `materials/agent范式-学术梳理.md` | 20+ 篇文献（综述/ReAct 等经典范式/多智能体/失败模式/benchmark 边界）的结构化梳理，附范式选型决策框架——子问题 A 的理论框架素材 |
 | 工业框架设计对比（2026-08-17） | `materials/agent框架-工业设计对比.md` | 7 个主流框架（LangGraph/AutoGen/CrewAI/OpenAI Agents SDK/ADK/AgentScope/smolagents）按核心抽象/控制流/状态管理/适用场景对比 + 5 篇设计观点文章（Anthropic、Cognition、12-Factor 等）——"框架把什么固化、留给用户什么"的证据基础 |
 | 软件工程原理与 LLM 系统（2026-08-17） | `materials/软件工程原理与LLM系统.md` | 经典原理（Parnas/Brooks/CBSE/形式化规约）与 "LLM 作为组件"新文献（prompt-as-spec、evals、metamorphic testing、neuro-symbolic）的对照梳理——"prompt 作为规约"类比的理论基础 |
+| harness 与冯诺依曼架构类别关系（2026-08-21） | `materials/harness与冯诺依曼架构类别关系.md` | 源码级映射表（LLM=控制单元/上下文=RAM/KV cache=带TTL缓存/steering=中断/skills=懒加载库）＋业内评价（Karpathy 谱系、冯诺依曼瓶颈倒置批评）＋设计意见四派＋替代架构五路线（黑板/主动推理/workflow/PTM 形式谱系）——子问题 A 的架构学定位；E≪W 的独立外部印证 |
 
 > 2026-08-17：上表及学术梳理中引用的 36 篇 arXiv 论文全文已入库 `references/AgentParadigms/`（26 篇）与 `references/SEforLLM/`（10 篇），下载校验见 `references/arxiv_2026-08_manifest.md`；全部摘要已按 `design/kb-app/06-摘要构建与命名规范.md` 完成**全文精读级**重写（frontmatter + 五段 + §锚点 + 精读标记，summary_version 3.0），索引见各主题 `summaries/INDEX.md`。精读核实修正了 4 处转述误差（MAST v3 占比、More Agents 无 COVER/CONF、SAS/MAS 级联精确数字、18 号框架名单与结论），已回填学术梳理材料。
 
