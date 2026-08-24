@@ -1,6 +1,6 @@
 # AgentParadigms 参考资料目录
 
-本目录收集 Agent 设计范式论文：综述框架、经典范式原始论文（ReAct / Reflexion / ToT / plan 类 / 认知架构）、多智能体协作范式、失败模式与 benchmark 边界研究。2026-08-17 批次入库（26 篇，来源：research 理论框架调研材料引用）并同日完成全文精读（摘要精读级 v3.0），下载校验见 [`../arxiv_2026-08_manifest.md`](../arxiv_2026-08_manifest.md)。
+本目录收集 Agent 设计范式论文：综述框架、经典范式原始论文（ReAct / Reflexion / ToT / plan 类 / 认知架构）、多智能体协作范式、失败模式与 benchmark 边界研究。2026-08-17 批次入库（26 篇，来源：research 理论框架调研材料引用）并同日完成全文精读（摘要精读级 v3.0）；2026-08-21 增补批次（4 篇：黑板×2 + 主动推理×2，来源：harness×冯诺依曼类别关系材料引用），下载校验均见 [`../arxiv_2026-08_manifest.md`](../arxiv_2026-08_manifest.md)。
 
 ## 文件清单
 
@@ -32,6 +32,10 @@
 | `24-Barres-TAU2_Bench_Dual_Control_v1.pdf` | τ²-bench：双控环境协调能力测量 |
 | `25-Mialon-GAIA_v1.pdf` | GAIA：通用助手基准（人类 92% vs GPT-4 15%） |
 | `26-Xie-OSWorld_v2.pdf` | OSWorld：真实计算机 GUI 环境基准（NeurIPS 2024 D&B） |
+| `27-Han-Blackboard_Advanced_MAS_v1.pdf` | 黑板架构 LLM 多智能体——黑板取代 memory + 控制单元调度（六基准平均 81.68） |
+| `28-Salemi-Blackboard_Information_Discovery_v2.pdf` | 黑板广播 + 自愿应答的数据发现系统（vs 主从式受控对照，规模越大增益越大） |
+| `29-Wen-Missing_Reward_ActiveInference_v1.pdf` | 以主动推理内在自由能取代外部 reward 的概念论文（有公式伪代码、无实验） |
+| `30-Raffa-FEP_ActiveInference_NeuralLM_CEUR3923.pdf` | FEP 与神经语言模型接口的概念短文（被动生成 vs 主动行动边界，CEUR Vol-3923） |
 
 摘要索引见 [`summaries/INDEX.md`](summaries/INDEX.md)（含阅读路线与研究方向关联）。
 

@@ -1,6 +1,6 @@
 # SEforLLM 参考资料目录
 
-本目录收集"软件工程 × LLM 系统"论文：LLM 作为软件构件、prompt 作为规约（promptware）、evals/蜕变测试、神经符号混合架构、AI 编码生产力与质量实证。2026-08-17 批次入库（10 篇，来源：research 理论框架调研材料引用）并同日完成全文精读（摘要精读级 v3.0），下载校验见 [`../arxiv_2026-08_manifest.md`](../arxiv_2026-08_manifest.md)。
+本目录收集"软件工程 × LLM 系统"论文：LLM 作为软件构件、prompt 作为规约（promptware）、evals/蜕变测试、神经符号混合架构、AI 编码生产力与质量实证。2026-08-17 批次入库（10 篇，来源：research 理论框架调研材料引用）并同日完成全文精读（摘要精读级 v3.0）；2026-08-21 增补批次（2 篇：Claude Code 源码级设计空间分析 + transformer 表达力上界，来源：harness×冯诺依曼类别关系材料引用），下载校验均见 [`../arxiv_2026-08_manifest.md`](../arxiv_2026-08_manifest.md)。
 
 ## 文件清单
 
@@ -16,6 +16,8 @@
 | `08-Mao-Protocol_Driven_Multi_Agent_v1.pdf` | 协议驱动多智能体工程（借用 Design by Contract） |
 | `09-Becker-METR_RCT_AI_Dev_Productivity_v2.pdf` | METR RCT：资深开发者用 AI 反慢 19% |
 | `10-Mujahid-GenAI_Self_Admitted_Tech_Debt_v1.pdf` | GenAI 诱导的自认技术债（"TODO: Fix the Mess Gemini Created"） |
+| `11-Liu-Dive_into_Claude_Code_v2.pdf` | Claude Code v2.1.88 源码级设计空间分析（queryLoop 单循环/五层压缩/CLAUDE.md user-context 注入/子代理 sidechain） |
+| `12-Merrill-Parallelism_Tradeoff_v4.pdf` | 对数精度 transformer ⊆ logspace-uniform TC⁰（TACL 2023）——"裸 LLM 非图灵完备、agent 框架恢复图灵等价"论断的理论依据 |
 
 摘要索引见 [`summaries/INDEX.md`](summaries/INDEX.md)。
 

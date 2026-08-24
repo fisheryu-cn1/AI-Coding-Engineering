@@ -51,3 +51,18 @@
 - arXiv 版本可能继续更新；若出现新版，保留当前文件并在本台账中新增版本记录，不覆盖历史文件。
 - 再分发许可以对应 arXiv 页面 license 为准；本台账不替代版权判断。
 - 标准格式哈希清单见 [`arxiv_2026-08_SHA256SUMS`](arxiv_2026-08_SHA256SUMS)；摘要索引见各主题 `summaries/INDEX.md`。
+
+## 2026-08-21 增补批次（harness×冯诺依曼类别关系检索入库）
+
+> 来源：`research/agent-software-design/materials/harness与冯诺依曼架构类别关系.md` 引用的论文（研究者指示入库）。元数据均经 arXiv API 核对（标题/作者/版本）；CEUR 一篇为工作坊短文。入库前核对修正一处误记：Merrill & Sabharwal《The Parallelism Tradeoff》正确编号为 2207.00729（初记 2302.01159 经核实为 Kerr 测地线物理论文，未下载）；另 2505.05794 实际主题为光子芯片硬件（引用材料已同步修正表述）。Parr 等的"Language Model Programs as Markov Chains"因 arXiv 三路检索未核实到条目，按"转述级不可作最终引用"纪律**未入库**，引用处已降级标注。
+
+| arXiv ID | Version | Title | Authors | Published | Updated | Local PDF | Bytes | SHA-256 |
+|---|---|---:|---|---|---|---|---:|---|
+| 2507.01701 | v1 | Exploring Advanced LLM Multi-Agent Systems Based on Blackboard Architecture | Bochen Han; Songmao Zhang | 2025-07-02 | 2025-07-02 | [AgentParadigms/27-Han-Blackboard_Advanced_MAS_v1.pdf](AgentParadigms/27-Han-Blackboard_Advanced_MAS_v1.pdf) | 3896075 | `b0fa397ba8d056df2afb78ca11f42d1968883f4d9679f866010d29208aade9e2` |
+| 2510.01285 | v2 | LLM-Based Multi-Agent Blackboard System for Information Discovery in Data Science | Alireza Salemi; Mihir Parmar; Palash Goyal; Yiwen Song; Jinsung Yoon; Hamed Zamani; Tomas Pfister; Hamid Palangi | 2025-09-30 | 2026-01-31 | [AgentParadigms/28-Salemi-Blackboard_Information_Discovery_v2.pdf](AgentParadigms/28-Salemi-Blackboard_Information_Discovery_v2.pdf) | 2861833 | `333545f7d918b877eb02579a04da724b0823e7886f232983453975797f5b19be` |
+| 2508.05619 | v1 | The Missing Reward: Active Inference in the Era of Experience | Bo Wen | 2025-08-07 | 2025-08-07 | [AgentParadigms/29-Wen-Missing_Reward_ActiveInference_v1.pdf](AgentParadigms/29-Wen-Missing_Reward_ActiveInference_v1.pdf) | 331680 | `3c7399319f55f493369d0d8141b4e782bc1d3fcf6ce53513bfd0322ff1562295` |
+| (CEUR Vol-3923) | — | Free Energy Principle and Active Inference in Neural Language Models (short paper) | Maria Raffa; Alessandro Acciai | 2025 | — | [AgentParadigms/30-Raffa-FEP_ActiveInference_NeuralLM_CEUR3923.pdf](AgentParadigms/30-Raffa-FEP_ActiveInference_NeuralLM_CEUR3923.pdf) | 225047 | `c977e06680d7221009e87af44810d2479a0c825b8ed96d5afbf385bb4234e077` |
+| 2607.25076 | v1 | Towards an Agent Operating System - Lessons from Classical and Cloud OS | Gosia Steinder; Hubertus Franke | 2026-07-27 | 2026-07-27 | [AIOS/12-Towards-an-Agent-OS-Lessons-Classical-Cloud.pdf](AIOS/12-Towards-an-Agent-OS-Lessons-Classical-Cloud.pdf) | 2457636 | `1e28ff86bfb848af7cf4f78f4d23b0bc3bfcb66ad31c65fdf79328f7127a25f2` |
+| 2505.05794 | v1 | What Is Next for LLMs? Next-Generation AI Computing Hardware Using Photonic Chips | Renjie Li; Wenjie Wei; Qi Xin; et al. | 2025-05-09 | 2025-05-09 | [AIOS/13-NextGen-LLM-Computing-Photonic-Chips.pdf](AIOS/13-NextGen-LLM-Computing-Photonic-Chips.pdf) | 13274166 | `a922d91cca24e32dc7bde574f0774fc3f7a77b52a6eee538fe887a5811b39b5e` |
+| 2604.14228 | v2 | Dive into Claude Code: The Design Space of Today's and Future AI Agent Systems | Jiacheng Liu; Xiaohan Zhao; Xinyi Shang; Zhiqiang Shen | 2026-04-14 | 2026-07-02 | [SEforLLM/11-Liu-Dive_into_Claude_Code_v2.pdf](SEforLLM/11-Liu-Dive_into_Claude_Code_v2.pdf) | 1482672 | `7fe2e84a71dc76836a9dd015bcbc52a9cb46c23fa47106c731478e107fb0f255` |
+| 2207.00729 | v4 | The Parallelism Tradeoff: Limitations of Log-Precision Transformers | William Merrill; Ashish Sabharwal | 2022-07-02 | 2023-04-26 | [SEforLLM/12-Merrill-Parallelism_Tradeoff_v4.pdf](SEforLLM/12-Merrill-Parallelism_Tradeoff_v4.pdf) | 470391 | `f0d4a82729a0284d276dbbc4527fb63b632112112cbcc7c902914eaafc6fe891` |

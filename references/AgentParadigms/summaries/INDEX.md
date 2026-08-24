@@ -1,8 +1,8 @@
 # AgentParadigms 主题论文摘要索引
 
 > 主题：Agent 设计范式——综述框架、经典范式原始论文、多智能体协作、失败模式与 benchmark 边界
-> 文件数：26
-> 生成日期：2026-08-17（同日完成全文精读，摘要均为精读级 summary_version 3.0）
+> 文件数：30（2026-08-21 增补黑板×2 + 主动推理×2，见 manifest 增补节）
+> 生成日期：2026-08-17（同日完成全文精读，摘要均为精读级 summary_version 3.0）；2026-08-24 增补 27/28（黑板架构谱系，summary_version 1.0）
 
 ## 论文列表
 
@@ -34,16 +34,23 @@
 | 24 | [24-TAU2双控协调基准.md](24-TAU2双控协调基准.md) | τ²-bench | 双控环境：协调独立于推理 |
 | 25 | [25-GAIA通用助手基准.md](25-GAIA通用助手基准.md) | GAIA: A Benchmark for General AI Assistants | 通用助手基准（人类 92% vs GPT-4 15%） |
 | 26 | [26-OSWorld计算机环境基准.md](26-OSWorld计算机环境基准.md) | OSWorld | 真实计算机 GUI 环境（人类 72% vs 模型 12%） |
+| 27 | [27-黑板架构高级多智能体.md](27-黑板架构高级多智能体.md) | Exploring Advanced LLM Multi-Agent Systems Based on Blackboard Architecture | 黑板 MAS 首个 LLM 实现（黑板取代 memory + 动态调度） |
+| 28 | [28-黑板多智能体信息发现.md](28-黑板多智能体信息发现.md) | LLM-based Multi-Agent Blackboard System for Information Discovery in Data Science | 黑板广播 + 自愿应答（数据发现，vs 主从式 +13%~57%） |
+| 29 | [29-缺失的奖励经验时代的主动推理.md](29-缺失的奖励经验时代的主动推理.md) | The Missing Reward: Active Inference in the Era of Experience | 以内在自由能最小化取代外部 reward 的概念论文（有公式伪代码、无实验） |
+| 30 | [30-神经语言模型的自由能与主动推理.md](30-神经语言模型的自由能与主动推理.md) | Free Energy Principle and Active Inference in Neural Language Models (short) | FEP×NLM 接口的概念定义（被动生成 vs 主动行动的边界，CEUR 短文） |
 
 ## 推荐先读
 
 - **综述三件套**：01 → 02 → 03（组件框架 → SE 任务矩阵 → 工程过程支柱）
 - **范式谱系**：05（ReAct 循环）→ 06（反思外循环）→ 08（静态计划）→ 09（DAG 并行）→ 07（树搜索）
 - **多智能体**：11 → 12 → 13（三原语）→ 15（失败分类）→ 16 → 17 → 18（SAS/MAS 收敛链）
+- **黑板替代路线**：27（黑板=共享内存 + 控制单元调度）→ 28（黑板=广播信道 + 全员自主）——两者互为谱系对照
+- **主动推理路线**：29（EFE 目标函数与控制回路骨架）→ 30（FEP×NLM 概念边界）——工程成熟度评估见摘要：有公式、无系统、无实验
 - **可靠性**：19（self-conditioning）→ 20（时间地平线）→ 23（pass^k）
 
 ## 与 GraphIt-KB 的相关性
 
 - 本主题是 `research/agent-software-design/` 理论框架 v0.2 的文献底座（三层骨架/两维范式/MAST 证据链/benchmark 边界），GraphIt-KB 检索层可借此回答 agent 设计类问题。
 - 15（MAST）与 19（self-conditioning）直接支撑"验证组件与分段检查点是必备件"的架构判断；20/23 提供评估口径（时间地平线、pass^k），可借鉴为 GraphIt-KB 评分模块的可靠性指标设计。
+- 27/28（黑板谱系）支撑 `research/agent-software-design/materials/harness与冯诺依曼架构类别关系.md` 的"黑板折中派"论证——共享结构化状态对象对"传话游戏"（上下文碎片化）的解法，与本研究"文档传递式协同"的独立收敛互证。
 - 深度精读版梳理见 `research/agent-software-design/materials/agent范式-学术梳理.md`。

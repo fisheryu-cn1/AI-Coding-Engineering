@@ -1,8 +1,8 @@
 # AIOS 主题论文摘要索引
 
 > 主题：LLM Agent 操作系统、Agent 基础设施与 Harness 演化
-> 文件数：12
-> 生成日期：2026-08-12
+> 文件数：14
+> 生成日期：2026-08-12（2026-08-24 增补 12、13）
 
 ## 论文列表
 
@@ -20,12 +20,16 @@
 | 09 | [09-RepoRescue_兼容性救援评测.md](09-RepoRescue_兼容性救援评测.md) | RepoRescue: An Empirical Study of LLM Agents on Whole-Repository Compatibility Rescue | 仓库级兼容性救援评测 |
 | 10 | [10-Agent_Harness演化与质量回归.md](10-Agent_Harness演化与质量回归.md) | Don't Blame the LLM: How Agent Harness Evolution Shapes Coding Agent Quality | Harness 演化决定 Agent 质量（关键反直觉发现） |
 | 11 | [11-ICAE_Bench交互式项目构建评测.md](11-ICAE_Bench交互式项目构建评测.md) | ICAE-Bench: Evaluating Coding Agents as Interactive Project Builders | 交互式项目构建的 Agent 评测基准 |
+| 12 | [12-走向代理操作系统.md](12-走向代理操作系统.md) | Towards an Agent Operating System - Lessons from Classical and Cloud OS | Agent-OS 标准化纲领：13 原语 + 语义鸿沟方法论 |
+| 13 | [13-下一代LLM计算光子芯片.md](13-下一代LLM计算光子芯片.md) | What Is Next for LLMs? Next-Generation AI Computing Hardware Using Photonic Chips | 光子芯片 LLM 硬件综述（冯·诺依曼瓶颈仅限硬件层论述） |
 
 ## 推荐先读
 
 - **想理解 LLM OS 愿景**：先读 01 → 02 → 03
 - **想理解 Harness/Agent 演化与质量**：10 → 07 → 08 → 11
 - **想要评测基准**：11 → 09；09 + 11 = 不同粒度的评测
+- **想理解 OS 类比的学术工程化谱系与边界**：01 → 02 → 12（12 给出"harness≈OS"类比的语义条件与失效边界）
+- **要核实冯·诺依曼瓶颈的硬件层论述**：13（§4.1 / §7.1）
 
 ## 与 GraphIt-KB 的相关性
 
