@@ -18,6 +18,7 @@
 | dshfind 插件超市 | https://dshfind.com/zh/plugins | DSH 插件目录（含 RAG、subagent 管理、技能加载器等），观察"第三方组件"实际形态 |
 | awesome-dsh-plugin | https://awesome-dsh-plugin.com/ | 500+ 条 DSH 插件清单，可做插件分类统计，归纳生态中已验证的组件类别 |
 | Pi Mono Explained | https://hoangyell.com/pi-mono-explained/ | 第三方解读："反框架"设计哲学，理解 pi 定制边界的补充视角 |
+| oh-my-pi（omp） | https://github.com/can1357/oh-my-pi | pi 的 fork+增强路线代表（subagents/LSP/advisor），其 /review reviewer 子代理与本项项目评审 skill 的对比见 `materials/ohmypi-reviewer机制对比.md`——分区并行 vs 重复采样、框架提示词 vs 可迭代资产、过程内 vs 阶段间三组对照 |
 
 ## 调研产出（2026-08-17，台账 #1/#2/#3）
 
