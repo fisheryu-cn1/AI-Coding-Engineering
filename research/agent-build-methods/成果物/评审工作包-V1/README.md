@@ -50,12 +50,14 @@ skill 与模板均为纯 Markdown（框架无关）；pi 特有件两处：守�
 
 ## 6. 源头声明与修订
 
+> 收档注记（2026-08-25）：下表路径已按收档后布局更新（项目整体收档至 `research/agent-build-methods/`）。
+
 | 组件 | 修订源头 |
 |---|---|
-| skill 及全部模板 | `research/custom-agent/experiments/review-pi/.pi/…`（CHANGELOG 记版本） |
-| 方法总纲 | `research/custom-agent/评审工作方法总纲-V1.md` |
-| 规约-验证对 | `research/agent-software-design/experiments/03-…md` |
-| 评估工具 | `research/custom-agent/experiments/review-pi/scripts/score_review.py` |
+| skill 及全部模板 | `research/agent-build-methods/过程记录/custom-agent/experiments/review-pi/.pi/…`（CHANGELOG 记版本） |
+| 方法总纲 | `research/agent-build-methods/成果物/方法与规范/评审工作方法总纲-V1.md` |
+| 规约-验证对 | `research/agent-build-methods/成果物/方法与规范/03-规约-验证对实例化.md` |
+| 评估工具 | `research/agent-build-methods/过程记录/custom-agent/experiments/review-pi/scripts/score_review.py` |
 
 修订流程：改源头 → 源头 CHANGELOG 登记 → 重新打包（本目录整体替换）并更新本 README 版本号。
 
