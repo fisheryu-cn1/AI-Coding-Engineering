@@ -1,10 +1,10 @@
 # ContextEngineering 主题论文摘要索引
 
 > 主题：上下文工程——长上下文、编码 Agent 上下文、提示压缩
-> 文件数：44（01–30 主目录 + 31–44 PromptCompression 子目录）
+> 文件数：45（01–30、45 主目录 + 31–44 PromptCompression 子目录）
 > 生成日期：2026-08-12（07 号另有 2026-08-17 增补的 v2 版本 PDF）
 
-## 第一部分：长上下文与上下文工程（01–30）
+## 第一部分：长上下文与上下文工程（01–30、45）
 
 ### 长上下文窗口与失效（01–06）
 
@@ -61,6 +61,12 @@
 | 29 | [29-上下文文件帮助.md](29-上下文文件帮助.md) | Do Context Files Help Coding Agents? A Two-Agent Ablation Study | 上下文文件的双 Agent 消融 |
 | 30 | [30-注册表到仓库.md](30-注册表到仓库.md) | From Registry to Repository: How AI Agent Skills Are Written, Adapted, and Maintained | AI 技能从注册表到仓库 |
 
+### 上下文文件实证（45，2026-08-25 增补）
+
+| # | 摘要文件 | 原论文标题 | 一句话定位 |
+|---|---|---|---|
+| 45 | [45-评测AGENTSMD上下文文件.md](45-评测AGENTSMD上下文文件.md) | Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents? | AGENTS.md 三设置大规模对照：不提成功率、成本 +20% |
+
 ## 第二部分：提示压缩（31–44，子目录 PromptCompression/）
 
 ### 经典方法（31–36）
@@ -97,6 +103,7 @@
 - **理解长上下文窗口的真相**：01 → 02 → 06 → 03（"MECW → U 形曲线 → 上下文腐烂 → 退化阈值"）
 - **理解 Agent 上下文工程全貌**：18（综述）→ 11（Harness Native）→ 17 / 20（代码库记忆 / TokenMizer）→ 23（ContextSniper）
 - **理解 SWE Agent 与仓库交互**：12（基准）→ 13 / 14（图谱 / Agent）→ 15（无 Agent）→ 16（CodeRAG）
+- **评估 context file 的真实收益**：45（4 agent×三设置大规模对照）→ 07（效率影响）→ 29（双 Agent 消融）（"成本 +20% 不提性能 → 效率维度 → 机制消融"）
 - **理解提示压缩的演进**：31（基线）→ 32（长上下文）→ 33（任务无关）→ 34 / 35（替代路线）→ 42（综述）→ 43 / 44（工具 + 实证）
 
 ## 与 GraphIt-KB 的相关性
@@ -106,3 +113,4 @@
 - 论文 11 / 17 / 20 直接支撑"Agent 长程上下文/记忆"的概念建模，与 GraphIt-KB 的"章节级图谱 + 主题质心 + 主题冷启动"机制呼应。
 - 论文 27 / 28（ARC / ACM）提供"压缩+遗忘"机制，与 NFR-3 的"原文不可变"约束互补。
 - 论文 31–44 系列是 GraphIt-KB 未来"上下文组装"模块的可选压缩后端参考。
+- 论文 45（AGENTS.md 评测）警示：KB 向 Agent 注入的摘要/上下文也应以"任务级收益"严格评测（本篇的三设置对照 + trace 分析即范式），而非默认"多上下文更好"。

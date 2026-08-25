@@ -57,6 +57,12 @@ references/ContextEngineering/
 |---|---|---|
 | 07 | `07-Lulla-Impact_of_AGENTS_md_v2.pdf` | 07 号论文（arXiv:2601.20404）的 v2 版本记录（v1 原文件保留）。下载校验信息见 [`../arxiv_2026-08_manifest.md`](../arxiv_2026-08_manifest.md) |
 
+### 2026 年 8 月 25 日增补
+
+| 编号 | 文件 | 主题 |
+|---|---|---|
+| 45 | `45-Gloaguen-Evaluating_AGENTS_md_v2.pdf` | 评测 AGENTS.md：context files 对任务成功率与成本的影响（ETH；与 07/29 构成 context files 有效性证据链；来源：人机可读性分离点两轮讨论；摘要已依 06-规范生成） |
+
 ### G 组：Prompt 压缩专题（独立子目录）
 
 为了避免主目录 PDF 数量膨胀，专门建立 [`PromptCompression/`](PromptCompression/) 子目录聚焦「**本地小模型前置处理、削减无效 Token、完善提示词完整性**」方向：
@@ -93,6 +99,7 @@ references/ContextEngineering/
 | E 组 | 2026 年 6 月新增：Agent 记忆与上下文管理 | 20–22 |
 | F 组 | 2026 年 7 月新增：仓库上下文、压缩与 Agent Skills | 23–30 |
 | G 组 | **Prompt 压缩专题（独立子目录）** | 31–44（见 `PromptCompression/`） |
+| H 组 | 2026 年 8 月 25 日新增：context files 有效性 | 45 |
 
 ## 使用建议
 
