@@ -1,0 +1,14 @@
+@startuml
+class Borrower {
+  +id : String
+  +name : String
+  +income : Decimal
+}
+class LoanOrder {
+  +id : String
+  +amount : Decimal
+  +status : OrderStatus
+}
+enum OrderStatus { draft pending approved rejected active closed }
+Borrower "1" --> "0..*" LoanOrder : places
+@enduml

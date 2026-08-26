@@ -1,0 +1,11 @@
+@prefix loan: <http://example.org/loan#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+loan:BorrowerShape a sh:NodeShape ;
+  sh:targetClass loan:Borrower .
+loan:LoanOrderShape a sh:NodeShape ;
+  sh:targetClass loan:LoanOrder .
+loan:OrderStatusShape a sh:NodeShape ;
+  sh:targetClass loan:OrderStatus ;
+  sh:property [ sh:path [ sh:inversePath loan:hasOrderStatus ] ] .
