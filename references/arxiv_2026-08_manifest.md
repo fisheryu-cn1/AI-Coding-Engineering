@@ -84,3 +84,11 @@
 | 2604.10392 | v1 | Intent-aligned Formal Specification Synthesis via Traceable Refinement | Zhe Ye; Aidan Z. H. Yang; Huangyuan Su; et al. | 2026-04-12 | 2026-04-12 | [FormalMethodsLLM/03-Ye-Intent_Aligned_Formal_Spec_v1.pdf](FormalMethodsLLM/03-Ye-Intent_Aligned_Formal_Spec_v1.pdf) | 838145 | `eec6cf20d1146cf2ebd80c3c96d5f991eac54fb7571a9f928ac9332b7a25663c` |
 | 2601.12845 | v1 | Automatic Generation of Formal Specification and Verification Annotations Using LLMs and Test Oracles | João Pascoal Faria; Emanuel Trigo; Vinicius Honorato; Rui Abreu | 2026-01-19 | 2026-01-19 | [FormalMethodsLLM/04-Faria-Dafny_Annotations_Test_Oracles_v1.pdf](FormalMethodsLLM/04-Faria-Dafny_Annotations_Test_Oracles_v1.pdf) | 1648815 | `b0c6c27e95d9a4bbc49bb4fbb571fc2b63efb9c4c4b503d7bc6b8ee8f40225ae` |
 | 2608.09919 | v1 | Detecting Behavioral Changes in Python Refactoring Implementations with Foundation Models | Jonhnanthan Oliveira; Rohit Gheyi; Márcio Ribeiro; Alessandro Garcia | 2026-08-10 | 2026-08-10 | [FormalMethodsLLM/05-Oliveira-Behavioral_Changes_Refactoring_FM_v1.pdf](FormalMethodsLLM/05-Oliveira-Behavioral_Changes_Refactoring_FM_v1.pdf) | 747881 | `3783ff9ab61ecaa3e629d8a1bb11fb14c92126f5023bb8a1efdd553c807fe82d` |
+
+## 2026-08-26 增补（trae-agent 论文入库）
+
+> 来源：Qoder/CodeBuddy/Trae 三家纳入研究范围的讨论中发现——字节开源 trae-agent 的配套论文是"同任务多轮独立采样再归并"（ensemble reasoning）的首个 agent 化实现与 SOTA 证据（SWE-bench Verified 75.20% 第一，2025-07），据此修正了"该方向全线缺位"的研究判断。元数据经 arXiv API 核对；PDF 经 pypdf 完整性验证；摘要依 06-规范基于全文精读生成。
+
+| arXiv ID | Version | Title | Authors | Published | Updated | Local PDF | Bytes | SHA-256 |
+|---|---|---|---|---|---|---|---:|---|
+| 2507.23370 | v1 | Trae Agent: An LLM-based Agent for Software Engineering with Test-time Scaling | Trae Research Team; Pengfei Gao; Zhao Tian; et al. | 2025-07-31 | 2025-07-31 | [AgentParadigms/31-TraeAgent-Test_Time_Scaling_v1.pdf](AgentParadigms/31-TraeAgent-Test_Time_Scaling_v1.pdf) | 6081225 | `14c484acc76c08a70a0db90bc2179a0d63d90360d28c414df2872b8ff4929306` |

@@ -1,0 +1,113 @@
+{
+  "files" : [ {
+    "path" : "SKILL.md",
+    "name" : "SKILL.md",
+    "nodeType" : "FILE",
+    "parentPath" : "",
+    "contentType" : "application/octet-stream",
+    "size" : 10697,
+    "checksum" : "b10c14e99e2b241a8ad9df833b90711f",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/SKILL.md",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  }, {
+    "path" : "manifest.json",
+    "name" : "manifest.json",
+    "nodeType" : "FILE",
+    "parentPath" : "",
+    "contentType" : "application/octet-stream",
+    "size" : 4180,
+    "checksum" : "72c6fb40f532246e705871cda627529d",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/manifest.json",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  }, {
+    "path" : "scripts",
+    "name" : "scripts",
+    "nodeType" : "DIRECTORY",
+    "parentPath" : "",
+    "contentType" : null,
+    "size" : null,
+    "checksum" : null,
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/scripts",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  }, {
+    "path" : "scripts/frame-template.html",
+    "name" : "frame-template.html",
+    "nodeType" : "FILE",
+    "parentPath" : "scripts",
+    "contentType" : "text/html",
+    "size" : 7703,
+    "checksum" : "b84f721842a76863e21074fb607b03d5",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/scripts/frame-template.html",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  }, {
+    "path" : "scripts/helper.js",
+    "name" : "helper.js",
+    "nodeType" : "FILE",
+    "parentPath" : "scripts",
+    "contentType" : "application/octet-stream",
+    "size" : 2707,
+    "checksum" : "cef288b6b4543910ffc7826c3a036a55",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/scripts/helper.js",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  }, {
+    "path" : "scripts/server.cjs",
+    "name" : "server.cjs",
+    "nodeType" : "FILE",
+    "parentPath" : "scripts",
+    "contentType" : "application/octet-stream",
+    "size" : 11218,
+    "checksum" : "92954f8fd4a9dc5dc9bcea5a17511623",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/scripts/server.cjs",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  }, {
+    "path" : "scripts/start-server.sh",
+    "name" : "start-server.sh",
+    "nodeType" : "FILE",
+    "parentPath" : "scripts",
+    "contentType" : "application/x-shar",
+    "size" : 4606,
+    "checksum" : "386ba065fd00d2f3d8d5303c26d413f5",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/scripts/start-server.sh",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  }, {
+    "path" : "scripts/stop-server.sh",
+    "name" : "stop-server.sh",
+    "nodeType" : "FILE",
+    "parentPath" : "scripts",
+    "contentType" : "application/x-shar",
+    "size" : 1314,
+    "checksum" : "3d59796ec5ca347c5eb95adbc4914bb8",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/scripts/stop-server.sh",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  }, {
+    "path" : "spec-document-reviewer-prompt.md",
+    "name" : "spec-document-reviewer-prompt.md",
+    "nodeType" : "FILE",
+    "parentPath" : "",
+    "contentType" : "application/octet-stream",
+    "size" : 1748,
+    "checksum" : "ea74c0f2369ae553c62f36af4ed3d424",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/spec-document-reviewer-prompt.md",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  }, {
+    "path" : "visual-companion.md",
+    "name" : "visual-companion.md",
+    "nodeType" : "FILE",
+    "parentPath" : "",
+    "contentType" : "application/octet-stream",
+    "size" : 12047,
+    "checksum" : "98407f42a43e3c3e3aae399376821e7e",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/286/versions/1.0.0/visual-companion.md",
+    "lastModifiedTime" : "2026-07-15T18:00:27.77122538",
+    "readonly" : true
+  } ]
+}

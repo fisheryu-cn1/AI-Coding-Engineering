@@ -1,8 +1,8 @@
 # AgentParadigms 主题论文摘要索引
 
-> 主题：Agent 设计范式——综述框架、经典范式原始论文、多智能体协作、失败模式与 benchmark 边界
-> 文件数：30（2026-08-21 增补黑板×2 + 主动推理×2，见 manifest 增补节）
-> 生成日期：2026-08-17（同日完成全文精读，摘要均为精读级 summary_version 3.0）；2026-08-24 增补 27/28（黑板架构谱系，summary_version 1.0）
+> 主题：Agent 设计范式——综述框架、经典范式原始论文、多智能体协作、失败模式与 benchmark 边界、ensemble/测试时扩展
+> 文件数：31（2026-08-21 增补黑板×2 + 主动推理×2，见 manifest 增补节）
+> 生成日期：2026-08-17（同日完成全文精读，摘要均为精读级 summary_version 3.0）；2026-08-24 增补 27/28（黑板架构谱系，summary_version 1.0）；2026-08-26 增补 31（ensemble reasoning，summary_version 1.0）
 
 ## 论文列表
 
@@ -38,6 +38,7 @@
 | 28 | [28-黑板多智能体信息发现.md](28-黑板多智能体信息发现.md) | LLM-based Multi-Agent Blackboard System for Information Discovery in Data Science | 黑板广播 + 自愿应答（数据发现，vs 主从式 +13%~57%） |
 | 29 | [29-缺失的奖励经验时代的主动推理.md](29-缺失的奖励经验时代的主动推理.md) | The Missing Reward: Active Inference in the Era of Experience | 以内在自由能最小化取代外部 reward 的概念论文（有公式伪代码、无实验） |
 | 30 | [30-神经语言模型的自由能与主动推理.md](30-神经语言模型的自由能与主动推理.md) | Free Energy Principle and Active Inference in Neural Language Models (short) | FEP×NLM 接口的概念定义（被动生成 vs 主动行动的边界，CEUR 短文） |
+| 31 | [31-TraeAgent测试时扩展集成推理.md](31-TraeAgent测试时扩展集成推理.md) | Trae Agent: An LLM-based Agent for Software Engineering with Test-time Scaling | 首个 agent 化 ensemble：高温 N 次采样→分层剪枝→多数票归并，SWE-bench Verified 75.20% 第一 |
 
 ## 推荐先读
 
@@ -47,10 +48,12 @@
 - **黑板替代路线**：27（黑板=共享内存 + 控制单元调度）→ 28（黑板=广播信道 + 全员自主）——两者互为谱系对照
 - **主动推理路线**：29（EFE 目标函数与控制回路骨架）→ 30（FEP×NLM 概念边界）——工程成熟度评估见摘要：有公式、无系统、无实验
 - **可靠性**：19（self-conditioning）→ 20（时间地平线）→ 23（pass^k）
+- **ensemble/测试时扩展路线（2026-08-26 增补）**：16（采样投票 best-of-N 基线）→ 31（agent 化 ensemble：分层剪枝+类人 selector+多数票）——16 是纯投票上界，31 是完整工程化且随 N 持续扩展
 
 ## 与 GraphIt-KB 的相关性
 
 - 本主题是 `research/agent-software-design/` 理论框架 v0.2 的文献底座（三层骨架/两维范式/MAST 证据链/benchmark 边界），GraphIt-KB 检索层可借此回答 agent 设计类问题。
 - 15（MAST）与 19（self-conditioning）直接支撑"验证组件与分段检查点是必备件"的架构判断；20/23 提供评估口径（时间地平线、pass^k），可借鉴为 GraphIt-KB 评分模块的可靠性指标设计。
 - 27/28（黑板谱系）支撑 `research/agent-software-design/materials/harness与冯诺依曼架构类别关系.md` 的"黑板折中派"论证——共享结构化状态对象对"传话游戏"（上下文碎片化）的解法，与本研究"文档传递式协同"的独立收敛互证。
+- 31（Trae Agent ensemble）是"同任务多轮独立采样再归并"的 SOTA 证据（2025-07 榜首）——修正了此前"该方向全线缺位"的判断；其分层剪枝（等价去重+回归测试）与 selector 的静态/动态程序理解为归并机制设计提供了组件级参照。
 - 深度精读版梳理见 `research/agent-software-design/materials/agent范式-学术梳理.md`。

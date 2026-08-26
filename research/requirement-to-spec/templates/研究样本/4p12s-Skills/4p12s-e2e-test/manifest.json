@@ -1,0 +1,25 @@
+{
+  "files" : [ {
+    "path" : "SKILL.md",
+    "name" : "SKILL.md",
+    "nodeType" : "FILE",
+    "parentPath" : "",
+    "contentType" : "application/octet-stream",
+    "size" : 6281,
+    "checksum" : "fcc56a82770e3252b36b31ddacceb00b",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/336/versions/1.0.1/SKILL.md",
+    "lastModifiedTime" : "2026-07-15T18:00:26.630233396",
+    "readonly" : true
+  }, {
+    "path" : "manifest.json",
+    "name" : "manifest.json",
+    "nodeType" : "FILE",
+    "parentPath" : "",
+    "contentType" : "application/octet-stream",
+    "size" : 814,
+    "checksum" : "5540dc63df57a363eb9716b1189b12a9",
+    "objectKey" : "/tmp/team-skill-storage/GLOBAL/GLOBAL/336/versions/1.0.1/manifest.json",
+    "lastModifiedTime" : "2026-07-15T18:00:26.630233396",
+    "readonly" : true
+  } ]
+}

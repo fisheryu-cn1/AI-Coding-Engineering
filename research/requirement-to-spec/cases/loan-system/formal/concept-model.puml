@@ -1,0 +1,48 @@
+@startuml
+' ===== loan-system R1 概念模型（翻译自 raw/requirements-register.md）=====
+' 翻译位: ZCode/GLM 2026-08-26; 覆盖: FIELD-001~003, RULE-001~004, FLOW-001~002, BR-002
+
+class Borrower {
+  +id : String
+  +name : String
+  +id_number : String
+  +phone : String
+  +income : Decimal
+  +employer : String
+  +position : String
+}
+
+class LoanOrder {
+  +id : String
+  +amount : Decimal
+  +term_months : Integer
+  +purpose : LoanPurpose
+  +interest_rate : Decimal
+  +status : OrderStatus
+}
+
+class CreditResult {
+  +score : Integer
+  +approved_amount : Decimal
+  +approved_rate : Decimal
+  +decision_reason : String
+}
+
+enum OrderStatus { draft pending approved rejected active closed }
+enum LoanPurpose { renovation education travel medical }
+enum CreditDecision { approved rejected }
+
+' @disjoint: OrderStatus_draft, OrderStatus_pending, OrderStatus_approved, OrderStatus_rejected, OrderStatus_active, OrderStatus_closed
+' @disjoint: LoanPurpose_renovation, LoanPurpose_education, LoanPurpose_travel, LoanPurpose_medical
+' 注解说明(RULE-003): 用途枚举4类互斥 —— 本注解行即 RULE-003 在模型层的承接（对照静态评估发现的丢失缺陷）
+' 注解说明(FLOW-001): OrderStatus 六态互斥; rejected 为终态的"不可回流"是转换规则非状态互斥, 由流程线承载
+
+Borrower "1" --> "0..*" LoanOrder : places
+LoanOrder "1" --> "0..1" CreditResult : hasDecision
+
+' ===== 语义待决项（Z_真 显式化, 不进模型）=====
+' Z1: 评分规则默认阈值/权重取值 (RULE-001) → 决策记录: 配置表+默认60分阈值, 数值约束归 Z3 规则集
+' Z2: 固定费率默认值 (RULE-004) → 同上配置表
+' Z3: 操作员角色是否执行通过/驳回 (FLOW-002) → **已知矛盾点**: 登记/PRD vs US/design 方向相反,
+'     本翻译采用【需求登记侧】语义(操作员基于审批结果流转), 待人工裁决后回写此图并重跑管线
+@enduml
