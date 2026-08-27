@@ -76,7 +76,9 @@ def main():
         p = os.path.join(rdir, fn)
         if fn.startswith('4') and '决策' in fn:
             for did, status, mk, text in collect_decisions(p):
-                (ready if mk[0] == '待执行' else gated).append((did, status, mk, fn, text))
+                # 解锁规则（16 号规约 §4）：裁决后执行 + 状态已裁决/已消解 → 决策已完成，动作转入待执行组
+                unlocked = mk[0] == '裁决后执行' and ('已裁决' in status or '已消解' in status)
+                (ready if (mk[0] == '待执行' or unlocked) else gated).append((did, status, mk, fn, text))
         else:
             for rid, cid, mk, line in collect_tables(p):
                 (ready if mk[0] == '待执行' else gated).append((rid, '', mk, fn, line))
