@@ -243,3 +243,43 @@ DETERMINISTIC
 > 修正后全绿（"人工裁决→机器执行→检查器把关"闭环的又一实证）；②FSM 的 P5 机制保留但本例配置为空——
 > "不可回流"从流程性质转为属性约束（单值持久），完整版时序验证归 R4 场景库；③类/个体计数变化（18→17/
 > 12→11）与枚举重构（六态+二值→四态+三值）精确对应。SVG 已重渲染两件。
+
+## Run-12 2026-08-27 Z4 执行——约束注解词表扩展与 RULE-002 承接（触发原因：人工决策执行）
+
+> 触发链：Z4 裁决"全必填"+用户指示补齐"是否填写"与"格式校验"两类规则。变更面：method/13 §3 词表新增
+> @required/@pattern 词条；puml2owl gen_shacl 解析新注解生成 sh:minCount 1 / sh:pattern；concept-model
+> 加注解（四字段必填；身份证 ^[0-9]{17}[0-9X]$、手机号 ^1[0-9]{10}$ 国标默认，外部标准引用可复议）；
+> bindings 新增 anno: 定位符类型，RULE-002 [暂缓] 转正式双绑定。
+
+生成 shapes（节选）：
+```
+loan:BorrowerShape sh:property [ sh:path loan:attrId_number ; sh:minCount 1 ] .
+loan:BorrowerShape sh:property [ sh:path loan:attrId_number ; sh:pattern "^[0-9]{17}[0-9X]$" ] .
+loan:BorrowerShape sh:property [ sh:path loan:attrPhone ; sh:pattern "^1[0-9]{10}$" ] .
+```
+
+负控四例（验证非空转+区分力）：
+```
+[正例-全字段齐+格式对]       Conforms: True
+[负例1-缺amount(必填违例)]   Conforms: False -> Constraint Violation in MinCountConstraintComponent
+[负例2-身份证格式错]         Conforms: False -> Constraint Violation in PatternConstraintComponent
+[负例3-手机号格式错]         Conforms: False -> Constraint Violation in PatternConstraintComponent
+```
+
+全链重跑：
+```
+[HermiT] consistent, classes=17 individuals=11（约束注解不进 OWL，与 Run-11 一致）
+绑定: 覆盖 10/10 | 解析 13/13 | 反向 0 | VERDICT: PASS（零 DEFERRED——RULE-002 撤暂缓）
+Z3: sat core [] | FSM: ALL_PROPERTIES_HOLD | 决定性: DETERMINISTIC
+```
+
+产物 sha256（基准演进，Run-11/12 两次模型变更后新值——预期演进非漂移；mini 独立回归基准不变）：
+```
+3de3ae1db4fbfde37902ffbc093cbc1fe5d67e45f7268bcb7ee1ac3dbc3d9939 *concept.owl.rdf
+07241117154d5f268e45050af5b8d653a54ee855af0fa95385beb6f80ccc7c3c *concept.shacl.ttl
+```
+
+> Δ 归因：①RULE-002 全链承接完成——从登记表原文（"表单必填项有提示；关键字段有基础校验"）到机器可判
+> 定约束（缺字段/错格式均被 pySHACL 拦截且报违例组件可区分）；②TA2-04 的触发时机语义（草稿保存同触校验）
+> 为行为约束，按混合架构归实现层与 R4 场景库，注解说明行显式声明该边界；③至此 21 条需求全部闭环或豁免，
+> 绑定清单零暂缓、队列零待执行——loan-system 案例完全收官。

@@ -54,9 +54,15 @@ enum CreditDecision {
 ' @disjoint: OrderStatus_draft, OrderStatus_pending, OrderStatus_active, OrderStatus_closed
 ' @disjoint: LoanPurpose_renovation, LoanPurpose_education, LoanPurpose_travel, LoanPurpose_medical
 ' @disjoint: CreditDecision_under_review, CreditDecision_approved, CreditDecision_rejected
+' @required: LoanOrder.amount, LoanOrder.term_months, Borrower.id_number, Borrower.phone
+' @pattern: Borrower.id_number = ^[0-9]{17}[0-9X]$
+' @pattern: Borrower.phone = ^1[0-9]{10}$
 ' 注解说明(RULE-003): 用途枚举4类互斥 —— 本注解行即 RULE-003 在模型层的承接（对照静态评估发现的丢失缺陷）
 ' 注解说明(FLOW-001/D-B): 单据状态四态互斥; 审批结果(approved/rejected)是单据属性维度由 CreditDecision 承载,
 '   原始需求将两个状态体系混淆——拆分依据见 review/E41 D-B 附记
+' 注解说明(RULE-002/Z4): @required 四字段=Z4 裁决"全必填"(金额/期限/身份证/电话); @pattern 正则取国标默认
+'   (身份证 GB 11643 十八位; 手机号十一位)——外部标准引用(Z_伪), 可复议; 草稿保存同触校验(TA2-04)为触发时机
+'   语义, 归实现层与 R4 场景库, 不由 SHACL 承载
 
 Borrower "1" --> "0..*" LoanOrder : places
 LoanOrder "1" --> "0..1" CreditResult : hasDecision

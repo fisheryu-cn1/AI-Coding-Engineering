@@ -17,3 +17,9 @@ loan:LoanPurposeShape a sh:NodeShape ;
 loan:CreditDecisionShape a sh:NodeShape ;
   sh:targetClass loan:CreditDecision ;
   sh:property [ sh:path [ sh:inversePath loan:hasCreditDecision ] ] .
+loan:LoanOrderShape sh:property [ sh:path loan:attrAmount ; sh:minCount 1 ] .
+loan:LoanOrderShape sh:property [ sh:path loan:attrTerm_months ; sh:minCount 1 ] .
+loan:BorrowerShape sh:property [ sh:path loan:attrId_number ; sh:minCount 1 ] .
+loan:BorrowerShape sh:property [ sh:path loan:attrPhone ; sh:minCount 1 ] .
+loan:BorrowerShape sh:property [ sh:path loan:attrId_number ; sh:pattern "^[0-9]{17}[0-9X]$" ] .
+loan:BorrowerShape sh:property [ sh:path loan:attrPhone ; sh:pattern "^1[0-9]{10}$" ] .

@@ -71,6 +71,8 @@ def resolve(locator, artifact_text):
         return bool(re.search(rf"@decision:.*{re.escape(key)}", artifact_text))
     if kind == 'z3tag':
         return bool(re.search(rf"assert_and_track\(.*?['\"]{re.escape(key)}", artifact_text, re.S))
+    if kind == 'anno':
+        return bool(re.search(rf"^'?\s*{re.escape(key)}", artifact_text, re.M))
     if kind == 'trans':
         a, _, b = key.partition('>')
         if b == '__END__':

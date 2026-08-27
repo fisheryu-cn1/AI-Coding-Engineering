@@ -104,7 +104,7 @@ def _parse_mult(m):
     return m, m
 
 
-def gen_shacl(onto, classes, enums, cls_map, enum_classes, out_path, ns, prefix):
+def gen_shacl(onto, classes, enums, cls_map, enum_classes, out_path, ns, prefix, src_text):
     lines = [f'@prefix {prefix}: <{ns}> .', '@prefix sh: <http://www.w3.org/ns/shacl#> .',
              '@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .', '']
     for cname in classes:
@@ -115,6 +115,21 @@ def gen_shacl(onto, classes, enums, cls_map, enum_classes, out_path, ns, prefix)
         lines.append(f'{prefix}:{ename}Shape a sh:NodeShape ;')
         lines.append(f'  sh:targetClass {prefix}:{ename} ;')
         lines.append(f'  sh:property [ sh:path [ sh:inversePath {prefix}:has{ename} ] ] .')
+    # 约束注解（method/13 §3）：@required → sh:minCount；@pattern → sh:pattern
+    import re as _re
+    src = src_text
+    prop_lines = []
+    for m in _re.finditer(r"^'\s*@required:\s*(.+)$", src, _re.M):
+        for spec in m.group(1).split(','):
+            cname, _, pname = spec.strip().partition('.')
+            if cname in classes:
+                prop_lines.append(f'{prefix}:{cname}Shape sh:property [ sh:path {prefix}:attr{pname.strip().capitalize()} ; sh:minCount 1 ] .')
+    for m in _re.finditer(r"^'\s*@pattern:\s*(.+?)\s*=\s*(.+)$", src, _re.M):
+        spec, pat = m.group(1).strip(), m.group(2).strip()
+        cname, _, pname = spec.partition('.')
+        if cname in classes:
+            prop_lines.append(f'{prefix}:{cname}Shape sh:property [ sh:path {prefix}:attr{pname.strip().capitalize()} ; sh:pattern "{pat}" ] .')
+    lines.extend(prop_lines)
     open(out_path, 'w', encoding='utf-8').write('\n'.join(lines))
 
 
@@ -124,6 +139,7 @@ if __name__ == '__main__':
     prefix = sys.argv[4] if len(sys.argv) > 4 else 'loan'
     onto, classes, enums, cls_map, enum_classes, prop_map = build(src, ns, prefix)
     onto.save(file=out_prefix + '.owl.rdf', format='rdfxml')
-    gen_shacl(onto, classes, enums, cls_map, enum_classes, out_prefix + '.shacl.ttl', ns, prefix)
+    src_text = open(src, encoding='utf-8').read()
+    gen_shacl(onto, classes, enums, cls_map, enum_classes, out_prefix + '.shacl.ttl', ns, prefix, src_text)
     n_cls = len(classes) + len(enums)
     print(f'OK: {out_prefix}.owl.rdf（{n_cls} 类/枚举, {len(prop_map)} 关联）+ .shacl.ttl')

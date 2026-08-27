@@ -53,8 +53,10 @@
 
 ## 流程线与绑定（2026-08-27 新增）
 
-- `flow-model.puml` / `.svg`: FLOW-001 全流转六态五迁移; rejected 终态禁回以 no_escape_from=[rejected] 断言;
-  fsm_check P1–P5 全 PASS, 负控注入三缺陷四命中自证非空转(Run-8)。删除条款=CRUD 操作不入状态机
-- `model-bindings.md`: 需求 ID ↔ 模型元素对照, check_model_bindings 覆盖/解析/反向三闭包 PASS(Run-9);
-  RULE-002 显式 [暂缓], 待 SHACL cardinality 词表(缺口③)落地后承接
+- `flow-model.puml` / `.svg`: v2（D-B 裁决重构版）单据四态四迁移, closed 统一终态; 审批结果(approved/rejected)
+  为属性维度由 CreditDecision 承载; "rejected 不可回流"转属性约束(单值持久)。fsm_check P1–P5 全 PASS(Run-11);
+  删除条款=CRUD 操作不入状态机
+- `model-bindings.md`: 需求 ID ↔ 模型元素对照, check_model_bindings 覆盖/解析/反向三闭包 PASS(13/13, Run-12);
+  RULE-002 已承接(Run-12): @required 四字段(金额/期限/身份证/电话)+@pattern 格式正则(国标默认) → sh:minCount/sh:pattern,
+  负控四例命中(MinCount/Pattern 组件分别报违例)——**零暂缓**
 
