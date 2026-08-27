@@ -28,9 +28,24 @@ class CreditResult {
   +decision_reason : String
 }
 
-enum OrderStatus { draft pending approved rejected active closed }
-enum LoanPurpose { renovation education travel medical }
-enum CreditDecision { approved rejected }
+enum OrderStatus {
+  draft
+  pending
+  approved
+  rejected
+  active
+  closed
+}
+enum LoanPurpose {
+  renovation
+  education
+  travel
+  medical
+}
+enum CreditDecision {
+  approved
+  rejected
+}
 
 ' @disjoint: OrderStatus_draft, OrderStatus_pending, OrderStatus_approved, OrderStatus_rejected, OrderStatus_active, OrderStatus_closed
 ' @disjoint: LoanPurpose_renovation, LoanPurpose_education, LoanPurpose_travel, LoanPurpose_medical
@@ -40,9 +55,8 @@ enum CreditDecision { approved rejected }
 Borrower "1" --> "0..*" LoanOrder : places
 LoanOrder "1" --> "0..1" CreditResult : hasDecision
 
-' ===== 语义待决项（Z_真 显式化, 不进模型）=====
-' Z1: 评分规则默认阈值/权重取值 (RULE-001) → 决策记录: 配置表+默认60分阈值, 数值约束归 Z3 规则集
-' Z2: 固定费率默认值 (RULE-004) → 同上配置表
-' Z3: 操作员角色是否执行通过/驳回 (FLOW-002) → **已知矛盾点**: 登记/PRD vs US/design 方向相反,
-'     本翻译采用【需求登记侧】语义(操作员基于审批结果流转), 待人工裁决后回写此图并重跑管线
+' ===== 人工裁决记录（2026-08-27, translation-audit-done.md）=====
+' @decision: FLOW-002 = 原始需求歧义确认; MVP 按最简原则忽略人工处理环节(自动审批即生效) —— 采纳 US/design 侧语义
+' @decision: RULE-004 = 费率定位为外部系统衔接点(MVP 退化固定值); Z2 默认值由实现侧配置承载
+' @decision: FIELD-002 = borrower 关联为外部系统对接点, MVP 简化设计
 @enduml
