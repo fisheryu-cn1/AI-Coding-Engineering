@@ -215,3 +215,31 @@ ee90910b95dd9e45b74009fed8cf1ca7b8c95683adec43c0208ed0760bc9cef8 *concept.shacl.
 
 > Δ 归因：puml2owl 忽略注释行 → OWL/SHACL 产物哈希不变，"文本为源、注释变更无模型效应"以基线哈希
 > 实证。评审文件迁移（formal→review 四件淘汰四件新建）不触及检查器消费面，全部检查项输入未变。
+
+## Run-11 2026-08-27 D-B 裁决执行——模型重构全链重跑（触发原因：人工决策解锁）
+
+> 触发链：用户裁决 D-B（两状态维度拆分，E41 附记完整陈述）+ Z2（费率三值）+ Z4（全必填）→ 队列解锁 →
+> 执行位按 D-B 附记展开模型重构。变更面：concept-model.puml v3（OrderStatus 四态、CreditResult 挂接三值
+> CreditDecision、disjoint 三组）、flow-model.puml v2（closed 统一终态、属性维度注记、no_escape_from 空——
+> "rejected 不可回流"转审批结果属性约束）、rules_z3.py v4（Z2 三值挂 z3tag）、model-bindings（12 行，
+> FIELD-003 增 disjoint:CreditDecision_ 行、FLOW-001 终态定位符改 closed>__END__）。
+
+```
+== 检查1 HermiT ==
+[HermiT] consistent, classes=17 individuals=11（0.62s；类数-1/个体数-1=枚举字面量子类 8→7）
+== 检查2 Z3 v4 ==
+规则集一致性: sat | core(空=自洽): []
+场景48/72分 PASS / ALL_PASS / 幂等 True（Z2 三值断言入集后仍自洽）
+== 检查6 绑定闭包 ==
+首验 FINDING[B]: FUNC-002 -> trans:pending>approved（新状态机中该迁移已不存在——真实联动遗漏被抓）
+修正（trans:pending>active）后: 覆盖 10/10 | 解析 12/12 | VERDICT: PASS
+== 检查7 FSM v2（四态四迁移）==
+P1–P4 PASS；P5 no_escape_from=[] PASS（配置语义变化：终态封闭由 P3 承载，禁回条款转属性约束）
+== 检查3 决定性 ==
+DETERMINISTIC
+```
+
+> Δ 归因：①绑定闭包在重构后首验即抓到 FUNC-002 定位符漂移——**决策执行链的联动遗漏被检查器实时拦截**，
+> 修正后全绿（"人工裁决→机器执行→检查器把关"闭环的又一实证）；②FSM 的 P5 机制保留但本例配置为空——
+> "不可回流"从流程性质转为属性约束（单值持久），完整版时序验证归 R4 场景库；③类/个体计数变化（18→17/
+> 12→11）与枚举重构（六态+二值→四态+三值）精确对应。SVG 已重渲染两件。

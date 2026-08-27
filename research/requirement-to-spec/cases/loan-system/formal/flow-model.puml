@@ -1,22 +1,24 @@
 @startuml
-' ===== loan-system FLOW-001 订单状态机（流程线翻译件 v1，2026-08-27）=====
-' 翻译位: ZCode/GLM；覆盖: FLOW-001 全部状态与流转 + D-A 裁决后的自动审批语义(FLOW-002 并入)
+' ===== loan-system FLOW-001 订单状态机（流程线翻译件 v2，2026-08-27 D-B 裁决重构版）=====
+' 翻译位: ZCode/GLM；覆盖: FLOW-001 全部流转 + D-A 裁决(自动审批即生效) + D-B 裁决(两状态维度拆分)。
 ' 人审入口: 本文件渲染 flow-model.svg（图形审），文本为源。
-' 范围说明: "删除可针对所有状态" 为 CRUD 操作非状态迁移, 不进本状态机(登记表已注记级联 CreditResult);
-'           操作员人工通过/驳回环节经 D-A 裁决(MVP 最简=自动审批即生效)不建模人工分支。
+' 范围说明: "删除可针对所有状态" 为 CRUD 操作非状态迁移, 不进本状态机(TA2-02 确认)。
+' 维度说明(D-B): 本图只承载单据流程状态维度(四态); 审批结果(under_review/approved/rejected)
+'   是单据属性维度, 由概念模型 CreditDecision 枚举承载, 在迁移标签中仅作触发条件注记。
 
-[*] --> draft : 创建草稿(UI-001 分步填写/保存草稿)
+[*] --> draft : 创建草稿(UI-001 分步填写; TA2-04 补充: 保存草稿同触发表单检验规则)
 draft --> pending : 提交申请(FUNC-002 记录创建)
-pending --> approved : 自动审批通过(score>=阈值,RULE-001/Z1)
-pending --> rejected : 自动审批拒绝(score<阈值)
-approved --> active : 电子签约生效(FUNC-003/D-A 无操作员环节)
+pending --> active : 审批通过,签约生效(结果维度=approved; MVP 全自动, 节点保留供完整版挂处理逻辑/外部交换)
+pending --> closed : 审批拒绝直闭(结果维度=rejected; MVP 全自动, 同上)
 active --> closed : 完成(FLOW-002 处理意见记录)
 
-closed --> [*] : 正常终态
-rejected --> [*] : 终态,FLOW-001 显式条款:不可回流 pending
+closed --> [*] : 统一终态(D-B 裁决: 无论审批结果, 完成全部流程处理后归结 closed)
 
-note right of rejected
-  终态断言由 fsm_check.py 检查:
-  no_escape_from=[rejected]
+note right of closed
+  终态封闭由 fsm_check P3 检查。
+  原"rejected 不可回流"条款(D-B 后)转为
+  属性约束: 审批结果单值持久,
+  不可翻转——静态模型由单值
+  属性承载, 完整版时序验证归 R4。
 end note
 @enduml

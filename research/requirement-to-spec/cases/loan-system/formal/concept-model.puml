@@ -1,6 +1,8 @@
 @startuml
 ' ===== loan-system R1 概念模型（翻译自 raw/requirements-register.md）=====
 ' 翻译位: ZCode/GLM 2026-08-26; 覆盖: FIELD-001~003, RULE-001~004, FLOW-001~002, BR-002
+' v3 (2026-08-27): D-B 裁决重构——单据流程状态与审批结果状态拆分为两个独立维度;
+'   OrderStatus 六态减为四态(approved/rejected 移出, 转审批结果属性维度), CreditDecision 增至三值并挂接。
 
 class Borrower {
   +id : String
@@ -25,14 +27,14 @@ class CreditResult {
   +score : Integer
   +approved_amount : Decimal
   +approved_rate : Decimal
+  +decision : CreditDecision
   +decision_reason : String
 }
 
+' 单据流程状态维度(D-B 裁决: 仅流程态; 审批结果不在此维度)
 enum OrderStatus {
   draft
   pending
-  approved
-  rejected
   active
   closed
 }
@@ -42,21 +44,26 @@ enum LoanPurpose {
   travel
   medical
 }
+' 审批结果状态维度(D-B 裁决: 三值, 独立标签持久化; under_review=待审核/审批未出结果)
 enum CreditDecision {
+  under_review
   approved
   rejected
 }
 
-' @disjoint: OrderStatus_draft, OrderStatus_pending, OrderStatus_approved, OrderStatus_rejected, OrderStatus_active, OrderStatus_closed
+' @disjoint: OrderStatus_draft, OrderStatus_pending, OrderStatus_active, OrderStatus_closed
 ' @disjoint: LoanPurpose_renovation, LoanPurpose_education, LoanPurpose_travel, LoanPurpose_medical
+' @disjoint: CreditDecision_under_review, CreditDecision_approved, CreditDecision_rejected
 ' 注解说明(RULE-003): 用途枚举4类互斥 —— 本注解行即 RULE-003 在模型层的承接（对照静态评估发现的丢失缺陷）
-' 注解说明(FLOW-001): OrderStatus 六态互斥; rejected 为终态的"不可回流"是转换规则非状态互斥, 由流程线承载
+' 注解说明(FLOW-001/D-B): 单据状态四态互斥; 审批结果(approved/rejected)是单据属性维度由 CreditDecision 承载,
+'   原始需求将两个状态体系混淆——拆分依据见 review/E41 D-B 附记
 
 Borrower "1" --> "0..*" LoanOrder : places
 LoanOrder "1" --> "0..1" CreditResult : hasDecision
 
-' ===== 人工裁决记录（2026-08-27, 裁决事实源=review/41-人工决策记录-S4.md）=====
+' ===== 人工裁决记录（裁决事实源=review/E41-人工决策记录-S4.md）=====
 ' @decision: FLOW-002 = 原始需求歧义确认; MVP 按最简原则忽略人工处理环节(自动审批即生效) —— 采纳 US/design 侧语义
 ' @decision: RULE-004 = 费率定位为外部系统衔接点(MVP 退化固定值); Z2 默认值由实现侧配置承载
 ' @decision: FIELD-002 = borrower 关联为外部系统对接点, MVP 简化设计
+' @decision: D-B = 两状态维度拆分(单据流程四态+审批结果三值CreditDecision); closed统一终态, 审批结果为属性非状态
 @enduml

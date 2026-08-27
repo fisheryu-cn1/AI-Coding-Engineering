@@ -1,13 +1,18 @@
-# 贷款系统业务规则 Z3 编码（RULE-001 + Z1 默认阈值 60）
+# 贷款系统业务规则 Z3 编码（RULE-001 + Z1 默认阈值 60 + Z2 费率三值）
 # v2 修正：场景间事实隔离（v1 的 bug——score==48 污染第二场景，被检查运行台账捕获）
+# v4 增补：Z2 裁决值入规则集（2026-08-27 人工输入：年化3.5%/服务费1%/罚息5%）
 from z3 import *
 
 s = Solver()
 s.set(unsat_core=True)
 approved = Bool('approved'); score, threshold = Int('score'), Int('threshold')
+annual_rate, service_fee_rate, overdue_penalty_rate = Reals('annual_rate service_fee_rate overdue_penalty_rate')
 s.assert_and_track(Implies(score >= threshold, approved), 'R1_达标通过')
 s.assert_and_track(Implies(score < threshold, Not(approved)), 'R1b_未达标拒绝')
 s.add(threshold == 60)
+s.assert_and_track(annual_rate == 3.5, 'Z2_年化利率_人工输入2026-08-27')
+s.assert_and_track(service_fee_rate == 1.0, 'Z2_服务费率_人工输入2026-08-27')
+s.assert_and_track(overdue_penalty_rate == 5.0, 'Z2_逾期罚息率_人工输入2026-08-27')
 print('规则集一致性:', s.check(), '| core(空=自洽):', s.unsat_core())
 
 def scenario(score_v):

@@ -21,14 +21,15 @@
 |---|---|---|---|
 | FIELD-001 | formal/concept-model.puml | class:Borrower | 7 属性全量在此类下 |
 | FIELD-002 | formal/concept-model.puml | class:LoanOrder | borrower_id 由 places 关联承接（D-裁决对接简化） |
-| FIELD-003 | formal/concept-model.puml | class:CreditResult | decision 字段弱化待 D-B（审计表已记） |
-| FUNC-002 | formal/flow-model.puml | trans:pending&gt;approved | 可形式化核心=提交触发自动审批；其记录 CRUD 属 FUNC-001 同类豁免范围 |
+| FIELD-003 | formal/concept-model.puml | class:CreditResult | decision 字段已按 D-B 裁决挂接三值 CreditDecision（2026-08-27 重构） |
+| FIELD-003 | formal/concept-model.puml | disjoint:CreditDecision_ | 审批结果三值互斥（D-B 裁决：独立状态维度） |
+| FUNC-002 | formal/flow-model.puml | trans:pending&gt;active | 可形式化核心=提交触发自动审批（D-B 裁决后 approved 路径特征迁移）；其记录 CRUD 属 FUNC-001 同类豁免范围 |
 | RULE-001 | formal/rules_z3.py | z3tag:R1_达标通过 | 数值规则归 Z3；阈值默认 60 为 Z1 决策默认值 |
 | RULE-002 | （暂缓） | （无） | [暂缓] 必填/格式校验需 SHACL cardinality 词表（缺口③）——词表就位后绑定 sh:minCount 组 |
 | RULE-003 | formal/concept-model.puml | disjoint:LoanPurpose_ | 枚举互斥=承接主体；配套 enum:LoanPurpose |
 | RULE-004 | formal/concept-model.puml | decision:RULE-004 | 外部配置衔接点决策注解（@decision 行）；费率默认值编码待 Z2 |
-| FLOW-001 | formal/concept-model.puml | disjoint:OrderStatus_ | 六态互斥（模型部分） |
-| FLOW-001 | formal/flow-model.puml | trans:rejected&gt;__END__ | 流转部分=流程线承载；rejected 终态不可回流断言在 fsm_check |
+| FLOW-001 | formal/concept-model.puml | disjoint:OrderStatus_ | 单据流程状态四态互斥（D-B 裁决：approved/rejected 移出此维度） |
+| FLOW-001 | formal/flow-model.puml | trans:closed&gt;__END__ | 流转部分=流程线承载；D-B 裁决后 closed 统一终态；"rejected 不可回流"转审批结果属性约束（单值持久，见概念模型注记） |
 | FLOW-002 | formal/flow-model.puml | trans:active&gt;closed | 完成流转；处理意见记录为标签文本约束（R4 场景检验域） |
 
 ## 定位符语法（供检查器与人工双向核对）
