@@ -1,0 +1,7 @@
+# p2s-kit Python 依赖（plan/02 §3.1；安装: pip install -r requirements.txt
+# 网络受限时加清华镜像: pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple）
+# Java 运行时(≥17)为唯一系统级依赖——owlready2 自带 HermiT.jar, 由 JVM 调用。
+owlready2>=0.40
+pyshacl>=0.20
+rdflib>=6.0
+z3-solver>=4.10
