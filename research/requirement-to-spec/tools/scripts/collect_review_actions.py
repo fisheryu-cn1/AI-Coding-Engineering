@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""collect_review_actions: 聚合 review/ 填写件中的执行标记 → 90-执行队列.md（method/16 §6）
+"""collect_review_actions: 聚合 review/ 填写件中的执行标记 → G90-执行队列.md（method/16 §6）
 
-确定性脚本（零 LLM）。扫描两类来源：
-  1) 评审表（3x-/4x- 前缀 .md）：表格行执行标记列（末列区，匹配 [待执行:…]/[裁决后执行:…]），
+确定性脚本（零 LLM）。只扫 E 前缀填写件（V 只读/G 生成物不扫）。两类来源：
+  1) 评审表（E3x- 前缀）：表格行执行标记列（匹配 [待执行:…]/[裁决后执行:…]），
      行锚点 = 第 1 列行 ID（如 TA1-03）；
-  2) 决策记录（41- 前缀）：`## D-x/Z-x/Q-x` 节的 `- 机器执行:` 行，锚点 = 决策 ID，
-     并带出 `- 状态:` 行（裁决后执行项显示等待中的状态）。
-输出分两组：待执行（可立即执行）/ 裁决后执行（等待对应决策状态变更）。
+  2) 决策记录（E4x- 前缀）：`## 决策ID` 节的 `- 机器执行:` 行，锚点 = 决策 ID，
+     并带出 `- 状态:` 行。
+输出分两组：待执行（可立即执行，含已解锁）/ 裁决后执行（等待决策状态变更，含退回重议）。
 用法: collect_review_actions.py <case_dir> [--expand]
 退出码: 0=正常生成（含零队列）。
 """
@@ -69,12 +69,12 @@ def main():
     if not os.path.isdir(rdir):
         sys.exit(f'ERR: {rdir} 不存在')
 
-    ready, gated = [], []   # 待执行 / 裁决后执行
+    ready, gated = [], []   # 待执行(含已解锁) / 裁决后执行(含退回重议)
     for fn in sorted(os.listdir(rdir)):
-        if not fn.endswith('.md') or fn.startswith(('00-', '90-')):
-            continue
+        if not fn.endswith('.md') or not fn.startswith('E'):
+            continue        # 只扫 E 前缀人工填写件（V 只读 / G 生成物 / 其他不扫）
         p = os.path.join(rdir, fn)
-        if fn.startswith('4') and '决策' in fn:
+        if fn.startswith('E4'):   # 决策记录（S4 阶段）
             for did, status, mk, text in collect_decisions(p):
                 # 解锁规则（16 号规约 §4）：裁决后执行 + 状态已裁决/已消解 → 决策已完成，动作转入待执行组
                 unlocked = mk[0] == '裁决后执行' and ('已裁决' in status or '已消解' in status)
@@ -83,7 +83,7 @@ def main():
             for rid, cid, mk, line in collect_tables(p):
                 (ready if mk[0] == '待执行' else gated).append((rid, '', mk, fn, line))
 
-    L = ['# 执行队列（90-）', '',
+    L = ['# 执行队列（G90-）', '',
          '> 生成物：collect_review_actions.py 从 review/ 填写件聚合，勿手改；重生成命令见文末。',
          '> 下游 LLM 调用纪律（method/16 §6）：以本队列为调用上下文，按锚点拉取最小行级上下文，禁止整读填写件全表。', '']
 
@@ -104,7 +104,7 @@ def main():
     L += ['## 生成记录', '',
           f'- 命令: python tools/scripts/collect_review_actions.py <case_dir>' + (' --expand' if args.expand else ''),
           f'- 待执行 {len(ready)} 条 / 裁决后执行 {len(gated)} 条']
-    out = os.path.join(rdir, '90-执行队列.md')
+    out = os.path.join(rdir, 'G90-执行队列.md')
     open(out, 'w', encoding='utf-8').write('\n'.join(L) + '\n')
     print(f'OK: {out}（待执行 {len(ready)} / 裁决后执行 {len(gated)}）')
 
