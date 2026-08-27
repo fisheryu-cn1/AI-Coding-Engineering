@@ -1,0 +1,51 @@
+@startuml
+' ===== [注入变体] RULE-003 枚举静默丢失场景 =====
+' 复刻对象: giencoder-exam-P0151020 原交付的同类缺陷——RULE-003 在登记/PRD 规则表存在,
+' 但下游建模时用途退化为自由文本, 枚举块与 @disjoint 承接锚点同步消失(翻译位无人察觉)。
+' 与正式件 formal/concept-model.puml 的差异仅两处:
+'   1) LoanOrder.purpose 类型 LoanPurpose -> String
+'   2) enum LoanPurpose 整块 + 其 @disjoint 注解 + 注解说明(RULE-003) 行 删除
+class Borrower {
+  +id : String
+  +name : String
+  +id_number : String
+  +phone : String
+  +income : Decimal
+  +employer : String
+  +position : String
+}
+
+class LoanOrder {
+  +id : String
+  +amount : Decimal
+  +term_months : Integer
+  +purpose : String
+  +interest_rate : Decimal
+  +status : OrderStatus
+}
+
+class CreditResult {
+  +score : Integer
+  +approved_amount : Decimal
+  +approved_rate : Decimal
+  +decision_reason : String
+}
+
+enum OrderStatus {
+  draft
+  pending
+  approved
+  rejected
+  active
+  closed
+}
+enum CreditDecision {
+  approved
+  rejected
+}
+
+' @disjoint: OrderStatus_draft, OrderStatus_pending, OrderStatus_approved, OrderStatus_rejected, OrderStatus_active, OrderStatus_closed
+
+Borrower "1" --> "0..*" LoanOrder : places
+LoanOrder "1" --> "0..1" CreditResult : hasDecision
+@enduml

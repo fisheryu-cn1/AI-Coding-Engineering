@@ -1,0 +1,22 @@
+@startuml
+' ===== [注入变体 C] 流程线负控：人为注入三类结构缺陷，验证 fsm_check 非空转 =====
+' 缺陷1: rejected 回流 pending —— 违反 FLOW-001 显式条款"rejected 终态不可回流"
+' 缺陷2: closed 重开回落 active —— 终态泄漏
+' 缺陷3: 遗留人工复核态无出路 —— 死端+陷阱(原交付 US 层澄清前语义的化石残留类比)
+
+[*] --> draft : 创建草稿
+draft --> pending : 提交申请
+pending --> approved : 自动审批通过
+pending --> rejected : 自动审批拒绝
+approved --> active : 电子签约生效
+active --> closed : 完成
+
+closed --> [*]
+rejected --> [*]
+no_escape_from=[rejected]
+
+' ---- 注入的缺陷迁移 ----
+rejected --> pending : [缺陷注入1] 驳回复核回流
+closed --> active : [缺陷注入2] 重开订单
+approved --> obsolete_review : [缺陷注入3] 遗留人工复核
+@enduml

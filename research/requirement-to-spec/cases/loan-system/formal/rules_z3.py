@@ -20,8 +20,14 @@ def scenario(score_v):
 def threshold_value(s):
     return 60
 
-print('场景48分: 可满足=%s, 规则判定=拒绝(期望) ->', *scenario(48))
-print('场景72分: 可满足=%s, 规则判定=通过(期望) ->', *scenario(72))
+EXPECTED = [(48, False), (72, True)]  # (分数, 期望规则判定 approved)；v3 修正 v1/v2 的 %s 格式缺陷
+all_pass = True
+for sv, want in EXPECTED:
+    sat_ok, approved_judged = scenario(sv)
+    hit = (sat_ok is True) and (approved_judged == want)
+    all_pass = all_pass and hit
+    print(f'场景{sv}分: 可满足={sat_ok}, 规则判定(approved)={approved_judged}, 期望={want} -> {"PASS" if hit else "FAIL"}')
+print('场景断言:', 'ALL_PASS' if all_pass else 'HAS_FAIL')
 
 # 幂等断言：两次求解同场景结果一致（确定性证据）
 a1 = scenario(72); a2 = scenario(72)

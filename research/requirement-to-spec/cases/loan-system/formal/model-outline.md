@@ -46,5 +46,15 @@
 ## 泛化/语义待决项
 
 - Z1: 评分规则默认阈值/权重取值 (RULE-001) → 决策记录: 配置表+默认60分阈值, 数值约束归 Z3 规则集
-- Z2: 固定费率默认值 (RULE-004) → 同上配置表
-- Z3: 操作员角色是否执行通过/驳回 (FLOW-002) → **已知矛盾点**: 登记/PRD vs US/design 方向相反,
+- Z2: 固定费率默认值 (RULE-004) → 决策记录: 定位外部配置衔接点(MVP 退化固定值, 实现侧配置承载)
+- Z3: 操作员角色是否执行通过/驳回 (FLOW-002) → **已裁决(D-A 2026-08-27)**: 确认原始需求歧义;
+  MVP 最简原则忽略人工环节(自动审批即生效), 采纳设计侧语义。@decision 注解在 concept-model.puml 尾部,
+  裁决后三件套重跑全绿(Run-4)。回填实验 B 实证: 双侧若被同时编码, Z3 unsat core 即按规则名点名来源(Run-7)
+
+## 流程线与绑定（2026-08-27 新增）
+
+- `flow-model.puml` / `.svg`: FLOW-001 全流转六态五迁移; rejected 终态禁回以 no_escape_from=[rejected] 断言;
+  fsm_check P1–P5 全 PASS, 负控注入三缺陷四命中自证非空转(Run-8)。删除条款=CRUD 操作不入状态机
+- `model-bindings.md`: 需求 ID ↔ 模型元素对照, check_model_bindings 覆盖/解析/反向三闭包 PASS(Run-9);
+  RULE-002 显式 [暂缓], 待 SHACL cardinality 词表(缺口③)落地后承接
+

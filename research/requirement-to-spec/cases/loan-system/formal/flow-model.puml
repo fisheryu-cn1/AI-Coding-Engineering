@@ -1,0 +1,22 @@
+@startuml
+' ===== loan-system FLOW-001 订单状态机（流程线翻译件 v1，2026-08-27）=====
+' 翻译位: ZCode/GLM；覆盖: FLOW-001 全部状态与流转 + D-A 裁决后的自动审批语义(FLOW-002 并入)
+' 人审入口: 本文件渲染 flow-model.svg（图形审），文本为源。
+' 范围说明: "删除可针对所有状态" 为 CRUD 操作非状态迁移, 不进本状态机(登记表已注记级联 CreditResult);
+'           操作员人工通过/驳回环节经 D-A 裁决(MVP 最简=自动审批即生效)不建模人工分支。
+
+[*] --> draft : 创建草稿(UI-001 分步填写/保存草稿)
+draft --> pending : 提交申请(FUNC-002 记录创建)
+pending --> approved : 自动审批通过(score>=阈值,RULE-001/Z1)
+pending --> rejected : 自动审批拒绝(score<阈值)
+approved --> active : 电子签约生效(FUNC-003/D-A 无操作员环节)
+active --> closed : 完成(FLOW-002 处理意见记录)
+
+closed --> [*] : 正常终态
+rejected --> [*] : 终态,FLOW-001 显式条款:不可回流 pending
+
+note right of rejected
+  终态断言由 fsm_check.py 检查:
+  no_escape_from=[rejected]
+end note
+@enduml
