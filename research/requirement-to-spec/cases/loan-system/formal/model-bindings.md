@@ -25,7 +25,7 @@
 | FIELD-003 | formal/concept-model.puml | disjoint:CreditDecision_ | 审批结果三值互斥（D-B 裁决：独立状态维度） |
 | FUNC-002 | formal/flow-model.puml | trans:pending&gt;active | 可形式化核心=提交触发自动审批（D-B 裁决后 approved 路径特征迁移）；其记录 CRUD 属 FUNC-001 同类豁免范围 |
 | RULE-001 | formal/rules_z3.py | z3tag:R1_达标通过 | 数值规则归 Z3；阈值默认 60 为 Z1 决策默认值 |
-| RULE-002 | （暂缓） | （无） | [暂缓] 必填/格式校验需 SHACL cardinality 词表（缺口③）——词表就位后绑定 sh:minCount 组 |
+| RULE-002 | （暂缓） | （无） | [暂缓] 必填/格式校验需注解词表的基数词条（method/13 §3 新增 `@required` 类注解 + puml2owl 生成 sh:minCount 逻辑；缺口③）——就位后绑定 sh:minCount 组 |
 | RULE-003 | formal/concept-model.puml | disjoint:LoanPurpose_ | 枚举互斥=承接主体；配套 enum:LoanPurpose |
 | RULE-004 | formal/concept-model.puml | decision:RULE-004 | 外部配置衔接点决策注解（@decision 行）；费率默认值编码待 Z2 |
 | FLOW-001 | formal/concept-model.puml | disjoint:OrderStatus_ | 单据流程状态四态互斥（D-B 裁决：approved/rejected 移出此维度） |
