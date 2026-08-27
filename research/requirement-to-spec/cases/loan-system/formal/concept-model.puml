@@ -55,7 +55,7 @@ enum CreditDecision {
 Borrower "1" --> "0..*" LoanOrder : places
 LoanOrder "1" --> "0..1" CreditResult : hasDecision
 
-' ===== 人工裁决记录（2026-08-27, translation-audit-done.md）=====
+' ===== 人工裁决记录（2026-08-27, 裁决事实源=review/41-人工决策记录-S4.md）=====
 ' @decision: FLOW-002 = 原始需求歧义确认; MVP 按最简原则忽略人工处理环节(自动审批即生效) —— 采纳 US/design 侧语义
 ' @decision: RULE-004 = 费率定位为外部系统衔接点(MVP 退化固定值); Z2 默认值由实现侧配置承载
 ' @decision: FIELD-002 = borrower 关联为外部系统对接点, MVP 简化设计

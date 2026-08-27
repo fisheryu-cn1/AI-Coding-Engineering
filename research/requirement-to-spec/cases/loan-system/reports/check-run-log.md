@@ -1,7 +1,7 @@
 # 检查运行台账（check-run-log）
 
 > **这是什么**：本项目 loan-system 案例全部机器检查与人工决策的证据流水账。**只追加不删改**。
-> **怎么读**：每节 = 一次运行的完整原始输出 + 差异归因。第一次来？先读 `../../method/14-检查规程与人工决策指南.md`（各检查项含义/重跑命令/人工决策记录方法），再回来按时间序读证据。
+> **怎么读**：每节 = 一次运行的完整原始输出 + 差异归因。第一次来？先读 `../../method/14-检查规程与人工决策指南.md`（各检查项含义/重跑命令/人工决策记录方法），人工环节界面见 `../review/00-INDEX.md`（16 号规约），再回来按时间序读证据。
 > **当前状态速览**：HermiT 一致 ✅ / Z3 v3 双场景 ALL_PASS+幂等 ✅ / 决定性基线 sha256 已立（v2 基准）✅ / 绑定闭包检查 6 项 PASS ✅ / 流程线 fsm_check P1–P5 全 PASS ✅（负控四命中自证非空转）/ 已裁决 D-A ✅ / 待人工决策：D-B decision 弱化、C 类审计勾选——见指南"人工决策点"表。
 
 > 全部证据为实际运行捕获。运行环境：Windows / Python 3.13 / Java 25 (Temurin)。
@@ -184,3 +184,34 @@ VERDICT: FAIL(2)
 > Δ 归因：覆盖/解析/反向三闭包全部按设计工作；DEFERRED 机制使"暂缓但显式"（RULE-002 待 SHACL
 > cardinality 词表）合法存在而不误报；对 Run-6 变体的漂移被精确捕获到行级定位符——**缺失类缺陷自此有
 > 确定性防线**，回填实验 A 的逃逸通道关闭。
+
+## Run-10 2026-08-27 评审界面迁移回归（触发原因：method/16 规约落地，puml 注释引用路径变更）
+
+> 变更内容：concept-model.puml 裁决记录节标题注释的文件引用更新（translation-audit-done.md →
+> review/41-人工决策记录-S4.md）；model-bindings.md 豁免政策行引用同步。**模型源的字节变更**
+> （注释行），按规程全链重跑七项：
+
+```
+== 检查3 决定性 ==
+baseline : 1bd6ca2108ceee7d9c99688fb340e5624a12660aa850c9f2f4290e2135d15189
+rerun    : 1bd6ca2108ceee7d9c99688fb340e5624a12660aa850c9f2f4290e2135d15189
+DETERMINISTIC
+== 检查2 Z3 ==
+场景断言: ALL_PASS / 重复求解一致: True
+== 检查6 绑定闭包 ==
+VERDICT: PASS（RULE-002 仍 DEFERRED，符合预期）
+== 检查7 FSM ==
+VERDICT: ALL_PROPERTIES_HOLD
+== 检查1 HermiT ==
+[HermiT] consistent, classes=18 individuals=12（3.07s）
+```
+
+重转产物 sha256（与 Run-3 既定基线逐字节一致——注释层变更零模型影响）：
+
+```
+beb9e9338efacb8df01e925b2ad5425f2ef666f2329e6409d8bcc20bfeca6f99 *concept.owl.rdf
+ee90910b95dd9e45b74009fed8cf1ca7b8c95683adec43c0208ed0760bc9cef8 *concept.shacl.ttl
+```
+
+> Δ 归因：puml2owl 忽略注释行 → OWL/SHACL 产物哈希不变，"文本为源、注释变更无模型效应"以基线哈希
+> 实证。评审文件迁移（formal→review 四件淘汰四件新建）不触及检查器消费面，全部检查项输入未变。
