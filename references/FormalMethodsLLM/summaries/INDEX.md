@@ -1,7 +1,7 @@
 # FormalMethodsLLM 主题论文摘要索引
 
 > 主题：形式方法 × LLM——形式规格合成、闭环可验证代码生成、refinement×LLM（correctness-by-construction）、意图对齐、验证注解生成、行为等价性检测
-> 文件数：5
+> 文件数：7
 > 生成日期：2026-08-25（首批，基于 PDF 全文的精读级摘要 summary_version 1.0——来源：人机可读性分离点与验证边界两轮讨论，备忘见 `../../../research/人机可读性分离点与验证边界_两轮讨论备忘_2026-08-25.md`）
 
 ## 论文列表
@@ -13,6 +13,8 @@
 | 03 | [03-意图对齐形式规格合成.md](03-意图对齐形式规格合成.md) | Intent-aligned Formal Specification Synthesis via Traceable Refinement | 测试→需求 traceability map 钉住每步局部修复；Opus 4.5 规格生成 +46.8% |
 | 04 | [04-LLM测试oracle生成Dafny注解.md](04-LLM测试oracle生成Dafny注解.md) | Automatic Generation of Formal Specification and Verification Annotations Using LLMs and Test Oracles | LLM 猜注解 + verifier/test oracle 双 oracle 级联判真：repair@8=98.2%、规约逻辑等价 96.4% |
 | 05 | [05-基础模型检测重构行为变化.md](05-基础模型检测重构行为变化.md) | Detecting Behavioral Changes in Python Refactoring Implementations with Foundation Models | FM 零样本 diff oracle：F1 0.77、发现 13 个真实重构引擎 bug（开发者接受 12/13） |
+| 06 | [06-PICKLES场景与形式模型双向翻译.md](06-PICKLES场景与形式模型双向翻译.md) | PICKLES: a Natural Language Framework for Requirement Specification and Model-Based Testing | BDD 场景⇄符号迁移系统双向翻译+组合成主模型再生成测试（转移覆盖 30%→100%）；本仓库双通道方法的最强先例邻居（JOT/ECMFA 2026，Twente） |
+| 07 | [07-LLM生成检查器做需求可满足性.md](07-LLM生成检查器做需求可满足性.md) | LLM-based Satisfiability Checking of String Requirements by Consistent Data and Checker Generation | LLM 起草结论+LLM 生成 SMT/Python 检查器自验证（免人工形式化）；残余风险=输出与检查器同错但一致——与"LLM 只起草不判定"红线对照（arXiv 2025，McGill） |
 
 ## 推荐先读
 
