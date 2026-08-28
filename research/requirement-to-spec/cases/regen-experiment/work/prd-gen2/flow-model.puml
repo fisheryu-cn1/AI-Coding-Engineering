@@ -1,0 +1,25 @@
+@startuml
+' ===== prd-review-P0151020 流程线（S3 翻译：输入=raw/prd.md §4 业务流程+§5 状态机规则原文）=====
+' 翻译忠实原则（评审模式）: 按 PRD 原文六态+操作员语义编码; PRD §4 行51 "rejection→pending" 系拼写漂移,
+'   按 PRD 状态机口径表(§6 六态)修正为 rejected 并注记——不改变 PRD 语义。
+
+[*] --> draft : 创建草稿(§4 主流程1: 分步填写/保存草稿)
+draft --> pending : 提交申请(§4 主流程2: 生成 LoanOrder)
+pending --> approved : 自动审批通过(§4 主流程3: 生成 CreditResult, 展示额度利率)
+pending --> rejected : 自动审批拒绝(§4 主流程3: 给出决策原因建议)
+approved --> active : 申请人确认签署(§4 主流程4)
+active --> closed : 完成(§4 主流程5: 操作人员执行完成流转, 记录处理意见)
+
+' PRD §4 主流程5+§2 角色表: 操作人员基于自动审批结果执行通过/驳回流转——按原文编码为显式迁移边:
+rejected --> [*] : 终态(§4 边界: 不可回流 pending)
+closed --> [*] : 终态
+
+no_escape_from=[rejected]
+
+note right of pending
+  PRD §4 异常4: 操作人员不得绕过审批
+  结果直接执行状态变更——与
+  approved/rejected 两条自动边
+  的关系归 Z3 规则集(OP-1/OP-2)
+end note
+@enduml

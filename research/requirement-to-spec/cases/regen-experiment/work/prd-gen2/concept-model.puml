@@ -1,0 +1,64 @@
+@startuml
+' ===== prd-review-P0151020 概念模型（S3 翻译：输入=raw/prd.md 原文）=====
+' 翻译位: ZCode/GLM 2026-08-28; 翻译忠实原则（评审模式）: 按 PRD 原文语义编码, 不引入我方裁决
+'   (loan-system D-B 已裁决四态拆分, 但本案例检验对象是 PRD 本身——按 PRD §6 六态原文编码, 冲突显形留给检查器与人工)
+' 覆盖: PRD §6 字段口径表全部实体 + §5 规则表结构性规则
+
+class Borrower {
+  +id : String
+  +name : String
+  +id_number : String
+  +phone : String
+  +income : Decimal
+  +employer : String
+  +position : String
+}
+
+class LoanOrder {
+  +id : String
+  +borrower_id : String
+  +amount : Decimal
+  +term_months : Integer
+  +purpose : LoanPurpose
+  +interest_rate : Decimal
+  +status : OrderStatus
+}
+
+class CreditResult {
+  +id : String
+  +order_id : String
+  +score : Integer
+  +approved_amount : Decimal
+  +approved_rate : Decimal
+  +decision : String
+  +decision_reason : String
+}
+
+' PRD §6: OrderStatus 六态原文（approved/rejected 为流程状态——按 PRD 原文保留）
+enum OrderStatus {
+  draft
+  pending
+  approved
+  rejected
+  active
+  closed
+}
+' PRD §5 规则表: 贷款用途固定枚举 4 类
+enum LoanPurpose {
+  renovation
+  education
+  travel
+  medical
+}
+
+' @disjoint: OrderStatus_draft, OrderStatus_pending, OrderStatus_approved, OrderStatus_rejected, OrderStatus_active, OrderStatus_closed
+' @disjoint: LoanPurpose_renovation, LoanPurpose_education, LoanPurpose_travel, LoanPurpose_medical
+' 注解说明(评审): decision 译为 String——PRD 原文未定义取值集(§6 仅"decision(决策)"), 按忠实原则不替 PRD 补语义;
+'   该弱化已登记为决策节 RD-2(与 loan-system D-B 同源问题在 PRD 的形态)
+' 注解说明(评审): borrower_id/order_id 按 PRD 原文译为 String 字段(§6 表格原文), 不替 PRD 升级为关联——弱化登记 RD-3
+
+Borrower "1" --> "0..*" LoanOrder : places
+LoanOrder "1" --> "0..1" CreditResult : hasDecision
+' 注解说明(评审): places/hasDecision 两关联为翻译位补充(PRD 原文仅字段表述 borrower_id/order_id)——
+'   实体关系是形式化检查的结构前提, 补充关系不改变 PRD 原文语义; RD-3 记录该补充
+@enduml

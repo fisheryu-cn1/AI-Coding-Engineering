@@ -1,0 +1,5 @@
+== check_doc_closure: cases/regen-experiment/raw/prd-regen2-uml.md ==
+登记 ID 21 | 文档引用 ID 21 | 豁免 ['BR-001', 'BR-002']
+A 私造/悬挂: 0 | B 未承接 0 / 弱承接线索 0 | C 验收断点: 0 | D 词表漂移: 0 | E: 触发
+FINDING[E]: 验收行无 ID 列: 验收节表首列不是 ID/编号/AC——验收行无法被下游精确引用
+VERDICT: FINDINGS(1)

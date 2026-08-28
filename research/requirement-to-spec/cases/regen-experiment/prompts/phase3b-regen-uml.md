@@ -1,0 +1,163 @@
+I'm using the 4p12s-prd skill to generate the Product Requirements Document.
+
+请严格按照下方 SKILL 规程的独立模式执行：主输入为当前目录的 requirements-register.md，输出写入当前目录的 prd.md。
+
+附加输入（本次新增）：当前目录的 concept-model.puml 与 flow-model.puml 是需求评审阶段生成的概念模型与订单状态机（形式化产物，PlantUML 文本）。它们可作为**语义与结构参照**使用——尤其是状态机合法路径、实体字段口径、状态维度拆分语义。注意：PRD 仍须保持业务含义文档定位（skill 规则"不转为技术设计"），UML 中的实现性细节（如 OWL 注解语法）不得进入 PRD 正文；需求 ID 引用一律以 requirements-register.md 的编号为准。
+
+===== SKILL 规程开始 =====
+---
+name: "4p12s-prd"
+display_name: "4p12s-prd"
+description: "|"
+version: "1.0.1"
+---
+
+# 生成 PRD
+
+**Announce at start:** "I'm using the 4p12s-prd skill to generate the Product Requirements Document."
+
+## 概述
+
+从已登记的业务需求生成 `prd.md`。保留业务含义，不转为技术设计。
+
+## 双模运行
+
+### 编排模式
+
+路径包必须包含：
+
+```yaml
+delivery_dir:
+state_path:
+project_entry_path:
+requirements_register_path:
+prd_path:               # 已存在的 prd.md 路径（更新场景）
+output_paths:
+allowed_write_paths:    # 仅 prd.md
+```
+
+### 独立模式
+
+自动发现：
+- 当前目录或指定目录下的 `requirements-register.md`
+- 项目入口文档
+- 输出路径：与 `requirements-register.md` 同目录的 `prd.md`
+
+如果找不到 `requirements-register.md`，提示用户先运行 `/4p12s-requirements`。
+
+## 输出文件
+
+写入唯一产物：`prd.md`
+
+```markdown
+# <需求名> PRD
+
+## 1. 背景与目标
+
+- 业务背景：
+- 目标：
+- 成功标准：
+- 关联需求 ID：
+
+## 2. 用户角色与场景
+
+| 角色 | 场景 | 目标 | 关联需求 ID |
+| --- | --- | --- | --- |
+
+## 3. 功能范围
+
+### 范围内
+
+| 功能 | 说明 | 关联需求 ID |
+| --- | --- | --- |
+
+### 范围外
+
+| 项目 | 原因 | 关联需求 ID |
+| --- | --- | --- |
+
+## 4. 业务流程
+
+### 主流程
+### 异常流程
+### 边界流程
+
+## 5. 业务规则
+
+| 规则 | 说明 | 关联需求 ID |
+| --- | --- | --- |
+
+## 6. 字段、数据与状态口径
+
+| 项目 | 口径 | 来源 | 关联需求 ID |
+| --- | --- | --- | --- |
+
+## 7. 系统边界与外部依赖
+
+| 系统或依赖 | 关系 | 输入/输出 | 风险 | 关联需求 ID |
+| --- | --- | --- | --- | --- |
+
+## 8. 非功能要求
+
+| 类型 | 要求 | 验收提示 | 关联需求 ID |
+| --- | --- | --- | --- |
+
+## 9. 验收标准
+
+| 验收项 | 通过标准 | 关联需求 ID |
+| --- | --- | --- |
+
+## 10. 待确认问题
+
+| 问题 | 关联需求 ID | 是否阻断后续阶段 | 下一步动作 |
+| --- | --- | --- | --- |
+```
+
+## PRD 规则
+
+- 范围内的每个需求 ID 必须出现在 PRD 中，或在 `范围外` 中附带原因
+- 保留 `requirements-register.md` 中的业务含义；不要将其转为技术设计
+- 验收标准必须是可观察和可测试的
+- 每个范围内的 `UI-*` 需求必须出现在用户角色/场景、功能范围、流程和验收标准中
+- 除非 `requirements-register.md` 明确排除前端，否则不要将前端范围移到 `范围外`
+- PRD 验收标准是下游验收场景生成的输入依据
+- 如果 PRD 生成时发现缺失边界、异常、字段、集成、权限或非功能验收标准，在此处添加并附带源需求 ID
+- 保持未解决的非阻断性问题明确
+- 不要在没有标记来源的情况下引入新需求
+- 不要使用澄清问题 ID 作为唯一链接来源
+
+## 质量门禁
+
+返回前验证：
+
+- 源需求 ID 已覆盖
+- 业务目标、范围、流程、规则、字段、依赖和非功能要求在存在上游内容时已体现
+- 验收标准足够具体，可以供给验收场景生成
+- 每个验收标准都有稳定引用和源需求 ID
+- 每个范围内的 `UI-*` 需求都有 PRD 覆盖和至少一个可观察的验收标准
+- 没有前端范围被静默移到 `范围外`
+- 没有 PRD 阻断性问题仍未解决
+- 没有编造不受支持的需求
+
+## STEP_RESULT（编排模式）
+
+```yaml
+step: prd
+status: running | passed | blocked | failed
+output_files:
+  - <delivery_dir>/prd.md
+required_inputs_checked:
+  - <delivery_dir>/requirements-register.md
+  - <project_entry_path>
+commands_run: none
+gate_evidence:
+blocking_reason:
+next_action:
+```
+
+## 边界
+
+- 不创建 `user-stories.md`、`design.md`、`tasks/`、`verification-plan.md`、`verification-result.md` 或 `deploy-log.md`
+- 不更新 `delivery-state.md`（编排模式下）
+- 不开始实现、测试、Git 或发布
+===== SKILL 规程结束 =====
