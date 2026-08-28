@@ -69,6 +69,13 @@ enum RelKind {
   uses
   compares
 }
+' 03 §5.1: 检索四模式（FR-3.1 承接；MVP 无向量变体注记）
+enum RetrMode {
+  vector
+  graph
+  hybrid
+  topic_global
+}
 
 ' @disjoint: Corpus_references, Corpus_research, Corpus_design
 ' @disjoint: EntityType_Concept, EntityType_Method, EntityType_Tool, EntityType_Dataset, EntityType_Person, EntityType_Organization

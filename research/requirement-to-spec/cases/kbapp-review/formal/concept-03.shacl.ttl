@@ -19,3 +19,6 @@ loan:EntityTypeShape a sh:NodeShape ;
 loan:RelKindShape a sh:NodeShape ;
   sh:targetClass loan:RelKind ;
   sh:property [ sh:path [ sh:inversePath loan:hasRelKind ] ] .
+loan:RetrModeShape a sh:NodeShape ;
+  sh:targetClass loan:RetrMode ;
+  sh:property [ sh:path [ sh:inversePath loan:hasRetrMode ] ] .

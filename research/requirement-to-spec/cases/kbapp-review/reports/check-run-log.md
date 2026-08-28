@@ -47,3 +47,27 @@ P1–P5 全 PASS（no_escape=[tombstone_delete]）
 > **Run-2 附记（修正轮）**：用户指出 05/03 类图不可对照 → 补 concept-05-graph（05 §2.2 图 DDL）+ diff_models.py 工具。
 > diff 首跑 11 项：5 项为 03 层翻译遗漏（已修正 concept-03 并重转，HermiT 仍 consistent 25/18）；收敛 6 项纯文档差异
 > （summary×3 新增有据 + 枚举约束三处放松为 STRING）。公共骨架原则入 method/17 候选。
+
+## Run-3 2026-08-28 翻译完整性补齐+检查链补全+BDD 首练（触发原因：用户三项审计）
+
+```
+== 补件转换/检查 ==
+concept-05-api（接口契约 8 类/枚举+3 依赖）: OK; concept-03 增 RetrMode 枚举重转: OK
+flow-03-parse（解析三级判定）: P1–P5 全 PASS（no_escape=[failed, no_text]）
+决定性快验: 同输入两转 sha256 相同（1709e753…）= DETERMINISTIC
+== 绑定闭包（kbapp 首建，FR 体系适配）==
+check_model_bindings 新增 --id-regex 参数（FR-\d+(\.\d+)?[ab]?）；修复过程中 loan 回归曾被破坏
+（正则单组化遗漏 group 引用）→ 修复后 loan PASS 保持
+kbapp: 登记 41 ID | 豁免 11 | 绑定 32/32 解析 | 覆盖 32/32 | VERDICT: PASS
+（绑定表修正 5 处笔误：FR-5.1→5.1a/5.1b、FR-2.2 指向 03、FR-6.4 trans 修正、FR-2.5/组标题豁免）
+== BDD 首练（T6 首例实数据）==
+[SC1] ABox 断言+HermiT: consistent（结构蕴含成立）
+[SC3] valid_to 断言可检; "不在结果"=查询层（OWA 边界——弱化如实注记）
+[负控] disjoint 违例(EntityType_Concept×Method 同实体) -> HermiT CAUGHT
+[SC6] flow-03 watchlist→accepted 迁移存在: True（fsm 路径走查）
+SC2/SC5 归验收测试域（token 计数/统计比率——二分标注第三类）
+```
+
+> 归因：①翻译完整性=补 2.5 件（接口契约/解析判定/检索枚举）+审计表（见报告 §9）；②检查链七项在 kbapp 至此
+> 全部就位（HermiT/Z3/决定性/绑定闭包/FSM/审计/BDD——SHACL 实例闭包并入 BDD 状态约束路径）；③BDD 首练
+> 实测两陷阱+发现二分标注需扩第三类（统计/实现域）。

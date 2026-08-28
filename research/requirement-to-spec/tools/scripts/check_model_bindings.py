@@ -11,8 +11,15 @@
 import argparse, os, re, sys
 from html import unescape
 
-REG_ID_RE = re.compile(r'\b(BR|FUNC|RULE|FLOW|FIELD|UI|NFR|DEL)-(\d{3})\b')
+REG_ID_RE = re.compile(r'\b((?:BR|FUNC|RULE|FLOW|FIELD|UI|NFR|DEL)-\d{3})\b')
 SPLIT_ID_RE = re.compile(r'^\s*((?:BR|FUNC|RULE|FLOW|FIELD|UI|NFR|DEL)-\d{3})\s*$')
+
+
+def make_id_res(extra):
+    """extra 形如 'FR-\\d+(?:\\.\\d+)?'——注入后同时匹配扩展前缀（FR-1.1）与内置前缀。"""
+    reg = REG_ID_RE if not extra else re.compile(rf'\b((?:BR|FUNC|RULE|FLOW|FIELD|UI|NFR|DEL)-\d{{3}}|{extra})\b')
+    split = SPLIT_ID_RE if not extra else re.compile(rf'^\s*((?:BR|FUNC|RULE|FLOW|FIELD|UI|NFR|DEL)-\d{{3}}|{extra})\s*$')
+    return reg, split
 
 
 def read(p):
@@ -39,7 +46,7 @@ def table_rows(text, header):
 def parse_register_ids(text):
     ids = []
     for m in REG_ID_RE.finditer(text):
-        i = f'{m.group(1)}-{m.group(2)}'
+        i = m.group(1)
         if i not in ids:
             ids.append(i)
     return ids
@@ -56,6 +63,8 @@ def resolve(locator, artifact_text):
     kind, _, key = loc.partition(':')
     if kind == 'class':
         return bool(re.search(rf'^\s*class\s+{re.escape(key)}\s*\{{', artifact_text, re.M))
+    if kind == 'interface':
+        return bool(re.search(rf'^\s*interface\s+{re.escape(key)}', artifact_text, re.M))
     if kind == 'enum':
         return bool(re.search(rf'^\s*enum\s+{re.escape(key)}\s*\{{', artifact_text, re.M))
     if kind == 'attr':
@@ -88,15 +97,19 @@ def main():
     ap.add_argument('case_dir')
     ap.add_argument('--bindings', default=None)
     ap.add_argument('--register', default=None)
+    ap.add_argument('--id-regex', default=None, help='扩展 ID 前缀正则（如 FR-\d+(?:\.\d+)?）')
     args = ap.parse_args()
 
     reg_path = args.register or os.path.join(args.case_dir, 'raw', 'requirements-register.md')
     bind_path = args.bindings or os.path.join(args.case_dir, 'formal', 'model-bindings.md')
     reg_text, bind_text = read(reg_path), read(bind_path)
+    global REG_ID_RE, SPLIT_ID_RE
+    if args.id_regex:
+        REG_ID_RE, SPLIT_ID_RE = make_id_res(args.id_regex)
 
     reg_ids = parse_register_ids(reg_text)
     # 登记表只统计"已接受"的行内的首个 ID 归属；简化：出现即视为已接受（本项目登记表当前全为已接受）
-    policy_rows = [r for r in table_rows(bind_text, '## 豁免政策') if r[0].startswith(('BR-', 'FUNC-', 'RULE-', 'FLOW-', 'FIELD-', 'UI-', 'NFR-', 'DEL-')) or r[0].endswith('-*')]
+    policy_rows = [r for r in table_rows(bind_text, '## 豁免政策') if SPLIT_ID_RE.match(r[0].split('/')[0].strip()) or r[0].strip().endswith('-*')]
     bind_rows = [r for r in table_rows(bind_text, '## 绑定表') if REG_ID_RE.search(r[0])]
 
     exempt_prefixes = set()

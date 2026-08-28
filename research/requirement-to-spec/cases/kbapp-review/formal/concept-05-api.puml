@@ -1,0 +1,75 @@
+@startuml
+' ===== kbapp-review 05 层接口契约类图（S3 补充翻译：输入=raw/05 §3 核心接口定义）=====
+' 翻译完整性补件（用户审计触发）。发现 KD-12: 05 §3.2 的 Section dataclass 与 §2.2 图 Section 节点
+' 同名异对象（解析域 vs 图域，属性集不同，P1→P5 的字段映射关系未声明）——建模以 ParseSection 消歧
+
+interface GraphStore {
+  +open(path, mode)
+  +close()
+  +upsert_nodes(label, rows)
+  +upsert_edges(rel, rows)
+  +query(cypher, params)
+  +shortest_path(src, dst, max_hops)
+}
+
+interface Parser {
+  +name : String
+  +formats
+  +parse(path) : ParseResult
+}
+
+interface ScoringModule {
+  +name : String
+  +version : String
+  +score(candidate, context) : ScoringResult
+}
+
+class ParseSection {
+  +section_path : String
+  +level : Integer
+  +title : String
+  +page_range : String
+  +text : String
+}
+
+class ParseResult {
+  +full_text : String
+  +sections
+  +structure : String
+  +parser : String
+  +warnings
+}
+
+class CandidateDoc {
+  +title : String
+  +abstract : String
+  +source : String
+  +topic_hint : String
+}
+
+class ScoringResult {
+  +score : Decimal
+  +suggested_topic : String
+  +notes
+  +debug
+}
+
+class Hit {
+  +doc_id : String
+  +section_path : String
+  +chunk_id : String
+  +score : Decimal
+  +summary : String
+  +anchor : String
+}
+
+' 注解说明(KD-12): ParseSection(05 §3.2, 六属性无 section_id/seq) 与图 Section 节点(05 §2.2,
+'   含 section_id/doc_id/seq/summary) 同名异对象——解析产物入图时的字段映射(P1→P5)未在 05 声明
+' 注解说明(KD-13): Hit.chunk_id 锚定 Chunk(检索域), 与图域 Section 通过 section_path 关联——
+'   三域(解析/图/检索)同名概念的映射关系散落, 建议集中字段映射表
+
+Parser ..> ParseResult : produces
+ScoringModule ..> ScoringResult : produces
+ScoringModule ..> CandidateDoc : consumes
+GraphStore ..> Hit : supports
+@enduml

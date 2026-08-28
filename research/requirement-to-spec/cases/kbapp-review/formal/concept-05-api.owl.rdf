@@ -1,0 +1,179 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="http://example.org/loan"
+         xmlns="http://example.org/loan#">
+
+<owl:Ontology rdf:about="http://example.org/loan"/>
+
+<owl:ObjectProperty rdf:about="#produces">
+  <rdfs:domain rdf:resource="#Parser"/>
+  <rdfs:range rdf:resource="#ParseResult"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#consumes">
+  <rdfs:domain rdf:resource="#ScoringModule"/>
+  <rdfs:range rdf:resource="#CandidateDoc"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#supports">
+  <rdfs:domain rdf:resource="#GraphStore"/>
+  <rdfs:range rdf:resource="#Hit"/>
+</owl:ObjectProperty>
+
+<owl:DatatypeProperty rdf:about="#attrName">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#ScoringModule"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrFormats">
+  <rdfs:domain rdf:resource="#Parser"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrVersion">
+  <rdfs:domain rdf:resource="#ScoringModule"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSection_path">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#Hit"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrLevel">
+  <rdfs:domain rdf:resource="#ParseSection"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTitle">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#CandidateDoc"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrPage_range">
+  <rdfs:domain rdf:resource="#ParseSection"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrText">
+  <rdfs:domain rdf:resource="#ParseSection"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrFull_text">
+  <rdfs:domain rdf:resource="#ParseResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSections">
+  <rdfs:domain rdf:resource="#ParseResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrStructure">
+  <rdfs:domain rdf:resource="#ParseResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrParser">
+  <rdfs:domain rdf:resource="#ParseResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrWarnings">
+  <rdfs:domain rdf:resource="#ParseResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAbstract">
+  <rdfs:domain rdf:resource="#CandidateDoc"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSource">
+  <rdfs:domain rdf:resource="#CandidateDoc"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTopic_hint">
+  <rdfs:domain rdf:resource="#CandidateDoc"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrScore">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+  <rdfs:domain rdf:resource="#Hit"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSuggested_topic">
+  <rdfs:domain rdf:resource="#ScoringResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrNotes">
+  <rdfs:domain rdf:resource="#ScoringResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDebug">
+  <rdfs:domain rdf:resource="#ScoringResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDoc_id">
+  <rdfs:domain rdf:resource="#Hit"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrChunk_id">
+  <rdfs:domain rdf:resource="#Hit"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSummary">
+  <rdfs:domain rdf:resource="#Hit"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAnchor">
+  <rdfs:domain rdf:resource="#Hit"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:Class rdf:about="#GraphStore">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Parser">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ScoringModule">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ParseSection">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ParseResult">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#CandidateDoc">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ScoringResult">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Hit">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+
+</rdf:RDF>

@@ -227,6 +227,26 @@
   <rdfs:subClassOf rdf:resource="#RelKind"/>
 </owl:Class>
 
+<owl:Class rdf:about="#RetrMode">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#RetrMode_vector">
+  <rdfs:subClassOf rdf:resource="#RetrMode"/>
+</owl:Class>
+
+<owl:Class rdf:about="#RetrMode_graph">
+  <rdfs:subClassOf rdf:resource="#RetrMode"/>
+</owl:Class>
+
+<owl:Class rdf:about="#RetrMode_hybrid">
+  <rdfs:subClassOf rdf:resource="#RetrMode"/>
+</owl:Class>
+
+<owl:Class rdf:about="#RetrMode_topic_global">
+  <rdfs:subClassOf rdf:resource="#RetrMode"/>
+</owl:Class>
+
 <owl:Class rdf:about="#Document">
   <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
 </owl:Class>
@@ -315,6 +335,22 @@
   <rdf:type rdf:resource="#RelKind_compares"/>
 </owl:NamedIndividual>
 
+<owl:NamedIndividual rdf:about="#lit_RetrMode_vector">
+  <rdf:type rdf:resource="#RetrMode_vector"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_RetrMode_graph">
+  <rdf:type rdf:resource="#RetrMode_graph"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_RetrMode_hybrid">
+  <rdf:type rdf:resource="#RetrMode_hybrid"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_RetrMode_topic_global">
+  <rdf:type rdf:resource="#RetrMode_topic_global"/>
+</owl:NamedIndividual>
+
 <owl:AllDisjointClasses>
   <owl:members rdf:parseType="Collection">
     <rdf:Description rdf:about="#RelKind_extends"/>
@@ -345,6 +381,15 @@
     <rdf:Description rdf:about="#Corpus_references"/>
     <rdf:Description rdf:about="#Corpus_research"/>
     <rdf:Description rdf:about="#Corpus_design"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#RetrMode_vector"/>
+    <rdf:Description rdf:about="#RetrMode_graph"/>
+    <rdf:Description rdf:about="#RetrMode_hybrid"/>
+    <rdf:Description rdf:about="#RetrMode_topic_global"/>
   </owl:members>
 </owl:AllDisjointClasses>
 

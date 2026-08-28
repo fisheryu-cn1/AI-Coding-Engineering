@@ -1,0 +1,22 @@
+@startuml
+' ===== kbapp-review 03 层解析三级判定状态机（S3 补充翻译：输入=raw/03 §4 P1 双路径判定）=====
+' 翻译完整性补件（用户审计触发）：03 §4 P1 的三级判定原文此前未建状态机
+
+[*] --> fast_attempt : 按格式选解析器, 先试快速路径(PyMuPDF4LLM)
+fast_attempt --> adopted : 覆盖率≥85% 且 标题≥3 → 采用快速路径
+fast_attempt --> flat : 覆盖率≥85% 但标题<3 → 仍快速路径, structure=flat(P3 由 LLM 补章节归属)
+fast_attempt --> docling : 覆盖率<85%(无文本层/损坏) → 降级版面分析
+docling --> adopted : 成功
+docling --> failed : 失败(extract_status=failed)
+docling --> no_text : 扫描版(进人工清单)
+adopted --> [*] : extract_status=ok
+flat --> [*] : extract_status=flat
+failed --> [*]
+no_text --> [*]
+
+note right of flat
+  OCR 刻意延后启用(已具备未启用)——
+  成本取舍非能力缺口(03 §4 P1 注)
+  no_escape_from=[failed, no_text]
+end note
+@enduml
