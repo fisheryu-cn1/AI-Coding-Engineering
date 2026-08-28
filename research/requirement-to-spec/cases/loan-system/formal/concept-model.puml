@@ -12,6 +12,9 @@ class Borrower {
   +income : Decimal
   +employer : String
   +position : String
+  +register()
+  +update()
+  +remove()
 }
 
 class LoanOrder {
@@ -21,6 +24,11 @@ class LoanOrder {
   +purpose : LoanPurpose
   +interest_rate : Decimal
   +status : OrderStatus
+  +submit()
+  +approve()
+  +reject()
+  +close()
+  +delete()
 }
 
 class CreditResult {
@@ -29,7 +37,13 @@ class CreditResult {
   +approved_rate : Decimal
   +decision : CreditDecision
   +decision_reason : String
+  +evaluate()
 }
+
+' 注解说明(方法提取): 类操作与 flow-model 迁移的系统对应——submit()=draft→pending(FUNC-002);
+'   approve()=pending→active(RULE-001+D-A 自动审批即生效); reject()=pending→closed(RULE-001 拒绝路径);
+'   close()=active→closed(FLOW-002); delete()=任意状态级联删除(FLOW-001 删除条款);
+'   evaluate()=评分计算(RULE-001,数值逻辑在 rules_z3); Borrower 三操作=FUNC-001 CRUD
 
 ' 单据流程状态维度(D-B 裁决: 仅流程态; 审批结果不在此维度)
 enum OrderStatus {

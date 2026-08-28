@@ -283,3 +283,17 @@ Z3: sat core [] | FSM: ALL_PROPERTIES_HOLD | 决定性: DETERMINISTIC
 > 定约束（缺字段/错格式均被 pySHACL 拦截且报违例组件可区分）；②TA2-04 的触发时机语义（草稿保存同触校验）
 > 为行为约束，按混合架构归实现层与 R4 场景库，注解说明行显式声明该边界；③至此 21 条需求全部闭环或豁免，
 > 绑定清单零暂缓、队列零待执行——loan-system 案例完全收官。
+
+## Run-13 2026-08-28 方法提取实验（触发原因：用户假设——LLM 环节是 UML 方法提取困难源，以 loan-system 为传统对照）
+
+> loan-system 概念模型加 9 个类操作（由 flow-model 迁移+需求动作机械推导，见模型内映射注解）：
+> LoanOrder{submit,approve,reject,close,delete}←五条迁移+删除条款；CreditResult.evaluate←评分；Borrower{register,update,remove}←CRUD。
+
+```
+== 转换 == OK（方法行被解析器忽略——method/13 §2 明文）
+== 产物不变性 == concept.owl.rdf sha256 = 3de3ae1d…（与 Run-12 基线逐字节一致）
+== HermiT == consistent, classes=17 individuals=11（与 Run-12 相同）
+```
+
+> 归因：①传统系统的方法与状态机迁移**无损互转**（每条迁移=一个操作，映射表在模型注解）；
+> ②方法行对 OWL/检查链零影响（三层归因第三层的实证）；③与 kb-app 的受控对照结论见日志。
