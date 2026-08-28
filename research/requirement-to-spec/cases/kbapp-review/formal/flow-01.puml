@@ -25,6 +25,8 @@ relocated --> active
 active --> tombstoned : 删除, 置valid_to墓碑(FR-4.4)
 tombstoned --> [*] : 历史可追溯保留
 
-tombstoned : 终态(软删除)
-no_escape_from=[tombstoned]
+note right of tombstoned
+  终态(软删除)
+  no_escape_from=[tombstoned]
+end note
 @enduml
