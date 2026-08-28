@@ -15,6 +15,7 @@
 import argparse, re, sys
 
 ID_RE = re.compile(r'\b(BR|FUNC|RULE|FLOW|FIELD|UI|NFR|DEL)-\d{3}\b')
+SUSPECT_RE = re.compile(r'\b[A-Z]{2,6}-\d{2,3}\b')   # 疑似 ID 形态（宽松）：抓形近前缀变体（FULC/FOW 式漂移）
 
 
 def read(p):
@@ -47,6 +48,18 @@ def main():
     bogus = [i for i in doc_ids if i not in reg_ids]
     for i in bogus:
         findings.append(f'A 私造/悬挂引用: {i} 不在登记表')
+    # A2 形近前缀变体（宽松疑似 ID：不匹配合法前缀正则的 token 若与某登记 ID 形近=ID 拼写漂移；
+    #    首例 2026-08-28 regen-experiment：FULC-001/FOW-001 曾逃过 A 检查）
+    legit = set(reg_ids)
+    seen_variant = set()
+    for m in SUSPECT_RE.finditer(doc):
+        tok = m.group(0)
+        if tok in legit or ID_RE.fullmatch(tok) or tok in seen_variant:
+            continue
+        near = min(reg_ids, key=lambda r: _lev(tok, r)) if reg_ids else ''
+        if near and _lev(tok, near) <= 2:
+            seen_variant.add(tok)
+            findings.append(f'A2 形近变体: "{tok}" 不是合法 ID（最近 "{near}"，出现 {doc.count(tok)} 次）——ID 拼写漂移/断链')
 
     # 验收节切片
     idx = doc.find(args.accept)
