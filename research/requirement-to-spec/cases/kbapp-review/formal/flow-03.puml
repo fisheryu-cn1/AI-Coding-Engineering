@@ -1,0 +1,33 @@
+@startuml
+' ===== kbapp-review 03 层状态机（§6.1 变更检测四情形 + §8.2 Inbox 三档流 + §2 tasks 驱动）=====
+
+state InboxFlow {
+  [*] --> candidate : 收集流程(查询→去重→评分模块)
+  candidate --> pending : score ≥ 0.70 → inbox(pending)
+  candidate --> watchlist : 0.50 ≤ score < 0.70 → inbox(watchlist, UI折叠)
+  candidate --> logged : score < 0.50 → 仅 collect_log 不入 inbox
+  pending --> accepted : 审核接受(移动到主题目录, 命名规范) → 入队流水线
+  pending --> rejected : 审核拒绝(删文件+记录, SHA入拒绝名单)
+  watchlist --> accepted
+  watchlist --> rejected
+  accepted --> [*]
+  rejected --> [*] : 永久跳过(SHA拒绝名单)
+  logged --> [*]
+}
+
+[*] --> registered : P1 解析(files 表登记, extract_status)
+registered --> indexed : 流水线完成(P5, status=indexed)
+registered --> failed : Docling 也失败(extract_status=failed)
+registered --> no_text : 扫描版(进人工清单)
+indexed --> requeue : sha256 变(修改): 旧节点置墓碑→重新入队
+requeue --> indexed
+indexed --> path_only : sha256 同+路径变(移动): 仅更新 path, 零重抽取
+path_only --> indexed
+indexed --> tombstoned : 磁盘不存在(删除): 置 valid_to, 向量标记过滤
+failed --> [*]
+no_text --> [*]
+tombstoned --> [*]
+
+tombstoned : 终态(软删除, 仅 Document 级; Section 级联过滤; Entity/Topic 共享不置墓碑)
+no_escape_from=[tombstoned, failed, no_text]
+@enduml

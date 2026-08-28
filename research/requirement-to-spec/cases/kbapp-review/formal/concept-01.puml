@@ -1,0 +1,72 @@
+@startuml
+' ===== kbapp-review 01 层概念模型（S3 翻译：输入=raw/01-功能需求文档.md 原文）=====
+' 翻译位: ZCode/GLM 2026-08-28; 评审忠实原则: 按 01 原文编码, 不引入 03 的设计精化
+' 覆盖: §2 术语表全部实体 + FR-1/2/5/6 结构语义
+
+class Document {
+  +doc_id : String
+  +title : String
+  +path : String
+  +sha256 : String
+  +doc_type : DocType
+  +arxiv_id : String
+  +page_count : Integer
+}
+
+class Section {
+  +section_path : String
+  +level : Integer
+  +page_range : String
+}
+
+class Chunk {
+  +length_limit : Integer
+}
+
+class Entity {
+  +name : String
+  +type : EntityType
+  +aliases : String
+}
+
+class Topic {
+  +name : String
+}
+
+class InboxItem {
+  +relevance_score : Decimal
+  +source : String
+}
+
+' FR-1.2b: 文档类型六类(封闭枚举, 原文列举)
+enum DocType {
+  paper
+  report
+  note
+  webpage
+  chartset
+  design
+}
+' FR-2.1: 实体类型六类(封闭枚举, 原文"至少覆盖"——下界语义, 见 KD-1 注记)
+enum EntityType {
+  Concept
+  Method
+  Tool
+  Dataset
+  Person
+  Organization
+}
+
+' @disjoint: DocType_paper, DocType_report, DocType_note, DocType_webpage, DocType_chartset, DocType_design
+' @disjoint: EntityType_Concept, EntityType_Method, EntityType_Tool, EntityType_Dataset, EntityType_Person, EntityType_Organization
+' 注解说明(KD-1 弱化): Topic 枚举原文"AIOS/CodeGraph/...等, 可扩展"=开放枚举, 01 未封闭取值集——待人工事项
+' 注解说明(KD-2): FR-2.1"至少覆盖"六类=下界约束, 预留扩展(与封闭 disjoint 并存时以六类为 MVP 基线)
+' 注解说明(KD-3): FR-6.2 阈值三档(accept/watchlist/reject)数值 01 未定义——待人工事项(03 层给默认值)
+
+Document "1" --> "1..*" Section : hasSection
+Section "1" --> "0..*" Chunk : splits
+Section "1" --> "0..*" Entity : mentions
+Document "1" --> "1..*" Topic : aboutTopic
+Entity --> "0..*" Entity : relatesTo
+InboxItem --> "0..1" Topic : suggestedTopic
+@enduml

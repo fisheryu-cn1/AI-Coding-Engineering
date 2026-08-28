@@ -1,0 +1,21 @@
+@prefix loan: <http://example.org/loan#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+loan:DocumentShape a sh:NodeShape ;
+  sh:targetClass loan:Document .
+loan:SectionShape a sh:NodeShape ;
+  sh:targetClass loan:Section .
+loan:EntityShape a sh:NodeShape ;
+  sh:targetClass loan:Entity .
+loan:TopicShape a sh:NodeShape ;
+  sh:targetClass loan:Topic .
+loan:CorpusShape a sh:NodeShape ;
+  sh:targetClass loan:Corpus ;
+  sh:property [ sh:path [ sh:inversePath loan:hasCorpus ] ] .
+loan:EntityTypeShape a sh:NodeShape ;
+  sh:targetClass loan:EntityType ;
+  sh:property [ sh:path [ sh:inversePath loan:hasEntityType ] ] .
+loan:RelKindShape a sh:NodeShape ;
+  sh:targetClass loan:RelKind ;
+  sh:property [ sh:path [ sh:inversePath loan:hasRelKind ] ] .

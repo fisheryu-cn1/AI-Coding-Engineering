@@ -1,0 +1,80 @@
+@startuml
+' ===== kbapp-review 03 层概念模型（S3 翻译：输入=raw/03-技术概要设计.md 原文）=====
+' 翻译位: ZCode/GLM 2026-08-28; 忠实原则: 按 03 原文编码(§3 图谱 Schema + §2 SQLite 核心)
+' 对照锚: 与 01 层 concept-01.puml 同源概念的形态差异(Chunk 从图节点降为 FTS 表行等)由对比报告承载
+
+class Document {
+  +doc_id : String
+  +title : String
+  +path : String
+  +sha256 : String
+  +doc_type : String
+  +corpus : Corpus
+  +arxiv_id : String
+  +version : String
+  +valid_from : String
+  +valid_to : String
+}
+
+class Section {
+  +section_id : String
+  +section_path : String
+  +level : Integer
+  +seq : Integer
+  +summary : String
+  +page_range : String
+}
+
+class Entity {
+  +entity_id : String
+  +name : String
+  +type : EntityType
+  +aliases : String
+}
+
+class Topic {
+  +name : String
+  +description : String
+}
+
+' 03 §3.1: corpus 三值封闭
+enum Corpus {
+  references
+  research
+  design
+}
+' 03 §3.1: Entity.type 六值(同 01 FR-2.1)
+enum EntityType {
+  Concept
+  Method
+  Tool
+  Dataset
+  Person
+  Organization
+}
+' 03 §4 P4: RELATES_TO.kind 九值封闭
+enum RelKind {
+  extends
+  contradicts
+  applies
+  evaluates
+  improves_on
+  part_of
+  instance_of
+  uses
+  compares
+}
+
+' @disjoint: Corpus_references, Corpus_research, Corpus_design
+' @disjoint: EntityType_Concept, EntityType_Method, EntityType_Tool, EntityType_Dataset, EntityType_Person, EntityType_Organization
+' @disjoint: RelKind_extends, RelKind_contradicts, RelKind_applies, RelKind_evaluates, RelKind_improves_on, RelKind_part_of, RelKind_instance_of, RelKind_uses, RelKind_compares
+' 注解说明(KD-4 对照): 03 §3.2 MVP 收敛砍除 Chunk 图节点与 CONTAINS_CHUNK/MENTIONS_ENTITY/CITES/
+'   SUPERSEDES/SAME_AS 边——Chunk 降级为 FTS 表行(§4 分块/§5.1 全文路), 语义由检索层承载(对照 01 术语表 Chunk 定义仍在)
+' 注解说明(KD-5): doc_type 在 03 为自由属性(§3.1 无枚举约束), 未沿用 01 FR-1.2 六类封闭枚举——形态差异待对照
+' 注解说明(KD-6): Topic 扁平映射+跨语料归并(大小写/连字符归一), >30 主题才引入 SUBTOPIC_OF——设计新生规则
+
+Document "1" --> "1..*" Section : CONTAINS_SECTION
+Section "1" --> "0..*" Entity : MENTIONS
+Document "1" --> "1..*" Topic : ABOUT_TOPIC
+Entity --> "0..*" Entity : RELATES_TO
+@enduml

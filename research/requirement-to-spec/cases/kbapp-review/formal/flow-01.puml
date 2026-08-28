@@ -1,0 +1,30 @@
+@startuml
+' ===== kbapp-review 01 层状态机（Inbox 审核流 FR-6.2/6.3 + Document 变更生命周期 FR-4.1/4.4）=====
+
+state InboxFlow {
+  [*] --> collected : 自动收集/初评(FR-6.2)
+  collected --> pending : score≥accept阈值 → 待审核
+  collected --> watchlist : 边界档 → 折叠待审
+  collected --> rejected_log : score<reject阈值 → 仅台账不入Inbox
+  pending --> accepted : 人工接受(FR-6.3)
+  pending --> rejected : 人工拒绝
+  pending --> reclassified : 人工改分类后接受
+  watchlist --> accepted
+  watchlist --> rejected
+  accepted --> [*] : 进入正式处理流水线
+  rejected --> [*]
+  reclassified --> [*]
+  rejected_log --> [*] : (不入Inbox, 注记区分人工拒绝)
+}
+
+[*] --> active : 资料入库(FR-1)
+active --> reprocessing : sha256变化=修改(FR-4.1)
+reprocessing --> active : 增量更新完成(FR-4.2)
+active --> relocated : 路径变化=移动, 零重抽取(FR-4.4)
+relocated --> active
+active --> tombstoned : 删除, 置valid_to墓碑(FR-4.4)
+tombstoned --> [*] : 历史可追溯保留
+
+tombstoned : 终态(软删除)
+no_escape_from=[tombstoned]
+@enduml
