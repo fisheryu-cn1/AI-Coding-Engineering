@@ -73,3 +73,36 @@ ScoringModule ..> ScoringResult : produces
 ScoringModule ..> CandidateDoc : consumes
 GraphStore ..> Hit : supports
 @enduml
+
+' ===== MCP 工具域（05 §6 工具表，M4/M5 收窄口径）=====
+class McpToolSearch {
+  +kb_search(query, mode, topic, limit)
+}
+class McpToolShow {
+  +kb_show(doc)
+}
+class McpToolRead {
+  +kb_read(doc, section)
+}
+class McpToolRelated {
+  +kb_related(target, type, hops, limit)
+}
+class McpToolCompare {
+  +kb_compare(concept, doc_ids, limit)
+}
+class McpToolAssemble {
+  +kb_assemble_context(task, budget, topics)
+}
+class McpToolTopics {
+  +kb_topics()
+}
+class McpToolIngest {
+  +kb_ingest(paths)
+}
+class McpToolReindex {
+  +kb_reindex(scope, full)
+}
+
+' 注解说明: 05 §6 M4/M5 口径——kb_search.mode 收为三值(vector → MODE_NOT_READY 报错);
+'   kb_show/kb_read 参数从 doc_id 扩为 doc(可传 id/路径/标题片段, retrieve.resolve_doc 解析);
+'   kb_related 增 type 参数(doc|entity); kb_status 未在 M4/M5 交付(留 P1)——均有 §6 声明

@@ -1,0 +1,55 @@
+@startuml
+' ===== kbapp-review 03 层接口契约模型（S3 补充翻译：输入=raw/03 §3.1 GraphStore + §8.2.2 ScoringModule + §7.1 MCP 工具表）=====
+' 补建背景：用户指出接口方法未进任何检查维度；03 的接口定义是 05 接口的上游（公共骨架原则同样适用于接口域）
+
+interface GraphStore {
+  +open(path, mode)
+  +close()
+  +upsert_nodes(label, rows)
+  +upsert_edges(rel, rows)
+  +query(cypher, params)
+  +shortest_path(src, dst, max_hops)
+}
+
+interface ScoringModule {
+  +name : String
+  +version : String
+  +score(candidate, context)
+}
+
+class McpToolSearch {
+  +kb_search(query, mode, topic, limit)
+}
+class McpToolShow {
+  +kb_show(doc_id)
+}
+class McpToolRead {
+  +kb_read(doc_id, section_path)
+}
+class McpToolRelated {
+  +kb_related(target, hops, limit)
+}
+class McpToolCompare {
+  +kb_compare(concept, doc_ids, limit)
+}
+class McpToolAssemble {
+  +kb_assemble_context(task, budget, topics)
+}
+class McpToolTopics {
+  +kb_topics()
+}
+class McpToolStatus {
+  +kb_status()
+}
+class McpToolIngest {
+  +kb_ingest(paths)
+}
+class McpToolReindex {
+  +kb_reindex(scope, full)
+}
+
+' 注解说明: 03 §7.1 工具表 kb_search 的 mode 参数为四值(vector/graph/hybrid/topic-global, FR-3.1 全集);
+'   05 §6 的 M4 收窄口径将 mode 收为三值(vector 显式报错 MODE_NOT_READY)——方法参数的值域漂移有 M4 声明
+
+' @disjoint: McpToolSearch, McpToolShow, McpToolRead, McpToolRelated, McpToolCompare, McpToolAssemble, McpToolTopics, McpToolStatus, McpToolIngest, McpToolReindex
+@enduml

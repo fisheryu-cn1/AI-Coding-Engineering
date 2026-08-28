@@ -10,19 +10,43 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from puml2xmi import parse_puml
 
 
+OP_RE = None  # 延迟初始化（避免顶层 import 失败顺序问题）
+import re as _re
+_OP_LINE = _re.compile(r'^([+\-#~])?\s*([\w]+)\s*\(.*\)\s*(?::\s*(.+?))?$')
+
+
+def _methods(text):
+    """从 puml 文本解析各类的操作行（+name(args): Ret）；与属性正则互斥（带参括号行不匹配属性）。"""
+    out, cur = {}, None
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("'"):
+            continue
+        m = _re.match(r'^(?:abstract\s+)?(?:class|interface)\s+(\w+)', line)
+        if m:
+            cur = m.group(1); out.setdefault(cur, set()); continue
+        if line == '}':
+            cur = None; continue
+        mo = _OP_LINE.match(line)
+        if mo and cur:
+            out[cur].add(mo.group(2))
+    return out
+
+
 def load(p):
-    classes, enums, assocs, gens = parse_puml(open(p, encoding='utf-8').read())
+    text = open(p, encoding='utf-8').read()
+    classes, enums, assocs, gens = parse_puml(text)
     attrs = {c: {a[1] for a in info['attrs']} for c, info in classes.items()}
     edges = {(a, b, label) for a, _, b, _, label in assocs}
-    return attrs, enums, edges
+    return attrs, enums, edges, _methods(text)
 
 
 def main():
     up, lo = sys.argv[1], sys.argv[2]
-    uA, uE, uR = load(up)
-    lA, lE, lR = load(lo)
+    uA, uE, uR, uM = load(up)
+    lA, lE, lR, lM = load(lo)
     print(f'== diff_models: 上层 {os.path.basename(up)} → 下层 {os.path.basename(lo)} ==')
-    print(f'上层: 类 {len(uA)} 枚举 {len(uE)} 关联 {len(uR)} | 下层: 类 {len(lA)} 枚举 {len(lE)} 关联 {len(lR)}')
+    print(f'上层: 类 {len(uA)} 枚举 {len(uE)} 关联 {len(uR)} 方法 {sum(len(v) for v in uM.values())} | 下层: 类 {len(lA)} 枚举 {len(lE)} 关联 {len(lR)} 方法 {sum(len(v) for v in lM.values())}')
     n = 0
     only_u = set(uA) - set(lA)
     only_l = set(lA) - set(uA)
@@ -49,9 +73,18 @@ def main():
     for e in sorted(set(lE) - set(uE)):
         print(f'FINDING[枚举]: 仅下层有枚举 {e}'); n += 1
     for r in sorted(uR - lR):
-        print(f'FINDING[关联]: 仅上层有 {r[0]}--{r[2]}:{r[4]}（下游丢失）'); n += 1
+        print(f'FINDING[关联]: 仅上层有 {r[0]}--{r[2]}:{r[2] if len(r)<3 else r[2]}（下游丢失）'); n += 1
     for r in sorted(lR - uR):
-        print(f'FINDING[关联]: 仅下层有 {r[0]}--{r[2]}:{r[4]}（新增）'); n += 1
+        print(f'FINDING[关联]: 仅下层有 {r[0]}--{r[2]}（新增）'); n += 1
+    for c in sorted(set(uM) & set(lM)):
+        for m in sorted(lM[c] - uM[c]):
+            print(f'FINDING[方法]: {c}.{m}() 下层新增（签名漂移检查点）'); n += 1
+        for m in sorted(uM[c] - lM[c]):
+            print(f'FINDING[方法]: {c}.{m}() 下层移除（签名漂移检查点）'); n += 1
+    for c in sorted(set(uM) - set(lM)):
+        print(f'FINDING[方法]: 仅上层有操作集 {c}（{len(uM[c])} 个方法）'); n += 1
+    for c in sorted(set(lM) - set(uM)):
+        print(f'FINDING[方法]: 仅下层有操作集 {c}（{len(lM[c])} 个方法）'); n += 1
     print('VERDICT:', 'IDENTICAL' if n == 0 else f'DIFFS({n})')
 
 
