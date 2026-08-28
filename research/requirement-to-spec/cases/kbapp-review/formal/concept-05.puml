@@ -1,0 +1,91 @@
+@startuml
+' ===== kbapp-review 05 层概念模型（S3 翻译：输入=raw/05-详细设计方案.md §2 DDL）=====
+' 翻译位: ZCode/GLM 2026-08-28; 忠实原则: 按 05 原文编码(注意 05 为活文档——M1/M2 补充块一并编入并注记)
+
+class FileRecord {
+  +doc_id : String
+  +path : String
+  +sha256 : String
+  +topic : String
+  +doc_type : String
+  +corpus : Corpus5
+  +extract_status : ExtractStatus
+  +status : FileStatus
+  +summary_source : String
+}
+
+class Task {
+  +kind : String
+  +status : TaskStatus
+  +attempts : Integer
+  +max_attempts : Integer
+}
+
+class InboxRecord {
+  +relevance_score : Decimal
+  +verdict : InboxVerdict
+  +scoring_module : String
+  +scoring_version : String
+  +suggested_topic : String
+}
+
+' 05 §2.1 files.extract_status 五值
+enum ExtractStatus {
+  pending
+  ok
+  flat
+  no_text
+  failed
+}
+' 05 §2.1 files.status 三值
+enum FileStatus {
+  new
+  indexed
+  tombstone
+}
+' 05 §2.1 corpus 五值(03 为三值——层间扩展, 见对照报告)
+enum Corpus5 {
+  references
+  research
+  design
+  inbox
+  external
+}
+' 05 §2.1 doc_type 注释六值(注意: 01 FR-1.2 为"图表集", 05 为 diagrams——术语漂移)
+enum DocTypeX {
+  paper
+  report
+  note
+  webpage
+  diagrams
+  design
+}
+' 05 §2.1 tasks.status 四值
+enum TaskStatus {
+  pending
+  running
+  done
+  failed
+}
+' 05 §2.1 inbox.verdict 四值
+enum InboxVerdict {
+  pending
+  watchlist
+  accepted
+  rejected
+}
+
+' @disjoint: ExtractStatus_pending, ExtractStatus_ok, ExtractStatus_flat, ExtractStatus_no_text, ExtractStatus_failed
+' @disjoint: FileStatus_new, FileStatus_indexed, FileStatus_tombstone
+' @disjoint: Corpus5_references, Corpus5_research, Corpus5_design, Corpus5_inbox, Corpus5_external
+' @disjoint: TaskStatus_pending, TaskStatus_running, TaskStatus_done, TaskStatus_failed
+' @disjoint: InboxVerdict_pending, InboxVerdict_watchlist, InboxVerdict_accepted, InboxVerdict_rejected
+' 注解说明(KD-7): "design"一词两义——DocTypeX.design(文档类型:设计方案)与 Corpus5.design(语料来源)同形异义,
+'   同形编号消歧应显式化(检索/展示层需上下文限定)
+' 注解说明(KD-8): doc_id 存在两代方案并存(活文档): §2.1 注释"corpus:relpath" vs M2 补充"全局顺序编号 D%04d"——
+'   §2.1 注释已被 M2 替代但未删除, 单文档内自相矛盾的字段口径
+' 注解说明(KD-9): 05 §2.2 Document 图节点较 03 §3.1 增加 summary_l1/summary_l2/summary_path 三属性(curated 集成)
+
+FileRecord "1" --> "0..*" Task : spawns
+InboxRecord --> "0..1" FileRecord : acceptedInto
+@enduml

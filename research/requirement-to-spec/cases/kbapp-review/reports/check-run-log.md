@@ -26,3 +26,20 @@ P4 交集vs并集 反例存在性: sat（例 ct=0.25, dt=1: 交集=0.25 ≤ 上�
 > **Run-1 附记（2026-08-28）**：四件 UML 的 SVG 已渲染（concept-01/03、flow-01/03，入口见 review/V00-INDEX）。
 > 渲染过程修一处语法：no_escape_from 裸行致 PlantUML 报错（loan 案例写在 note 块内故通过）——统一移入 note，
 > fsm_check 解析回归验证通过（配置行 note 内可解析）。
+
+## Run-2 2026-08-28 05-详细设计三层检验（触发原因：用户新任务——05 自身+05↔03+05↔01）
+
+```
+== 转换 == concept-05: OK（9 类/枚举, 2 关联）
+== HermiT == [concept-05] consistent, classes=36 individuals=27
+== FSM（双状态机）==
+tasks（failed 非终态可退避回 pending）+ files.status（tombstone 拆 delete 终态/modify 中转两状态）
+P1–P5 全 PASS（no_escape=[tombstone_delete]）
+== Z3 ==
+05 阈值组自洽: sat（0.70/0.50/0.05 与 03 一致——传导 ✓）
+分类判据分歧例A(差值过/比值不过): sat top1=0.575, top2=0.44  ← 03 差值判据与 05 M2 比值判据对该输入行为相反
+分类判据分歧例B(比值过/差值不过): sat top1=0, top2=0（平凡解, A 已足证不等价）
+```
+
+> 归因：05 层自身全绿；实质发现全部在层间与细化缺口——KD-10 墓碑-重索引 upsert 语义两难（细化暴露）、
+> 分类判据变形（Z3 分歧反例）、corpus 3→5 静默扩展、doc_type 三层漂移链、NFR-4 缺口长链固化。详见《三层检验报告》。

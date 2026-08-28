@@ -1,0 +1,467 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="http://example.org/loan"
+         xmlns="http://example.org/loan#">
+
+<owl:Ontology rdf:about="http://example.org/loan"/>
+
+<owl:ObjectProperty rdf:about="#spawns">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="#Task"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#acceptedInto">
+  <rdfs:domain rdf:resource="#InboxRecord"/>
+  <rdfs:range rdf:resource="#FileRecord"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasCorpus5">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="#Corpus5"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasExtractStatus">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="#ExtractStatus"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasFileStatus">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="#FileStatus"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasTaskStatus">
+  <rdfs:domain rdf:resource="#Task"/>
+  <rdfs:range rdf:resource="#TaskStatus"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasInboxVerdict">
+  <rdfs:domain rdf:resource="#InboxRecord"/>
+  <rdfs:range rdf:resource="#InboxVerdict"/>
+</owl:ObjectProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDoc_id">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrPath">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSha256">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTopic">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDoc_type">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSummary_source">
+  <rdfs:domain rdf:resource="#FileRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrKind">
+  <rdfs:domain rdf:resource="#Task"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAttempts">
+  <rdfs:domain rdf:resource="#Task"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrMax_attempts">
+  <rdfs:domain rdf:resource="#Task"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrRelevance_score">
+  <rdfs:domain rdf:resource="#InboxRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrScoring_module">
+  <rdfs:domain rdf:resource="#InboxRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrScoring_version">
+  <rdfs:domain rdf:resource="#InboxRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSuggested_topic">
+  <rdfs:domain rdf:resource="#InboxRecord"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:Class rdf:about="#ExtractStatus">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ExtractStatus_pending">
+  <rdfs:subClassOf rdf:resource="#ExtractStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ExtractStatus_ok">
+  <rdfs:subClassOf rdf:resource="#ExtractStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ExtractStatus_flat">
+  <rdfs:subClassOf rdf:resource="#ExtractStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ExtractStatus_no_text">
+  <rdfs:subClassOf rdf:resource="#ExtractStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ExtractStatus_failed">
+  <rdfs:subClassOf rdf:resource="#ExtractStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#FileStatus">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#FileStatus_new">
+  <rdfs:subClassOf rdf:resource="#FileStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#FileStatus_indexed">
+  <rdfs:subClassOf rdf:resource="#FileStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#FileStatus_tombstone">
+  <rdfs:subClassOf rdf:resource="#FileStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Corpus5">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Corpus5_references">
+  <rdfs:subClassOf rdf:resource="#Corpus5"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Corpus5_research">
+  <rdfs:subClassOf rdf:resource="#Corpus5"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Corpus5_design">
+  <rdfs:subClassOf rdf:resource="#Corpus5"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Corpus5_inbox">
+  <rdfs:subClassOf rdf:resource="#Corpus5"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Corpus5_external">
+  <rdfs:subClassOf rdf:resource="#Corpus5"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DocTypeX">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DocTypeX_paper">
+  <rdfs:subClassOf rdf:resource="#DocTypeX"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DocTypeX_report">
+  <rdfs:subClassOf rdf:resource="#DocTypeX"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DocTypeX_note">
+  <rdfs:subClassOf rdf:resource="#DocTypeX"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DocTypeX_webpage">
+  <rdfs:subClassOf rdf:resource="#DocTypeX"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DocTypeX_diagrams">
+  <rdfs:subClassOf rdf:resource="#DocTypeX"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DocTypeX_design">
+  <rdfs:subClassOf rdf:resource="#DocTypeX"/>
+</owl:Class>
+
+<owl:Class rdf:about="#TaskStatus">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#TaskStatus_pending">
+  <rdfs:subClassOf rdf:resource="#TaskStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#TaskStatus_running">
+  <rdfs:subClassOf rdf:resource="#TaskStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#TaskStatus_done">
+  <rdfs:subClassOf rdf:resource="#TaskStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#TaskStatus_failed">
+  <rdfs:subClassOf rdf:resource="#TaskStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#InboxVerdict">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#InboxVerdict_pending">
+  <rdfs:subClassOf rdf:resource="#InboxVerdict"/>
+</owl:Class>
+
+<owl:Class rdf:about="#InboxVerdict_watchlist">
+  <rdfs:subClassOf rdf:resource="#InboxVerdict"/>
+</owl:Class>
+
+<owl:Class rdf:about="#InboxVerdict_accepted">
+  <rdfs:subClassOf rdf:resource="#InboxVerdict"/>
+</owl:Class>
+
+<owl:Class rdf:about="#InboxVerdict_rejected">
+  <rdfs:subClassOf rdf:resource="#InboxVerdict"/>
+</owl:Class>
+
+<owl:Class rdf:about="#FileRecord">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Task">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#InboxRecord">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:NamedIndividual rdf:about="#lit_ExtractStatus_pending">
+  <rdf:type rdf:resource="#ExtractStatus_pending"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_ExtractStatus_ok">
+  <rdf:type rdf:resource="#ExtractStatus_ok"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_ExtractStatus_flat">
+  <rdf:type rdf:resource="#ExtractStatus_flat"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_ExtractStatus_no_text">
+  <rdf:type rdf:resource="#ExtractStatus_no_text"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_ExtractStatus_failed">
+  <rdf:type rdf:resource="#ExtractStatus_failed"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_FileStatus_new">
+  <rdf:type rdf:resource="#FileStatus_new"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_FileStatus_indexed">
+  <rdf:type rdf:resource="#FileStatus_indexed"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_FileStatus_tombstone">
+  <rdf:type rdf:resource="#FileStatus_tombstone"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_Corpus5_references">
+  <rdf:type rdf:resource="#Corpus5_references"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_Corpus5_research">
+  <rdf:type rdf:resource="#Corpus5_research"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_Corpus5_design">
+  <rdf:type rdf:resource="#Corpus5_design"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_Corpus5_inbox">
+  <rdf:type rdf:resource="#Corpus5_inbox"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_Corpus5_external">
+  <rdf:type rdf:resource="#Corpus5_external"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DocTypeX_paper">
+  <rdf:type rdf:resource="#DocTypeX_paper"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DocTypeX_report">
+  <rdf:type rdf:resource="#DocTypeX_report"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DocTypeX_note">
+  <rdf:type rdf:resource="#DocTypeX_note"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DocTypeX_webpage">
+  <rdf:type rdf:resource="#DocTypeX_webpage"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DocTypeX_diagrams">
+  <rdf:type rdf:resource="#DocTypeX_diagrams"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DocTypeX_design">
+  <rdf:type rdf:resource="#DocTypeX_design"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_TaskStatus_pending">
+  <rdf:type rdf:resource="#TaskStatus_pending"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_TaskStatus_running">
+  <rdf:type rdf:resource="#TaskStatus_running"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_TaskStatus_done">
+  <rdf:type rdf:resource="#TaskStatus_done"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_TaskStatus_failed">
+  <rdf:type rdf:resource="#TaskStatus_failed"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_InboxVerdict_pending">
+  <rdf:type rdf:resource="#InboxVerdict_pending"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_InboxVerdict_watchlist">
+  <rdf:type rdf:resource="#InboxVerdict_watchlist"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_InboxVerdict_accepted">
+  <rdf:type rdf:resource="#InboxVerdict_accepted"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_InboxVerdict_rejected">
+  <rdf:type rdf:resource="#InboxVerdict_rejected"/>
+</owl:NamedIndividual>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#InboxVerdict_pending"/>
+    <rdf:Description rdf:about="#InboxVerdict_watchlist"/>
+    <rdf:Description rdf:about="#InboxVerdict_accepted"/>
+    <rdf:Description rdf:about="#InboxVerdict_rejected"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#TaskStatus_pending"/>
+    <rdf:Description rdf:about="#TaskStatus_running"/>
+    <rdf:Description rdf:about="#TaskStatus_done"/>
+    <rdf:Description rdf:about="#TaskStatus_failed"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#Corpus5_references"/>
+    <rdf:Description rdf:about="#Corpus5_research"/>
+    <rdf:Description rdf:about="#Corpus5_design"/>
+    <rdf:Description rdf:about="#Corpus5_inbox"/>
+    <rdf:Description rdf:about="#Corpus5_external"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#FileStatus_new"/>
+    <rdf:Description rdf:about="#FileStatus_indexed"/>
+    <rdf:Description rdf:about="#FileStatus_tombstone"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#ExtractStatus_pending"/>
+    <rdf:Description rdf:about="#ExtractStatus_ok"/>
+    <rdf:Description rdf:about="#ExtractStatus_flat"/>
+    <rdf:Description rdf:about="#ExtractStatus_no_text"/>
+    <rdf:Description rdf:about="#ExtractStatus_failed"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#InboxVerdict_pending"/>
+    <rdf:Description rdf:about="#InboxVerdict_watchlist"/>
+    <rdf:Description rdf:about="#InboxVerdict_accepted"/>
+    <rdf:Description rdf:about="#InboxVerdict_rejected"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#TaskStatus_pending"/>
+    <rdf:Description rdf:about="#TaskStatus_running"/>
+    <rdf:Description rdf:about="#TaskStatus_done"/>
+    <rdf:Description rdf:about="#TaskStatus_failed"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#DocTypeX_paper"/>
+    <rdf:Description rdf:about="#DocTypeX_report"/>
+    <rdf:Description rdf:about="#DocTypeX_note"/>
+    <rdf:Description rdf:about="#DocTypeX_webpage"/>
+    <rdf:Description rdf:about="#DocTypeX_diagrams"/>
+    <rdf:Description rdf:about="#DocTypeX_design"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#Corpus5_references"/>
+    <rdf:Description rdf:about="#Corpus5_research"/>
+    <rdf:Description rdf:about="#Corpus5_design"/>
+    <rdf:Description rdf:about="#Corpus5_inbox"/>
+    <rdf:Description rdf:about="#Corpus5_external"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#FileStatus_new"/>
+    <rdf:Description rdf:about="#FileStatus_indexed"/>
+    <rdf:Description rdf:about="#FileStatus_tombstone"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#ExtractStatus_pending"/>
+    <rdf:Description rdf:about="#ExtractStatus_ok"/>
+    <rdf:Description rdf:about="#ExtractStatus_flat"/>
+    <rdf:Description rdf:about="#ExtractStatus_no_text"/>
+    <rdf:Description rdf:about="#ExtractStatus_failed"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+
+</rdf:RDF>

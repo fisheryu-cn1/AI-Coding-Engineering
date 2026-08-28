@@ -1,0 +1,28 @@
+@prefix loan: <http://example.org/loan#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+loan:FileRecordShape a sh:NodeShape ;
+  sh:targetClass loan:FileRecord .
+loan:TaskShape a sh:NodeShape ;
+  sh:targetClass loan:Task .
+loan:InboxRecordShape a sh:NodeShape ;
+  sh:targetClass loan:InboxRecord .
+loan:ExtractStatusShape a sh:NodeShape ;
+  sh:targetClass loan:ExtractStatus ;
+  sh:property [ sh:path [ sh:inversePath loan:hasExtractStatus ] ] .
+loan:FileStatusShape a sh:NodeShape ;
+  sh:targetClass loan:FileStatus ;
+  sh:property [ sh:path [ sh:inversePath loan:hasFileStatus ] ] .
+loan:Corpus5Shape a sh:NodeShape ;
+  sh:targetClass loan:Corpus5 ;
+  sh:property [ sh:path [ sh:inversePath loan:hasCorpus5 ] ] .
+loan:DocTypeXShape a sh:NodeShape ;
+  sh:targetClass loan:DocTypeX ;
+  sh:property [ sh:path [ sh:inversePath loan:hasDocTypeX ] ] .
+loan:TaskStatusShape a sh:NodeShape ;
+  sh:targetClass loan:TaskStatus ;
+  sh:property [ sh:path [ sh:inversePath loan:hasTaskStatus ] ] .
+loan:InboxVerdictShape a sh:NodeShape ;
+  sh:targetClass loan:InboxVerdict ;
+  sh:property [ sh:path [ sh:inversePath loan:hasInboxVerdict ] ] .

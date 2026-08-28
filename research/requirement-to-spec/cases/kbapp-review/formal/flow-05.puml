@@ -1,0 +1,29 @@
+@startuml
+' ===== kbapp-review 05 层状态机（§7.2 tasks 重试机 + §2.1/§4.6 files.status 含 modify 回流）=====
+
+state TaskFlow {
+  [*] --> pending : 入队(扫描器只入队)
+  pending --> running : 执行器取任务
+  running --> done : 成功
+  running --> failed : RetryableError 且 attempts≥max
+  failed --> pending : attempts<max 退避重试(指数回 pending——failed 非终态!)
+  done --> [*]
+}
+
+[*] --> new : 登记(files.status)
+new --> indexed : 流水线完成(P5)
+indexed --> tombstone_delete : 删除: valid_to=now, 索引物理清理
+indexed --> tombstone_modify : 修改: 旧节点置墓碑+清索引, status=new 重入队
+tombstone_modify --> new : 重跑完整流水线(§4.6: sha256 必变缓存必 miss)
+tombstone_delete --> [*] : 历史可追溯(图级 valid_to 保留)
+
+note right of tombstone_modify
+  墓碑双语义: files.status 同值 tombstone
+  承载 delete(终态)与 modify(中转)
+  两种语义——单状态双用途。
+  且 stage_index 将 upsert 同 doc_id 的
+  Document 节点, valid_to 是否被新值
+  覆盖未定义(KD-10——墓碑-重索引语义缺口)
+  no_escape_from=[tombstone_delete]
+end note
+@enduml
