@@ -1,0 +1,54 @@
+@startuml
+' ===== kbapp-review 05 层图 Schema 模型（S3 翻译：输入=raw/05 §2.2 LadybugDB DDL）=====
+' 公共骨架原则（本次修正建立）：本图与 concept-03.puml 同源对齐（四节点四边），层间类图级 diff 的前提
+
+class Document {
+  +doc_id : String
+  +title : String
+  +path : String
+  +sha256 : String
+  +doc_type : String
+  +corpus : String
+  +arxiv_id : String
+  +version : String
+  +authors : String
+  +published : String
+  +summary_l1 : String
+  +summary_l2 : String
+  +summary_path : String
+  +valid_from : String
+  +valid_to : String
+}
+
+class Section {
+  +section_id : String
+  +doc_id : String
+  +section_path : String
+  +level : Integer
+  +title : String
+  +summary : String
+  +page_range : String
+  +seq : Integer
+}
+
+class Entity {
+  +entity_id : String
+  +name : String
+  +type : String
+  +aliases : String
+  +description : String
+}
+
+class Topic {
+  +name : String
+  +description : String
+}
+
+' 注解说明(KD-9): Document 较 03 §3.1 新增 summary_l1/summary_l2/summary_path 三属性(curated 集成, §2.6)
+' 注解说明: doc_type/corpus/type 在图 DDL 均为 STRING 无枚举约束(封闭性靠代码侧, 同 03 形态)
+
+Document "1" --> "1..*" Section : CONTAINS_SECTION
+Section "1" --> "0..*" Entity : MENTIONS
+Document "1" --> "1..*" Topic : ABOUT_TOPIC
+Entity --> "0..*" Entity : RELATES_TO
+@enduml

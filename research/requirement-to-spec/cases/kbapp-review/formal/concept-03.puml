@@ -12,17 +12,21 @@ class Document {
   +corpus : Corpus
   +arxiv_id : String
   +version : String
+  +authors : String
+  +published : String
   +valid_from : String
   +valid_to : String
 }
 
 class Section {
   +section_id : String
+  +doc_id : String
   +section_path : String
   +level : Integer
-  +seq : Integer
+  +title : String
   +summary : String
   +page_range : String
+  +seq : Integer
 }
 
 class Entity {
@@ -30,6 +34,7 @@ class Entity {
   +name : String
   +type : EntityType
   +aliases : String
+  +description : String
 }
 
 class Topic {

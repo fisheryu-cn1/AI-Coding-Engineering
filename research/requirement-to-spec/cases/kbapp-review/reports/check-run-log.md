@@ -43,3 +43,7 @@ P1–P5 全 PASS（no_escape=[tombstone_delete]）
 
 > 归因：05 层自身全绿；实质发现全部在层间与细化缺口——KD-10 墓碑-重索引 upsert 语义两难（细化暴露）、
 > 分类判据变形（Z3 分歧反例）、corpus 3→5 静默扩展、doc_type 三层漂移链、NFR-4 缺口长链固化。详见《三层检验报告》。
+
+> **Run-2 附记（修正轮）**：用户指出 05/03 类图不可对照 → 补 concept-05-graph（05 §2.2 图 DDL）+ diff_models.py 工具。
+> diff 首跑 11 项：5 项为 03 层翻译遗漏（已修正 concept-03 并重转，HermiT 仍 consistent 25/18）；收敛 6 项纯文档差异
+> （summary×3 新增有据 + 枚举约束三处放松为 STRING）。公共骨架原则入 method/17 候选。
