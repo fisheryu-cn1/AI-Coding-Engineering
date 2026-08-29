@@ -1,0 +1,32 @@
+@prefix loan: <http://example.org/loan#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+loan:BorrowerShape a sh:NodeShape ;
+  sh:targetClass loan:Borrower .
+loan:LoanOrderShape a sh:NodeShape ;
+  sh:targetClass loan:LoanOrder .
+loan:CreditResultShape a sh:NodeShape ;
+  sh:targetClass loan:CreditResult .
+loan:ApprovalConfigShape a sh:NodeShape ;
+  sh:targetClass loan:ApprovalConfig .
+loan:RateConfigShape a sh:NodeShape ;
+  sh:targetClass loan:RateConfig .
+loan:OrderLogShape a sh:NodeShape ;
+  sh:targetClass loan:OrderLog .
+loan:BorrowerServiceShape a sh:NodeShape ;
+  sh:targetClass loan:BorrowerService .
+loan:LoanOrderServiceShape a sh:NodeShape ;
+  sh:targetClass loan:LoanOrderService .
+loan:CreditServiceShape a sh:NodeShape ;
+  sh:targetClass loan:CreditService .
+loan:ConfigServiceShape a sh:NodeShape ;
+  sh:targetClass loan:ConfigService .
+loan:ScoringRulesShape a sh:NodeShape ;
+  sh:targetClass loan:ScoringRules .
+loan:LoanStatusShape a sh:NodeShape ;
+  sh:targetClass loan:LoanStatus ;
+  sh:property [ sh:path [ sh:inversePath loan:hasLoanStatus ] ] .
+loan:DecisionShape a sh:NodeShape ;
+  sh:targetClass loan:Decision ;
+  sh:property [ sh:path [ sh:inversePath loan:hasDecision ] ] .

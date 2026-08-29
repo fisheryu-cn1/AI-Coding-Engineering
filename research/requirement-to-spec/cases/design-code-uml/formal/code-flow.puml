@@ -1,0 +1,111 @@
+@startuml code-flow
+' ==========================================================
+' 状态机 — 取自代码真实状态迁移逻辑
+' 来源：types.ts::STATUS_TRANSITIONS + canTransition
+'       services/loanOrderService.ts::submit
+'       services/orderFlowService.ts::sign, complete
+' ==========================================================
+
+title code-flow — LoanOrder 状态机（取自真实代码）
+
+' LoanStatus 实际取值集合（types.ts）：
+'   draft, pending, approved, rejected, active, closed
+
+[*] --> draft
+note on link
+  POST /orders  (LoanOrderService.save 无 id)
+  → store.createOrder(..., status='draft')
+  来源：loanOrderService.ts::save
+end note
+
+state "draft" as draft
+state "pending" as pending
+state "approved" as approved
+state "rejected" as rejected
+state "active" as active
+state "closed" as closed
+
+draft --> pending : submit()
+note on link
+  LoanOrderService.submit(id)
+  校验 canTransition(order.status, 'pending')
+  store.updateOrder(status='pending')
+  store.createLog(action='submit', '提交申请，进入自动审批')
+  来源：loanOrderService.ts::submit
+end note
+
+pending --> approved : autoApprove() [score >= passThreshold]
+note on link
+  ScoringRules.autoApprove(orderId)
+  decision = 'approved' 时：
+  store.updateOrder(status='approved')
+  store.createLog(action='approve', decisionReason)
+  store.createCredit(approved_amount=order.amount, approved_rate=annualRate)
+  来源：scoring.ts::autoApprove
+end note
+
+pending --> rejected : autoApprove() [score < passThreshold]
+note on link
+  ScoringRules.autoApprove(orderId)
+  decision = 'rejected' 时：
+  store.updateOrder(status='rejected')
+  store.createLog(action='approve', decisionReason)
+  store.createCredit(approved_amount=0, approved_rate=0)
+  来源：scoring.ts::autoApprove
+end note
+
+approved --> active : sign()
+note on link
+  OrderFlowService.sign(id)
+  校验 canTransition('approved', 'active')
+  store.updateOrder(status='active')
+  store.createLog(action='sign', '用户确认签署合同')
+  返回 contractDetail
+  来源：orderFlowService.ts::sign
+end note
+
+active --> closed : complete(comment)
+note on link
+  OrderFlowService.complete(id, comment)
+  校验 canTransition('active', 'closed')
+  store.updateOrder(status='closed')
+  store.createLog(action='complete', comment || '订单已完成')
+  来源：orderFlowService.ts::complete
+end note
+
+rejected --> [*]
+closed --> [*]
+
+' ----------------------------------------------------------
+' 补充说明：submit() 原子性
+' ----------------------------------------------------------
+note across
+  **代码观察：submit() 原子执行 draft→pending→{approved,rejected}**
+  在 LoanOrderService.submit 中：
+  ① store.updateOrder(status='pending')
+  ② const result = autoApprove(id)
+  ③ store.updateOrder(status=result.decision)
+  三步连续执行，无外部观测到中间 pending 状态的窗口。
+  对调用方而言：POST /orders/:id/submit 的结果
+  只会是 approved 或 rejected。
+  pending 仅作为 OrderLog(action='submit') 的语义记录保留。
+end note
+
+' ----------------------------------------------------------
+' 合法迁移表（types.ts::STATUS_TRANSITIONS）
+' ----------------------------------------------------------
+note across
+  **STATUS_TRANSITIONS（types.ts 声明）**
+  draft    → [pending]
+  pending  → [approved, rejected]
+  approved → [active]
+  rejected → []
+  active   → [closed]
+  closed   → []
+
+  代码中所有状态变更均先经 canTransition 校验：
+  canTransition(from, to) := STATUS_TRANSITIONS[from]?.includes(to) ?? false
+  非法迁移抛错：err.status = 400，message 含 "非法流转"
+end note
+
+@enduml

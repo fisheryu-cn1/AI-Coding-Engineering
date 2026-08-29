@@ -1,0 +1,569 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="http://example.org/loan"
+         xmlns="http://example.org/loan#">
+
+<owl:Ontology rdf:about="http://example.org/loan"/>
+
+<owl:ObjectProperty rdf:about="#hasLoanStatus">
+  <rdfs:domain rdf:resource="#LoanOrder"/>
+  <rdfs:range rdf:resource="#LoanStatus"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasLoanPurpose">
+  <rdfs:domain rdf:resource="#LoanOrder"/>
+  <rdfs:range rdf:resource="#LoanPurpose"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasCreditDecision">
+  <rdfs:domain rdf:resource="#CreditResult"/>
+  <rdfs:range rdf:resource="#CreditDecision"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#applies">
+  <rdfs:domain rdf:resource="#Borrower"/>
+  <rdfs:range rdf:resource="#LoanOrder"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#produces">
+  <rdfs:domain rdf:resource="#LoanOrder"/>
+  <rdfs:range rdf:resource="#CreditResult"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#tracks">
+  <rdfs:domain rdf:resource="#LoanOrder"/>
+  <rdfs:range rdf:resource="#OrderLog"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#returns">
+  <rdfs:domain rdf:resource="#LoanOrderService"/>
+  <rdfs:range rdf:resource="#OrderDetail"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasContractDetail">
+  <rdfs:domain rdf:resource="#LoanOrderService"/>
+  <rdfs:range rdf:resource="#ContractDetail"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#manages">
+  <rdfs:domain rdf:resource="#Store"/>
+  <rdfs:range rdf:resource="#Borrower"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasApprovalConfig">
+  <rdfs:domain rdf:resource="#Store"/>
+  <rdfs:range rdf:resource="#ApprovalConfig"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasRateConfig">
+  <rdfs:range rdf:resource="#RateConfig"/>
+  <rdfs:domain rdf:resource="#ContractDetail"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#delegates">
+  <rdfs:domain rdf:resource="#BorrowerService"/>
+  <rdfs:range rdf:resource="#Store"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasScoringRules">
+  <rdfs:domain rdf:resource="#LoanOrderService"/>
+  <rdfs:range rdf:resource="#ScoringRules"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasRateRules">
+  <rdfs:domain rdf:resource="#OrderFlowService"/>
+  <rdfs:range rdf:resource="#RateRules"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#consumes">
+  <rdfs:domain rdf:resource="#ScoringRules"/>
+  <rdfs:range rdf:resource="#ScoreInput"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasStore">
+  <rdfs:domain rdf:resource="#ScoringRules"/>
+  <rdfs:range rdf:resource="#Store"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#calls">
+  <rdfs:domain rdf:resource="#BorrowerListView"/>
+  <rdfs:range rdf:resource="#BorrowerApi"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasLoanOrder">
+  <rdfs:range rdf:resource="#LoanOrder"/>
+  <rdfs:domain rdf:resource="#ContractDetail"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasBorrower">
+  <rdfs:domain rdf:resource="#ScoreInput"/>
+  <rdfs:range rdf:resource="#Borrower"/>
+</owl:ObjectProperty>
+
+<owl:DatatypeProperty rdf:about="#attrId">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#OrderLog"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrName">
+  <rdfs:domain rdf:resource="#Borrower"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrId_number">
+  <rdfs:domain rdf:resource="#Borrower"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrPhone">
+  <rdfs:domain rdf:resource="#Borrower"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrIncome">
+  <rdfs:domain rdf:resource="#Borrower"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrEmployer">
+  <rdfs:domain rdf:resource="#Borrower"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrPosition">
+  <rdfs:domain rdf:resource="#Borrower"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrBorrower_id">
+  <rdfs:domain rdf:resource="#LoanOrder"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAmount">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#ScoreInput"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTerm_months">
+  <rdfs:domain rdf:resource="#LoanOrder"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrInterest_rate">
+  <rdfs:domain rdf:resource="#LoanOrder"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrOrder_id">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#OrderLog"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrScore">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#ScoreOutput"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrApproved_amount">
+  <rdfs:domain rdf:resource="#CreditResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrApproved_rate">
+  <rdfs:domain rdf:resource="#CreditResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDecision_reason">
+  <rdfs:domain rdf:resource="#CreditResult"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAction">
+  <rdfs:domain rdf:resource="#OrderLog"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrComment">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#OrderDetailView"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrIncomeweight">
+  <rdfs:domain rdf:resource="#ApprovalConfig"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDebtratiolimit">
+  <rdfs:domain rdf:resource="#ApprovalConfig"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrPassthreshold">
+  <rdfs:domain rdf:resource="#ApprovalConfig"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAnnualrate">
+  <rdfs:domain rdf:resource="#RateConfig"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrServicefee">
+  <rdfs:domain rdf:resource="#RateConfig"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrOverduepenalty">
+  <rdfs:domain rdf:resource="#RateConfig"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCredit">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#ContractDetail"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrLogs">
+  <rdfs:domain rdf:resource="#OrderDetail"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTerms">
+  <rdfs:domain rdf:resource="#ContractDetail"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTermmonths">
+  <rdfs:domain rdf:resource="#ScoreInput"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrPassed">
+  <rdfs:domain rdf:resource="#ScoreOutput"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDecisionreason">
+  <rdfs:domain rdf:resource="#ScoreOutput"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrBaseurl">
+  <rdfs:domain rdf:resource="#HttpClient"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTimeout">
+  <rdfs:domain rdf:resource="#HttpClient"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrList">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#OrderListView"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrKeyword">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#OrderListView"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrLoading">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#OrderDetailView"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrActive">
+  <rdfs:domain rdf:resource="#BorrowerFormView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSubmitting">
+  <rdfs:domain rdf:resource="#BorrowerFormView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrForm">
+  <rdfs:domain rdf:resource="#BorrowerFormView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrPurposes">
+  <rdfs:domain rdf:resource="#BorrowerFormView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDetail">
+  <rdfs:domain rdf:resource="#OrderDetailView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrContract">
+  <rdfs:domain rdf:resource="#OrderDetailView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrApproval">
+  <rdfs:domain rdf:resource="#ConfigPageView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrRate">
+  <rdfs:domain rdf:resource="#ConfigPageView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSavingapproval">
+  <rdfs:domain rdf:resource="#ConfigPageView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSavingrate">
+  <rdfs:domain rdf:resource="#ConfigPageView"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:Class rdf:about="#LoanStatus">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanStatus_draft">
+  <rdfs:subClassOf rdf:resource="#LoanStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanStatus_pending">
+  <rdfs:subClassOf rdf:resource="#LoanStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanStatus_approved">
+  <rdfs:subClassOf rdf:resource="#LoanStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanStatus_rejected">
+  <rdfs:subClassOf rdf:resource="#LoanStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanStatus_active">
+  <rdfs:subClassOf rdf:resource="#LoanStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanStatus_closed">
+  <rdfs:subClassOf rdf:resource="#LoanStatus"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanPurpose">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanPurpose_装修">
+  <rdfs:subClassOf rdf:resource="#LoanPurpose"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanPurpose_教育">
+  <rdfs:subClassOf rdf:resource="#LoanPurpose"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanPurpose_旅游">
+  <rdfs:subClassOf rdf:resource="#LoanPurpose"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanPurpose_医疗">
+  <rdfs:subClassOf rdf:resource="#LoanPurpose"/>
+</owl:Class>
+
+<owl:Class rdf:about="#CreditDecision">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#CreditDecision_approved">
+  <rdfs:subClassOf rdf:resource="#CreditDecision"/>
+  <owl:disjointWith rdf:resource="#CreditDecision_rejected"/>
+</owl:Class>
+
+<owl:Class rdf:about="#CreditDecision_rejected">
+  <rdfs:subClassOf rdf:resource="#CreditDecision"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Borrower">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanOrder">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#CreditResult">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OrderLog">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ApprovalConfig">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#RateConfig">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OrderDetail">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ContractDetail">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ScoreInput">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ScoreOutput">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Store">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#BorrowerService">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LoanOrderService">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OrderFlowService">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ConfigService">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ScoringRules">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#RateRules">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ValidationMiddleware">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#HttpClient">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#BorrowerApi">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OrderApi">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ConfigApi">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#BorrowerListView">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#BorrowerFormView">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OrderListView">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OrderDetailView">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ConfigPageView">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:NamedIndividual rdf:about="#lit_LoanStatus_draft">
+  <rdf:type rdf:resource="#LoanStatus_draft"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_LoanStatus_pending">
+  <rdf:type rdf:resource="#LoanStatus_pending"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_LoanStatus_approved">
+  <rdf:type rdf:resource="#LoanStatus_approved"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_LoanStatus_rejected">
+  <rdf:type rdf:resource="#LoanStatus_rejected"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_LoanStatus_active">
+  <rdf:type rdf:resource="#LoanStatus_active"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_LoanStatus_closed">
+  <rdf:type rdf:resource="#LoanStatus_closed"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_LoanPurpose_装修">
+  <rdf:type rdf:resource="#LoanPurpose_装修"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_LoanPurpose_教育">
+  <rdf:type rdf:resource="#LoanPurpose_教育"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_LoanPurpose_旅游">
+  <rdf:type rdf:resource="#LoanPurpose_旅游"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_LoanPurpose_医疗">
+  <rdf:type rdf:resource="#LoanPurpose_医疗"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_CreditDecision_approved">
+  <rdf:type rdf:resource="#CreditDecision_approved"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_CreditDecision_rejected">
+  <rdf:type rdf:resource="#CreditDecision_rejected"/>
+</owl:NamedIndividual>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#LoanPurpose_装修"/>
+    <rdf:Description rdf:about="#LoanPurpose_教育"/>
+    <rdf:Description rdf:about="#LoanPurpose_旅游"/>
+    <rdf:Description rdf:about="#LoanPurpose_医疗"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#LoanStatus_draft"/>
+    <rdf:Description rdf:about="#LoanStatus_pending"/>
+    <rdf:Description rdf:about="#LoanStatus_approved"/>
+    <rdf:Description rdf:about="#LoanStatus_rejected"/>
+    <rdf:Description rdf:about="#LoanStatus_active"/>
+    <rdf:Description rdf:about="#LoanStatus_closed"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+
+</rdf:RDF>

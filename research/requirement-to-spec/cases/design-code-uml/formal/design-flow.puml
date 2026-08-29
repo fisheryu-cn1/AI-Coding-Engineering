@@ -1,0 +1,61 @@
+@startuml design-flow
+
+' ============================================================
+' 状态机：LoanOrder 订单状态流转
+' 来源：design.md §"状态流与边界情况" + §"数据流（主流程）"
+' 状态集：draft / pending / approved / rejected / active / closed
+' 终态：rejected、closed
+' ============================================================
+
+state draft
+state pending
+state approved
+state rejected
+state active
+state closed
+
+[*] --> draft
+
+draft --> pending : submit\n(POST /loans/:id/submit)
+pending --> approved : 自动审批通过\n(CreditService.approve, score ≥ threshold)
+pending --> rejected : 自动审批拒绝\n(CreditService.approve, score < threshold,\n写 decision_reason)
+approved --> active : sign\n(POST /loans/:id/sign)
+active --> closed : complete\n(POST /loans/:id/complete,\n写 order_log action+comment)
+
+rejected --> [*] : 终态（不可回流 pending）
+closed --> [*] : 终态
+
+note right of draft
+  起始点，未提交不入审批
+  来源：design.md §"状态流与边界情况"
+end note
+
+note right of pending
+  自动审批即生效，
+  无操作员人工通过/驳回环节
+  来源：design.md §"数据流（主流程）3" + §"范围外"
+end note
+
+note left of rejected
+  终态，不可回流 pending
+  来源：design.md §"状态流与边界情况"
+end note
+
+note left of active
+  签署后进入 active；
+  完成处理后转 closed
+  来源：design.md §"数据流（主流程）4-5"
+end note
+
+note as N1
+  非法流转（如 pending→closed、
+  rejected→pending）由 service 层
+  状态机校验拒绝
+  来源：design.md §"状态流与边界情况"
+  + US-007/AC-011
+end note
+
+N1 .. pending
+N1 .. rejected
+
+@enduml

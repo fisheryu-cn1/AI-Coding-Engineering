@@ -1,0 +1,222 @@
+@startuml design-concept
+
+' ============================================================
+' 概念类图：个人消费贷款管理系统
+' 来源：D:/Users/.../design.md
+' 提取范围：领域实体 + 服务层 + 规则层（不含前端 UI）
+' ============================================================
+
+' ---------------- 枚举 ----------------
+
+enum LoanStatus {
+  draft
+  pending
+  approved
+  rejected
+  active
+  closed
+}
+
+enum Decision {
+  approved
+  rejected
+}
+
+' ---------------- 领域实体 ----------------
+
+class Borrower {
+  + id : number
+  + name : string
+  + id_number : string
+  + phone : string
+  + income : number
+  + employer : string
+  + position : string
+  --
+  ' @logic create: 创建借款人；校验 id_number/phone 格式与必填项（金额>0、id/电话格式）。来源 design.md §"Borrower CRUD" / DE-02 / §"权限、审计、安全或合规"
+  + create() : Borrower
+  ' @logic findById: 按 id 查询借款人。来源 design.md §"REST 接口" GET /borrowers/:id
+  + findById(id : number) : Borrower
+  ' @logic list: 按关键字（姓名/电话）模糊查询。来源 design.md §"BorrowerList 列表" DE-13 / UI-002 关键字查询
+  + list(keyword : string) : Borrower[]
+  ' @logic update: 更新借款人字段。来源 design.md §"REST 接口" PUT /borrowers/:id
+  + update(id : number, data : Borrower) : Borrower
+  ' @logic delete: 删除借款人；所有状态可删。来源 design.md §"REST 接口" DELETE /borrowers/:id / §"状态流与边界情况"
+  + delete(id : number) : void
+}
+
+class LoanOrder {
+  + id : number
+  + borrower_id : number
+  + amount : number
+  + term_months : number
+  + purpose : string
+  + interest_rate : number
+  + status : LoanStatus
+  --
+  ' @logic createDraft: 保存草稿（status=draft）。来源 design.md §"数据流（主流程）1" / POST /loans / DE-12 分步表单+草稿
+  + createDraft() : LoanOrder
+  ' @logic submit: 状态机 draft→pending；触发 CreditService.approve。来源 design.md §"数据流（主流程）2" / POST /loans/:id/submit / DE-03
+  + submit() : void
+  ' @logic sign: 状态机 approved→active，记录签署。来源 design.md §"数据流（主流程）4" / POST /loans/:id/sign / DE-15
+  + sign() : void
+  ' @logic complete: 状态机 active→closed 并写入 order_log（action+comment）。来源 design.md §"数据流（主流程）5" / POST /loans/:id/complete / DE-08 FLOW-002
+  + complete(comment : string) : void
+  ' @logic deleteCascade: 删除订单并级联删除 credit_result 与 order_log。来源 design.md §"范围/级联删除" / DE-03 / US-001/AC-003
+  + deleteCascade() : void
+  ' @logic findById: 按 id 查询订单。来源 design.md §"REST 接口" GET /loans/:id
+  + findById(id : number) : LoanOrder
+  ' @logic list: 订单列表查询。来源 design.md §"REST 接口" GET /loans / DE-16
+  + list() : LoanOrder[]
+  ' @logic update: 更新订单字段。来源 design.md §"REST 接口" PUT /loans/:id
+  + update(id : number, data : LoanOrder) : LoanOrder
+}
+
+class CreditResult {
+  + id : number
+  + order_id : number
+  + score : number
+  + approved_amount : number
+  + approved_rate : number
+  + decision : Decision
+  + decision_reason : string
+  --
+  ' @logic findByOrderId: 按 order_id 查询审批结果（一条订单对应一份）。来源 design.md §"REST 接口" GET /credit-results / §"级联删除"
+  + findByOrderId(orderId : number) : CreditResult
+  ' @logic findById: 按 id 查询。来源 design.md §"REST 接口" GET /credit-results/:id
+  + findById(id : number) : CreditResult
+  ' @logic list: 审批结果列表。来源 design.md §"REST 接口" GET /credit-results / DE-04
+  + list() : CreditResult[]
+}
+
+class ApprovalConfig {
+  + id : number
+  + metrics : string[]
+  + weights : number[]
+  + threshold : number
+  --
+  ' @logic getRules: 读取评分指标/权重/通过阈值（默认阈值 60）。来源 design.md §"configService" / GET /config/approval / DE-06 / §"风险与开放问题" RULE-001 默认值
+  + getRules() : ApprovalConfig
+  ' @logic updateRules: 更新评分规则（参数化）。来源 design.md §"评分规则参数化配置" / PUT /config/approval / DE-06 DE-17
+  + updateRules(rules : ApprovalConfig) : void
+}
+
+class RateConfig {
+  + id : number
+  + annual_rate : number
+  + service_fee : number
+  + penalty_rate : number
+  --
+  ' @logic getRates: 读取年化利率/服务费/逾期罚息。来源 design.md §"configService" / GET /config/rates / DE-06 / RULE-004
+  + getRates() : RateConfig
+  ' @logic updateRates: 更新费率配置。来源 design.md §"费率配置" / PUT /config/rates / DE-06
+  + updateRates(rates : RateConfig) : void
+}
+
+class OrderLog {
+  + id : number
+  + order_id : number
+  + action : string
+  + comment : string
+  + created_at : Date
+  --
+  ' @logic record: 订单状态变化时写入 action+comment。来源 design.md §"FLOW-002 处理意见记录" / DE-08 / §"数据流（主流程）5"
+  + record(orderId : number, action : string, comment : string) : OrderLog
+}
+
+' ---------------- 服务层 ----------------
+
+class BorrowerService {
+  - borrower : Borrower
+  --
+  ' @logic create: Borrower CRUD 业务封装，承接 controller 调用。来源 design.md §"borrowerService.ts" / DE-02
+  + create(data : Borrower) : Borrower
+  ' @logic findById: 按 id 读取。来源 design.md §"borrowerService.ts" / DE-02
+  + findById(id : number) : Borrower
+  ' @logic list: 关键字查询封装。来源 design.md §"borrowerService.ts" / DE-02 DE-13
+  + list(keyword : string) : Borrower[]
+  ' @logic update: 更新借款人信息。来源 design.md §"borrowerService.ts" / DE-02
+  + update(id : number, data : Borrower) : Borrower
+  ' @logic delete: 删除借款人。来源 design.md §"borrowerService.ts" / DE-02
+  + delete(id : number) : void
+}
+
+class LoanOrderService {
+  - order : LoanOrder
+  - log : OrderLog
+  --
+  ' @logic createDraft: 创建 draft 订单。来源 design.md §"loanOrderService.ts" / DE-03
+  + createDraft(data : LoanOrder) : LoanOrder
+  ' @logic submit: draft→pending 状态机校验 + 写日志 + 触发自动审批。来源 design.md §"loanOrderService 含状态机校验" / §"数据流（主流程）2" / US-007/AC-011
+  + submit(id : number) : void
+  ' @logic sign: approved→active。来源 design.md §"loanOrderService" / §"数据流（主流程）4"
+  + sign(id : number) : void
+  ' @logic complete: active→closed 并写 order_log（action+comment）。来源 design.md §"loanOrderService" / §"数据流（主流程）5" / FLOW-002 DE-08
+  + complete(id : number, comment : string) : void
+  ' @logic deleteCascade: 删除订单并级联删除 credit_result 与 order_log。来源 design.md §"loanOrderService 含级联删除" / DE-03
+  + deleteCascade(id : number) : void
+  ' @logic findById/list/update: 订单 CRUD 业务封装。来源 design.md §"loanOrderService.ts" / DE-03
+  + findById(id : number) : LoanOrder
+  + list() : LoanOrder[]
+  + update(id : number, data : LoanOrder) : LoanOrder
+  ' @logic validateTransition: 状态机合法性校验；非法流转（如 pending→closed、rejected→pending）拒绝。来源 design.md §"状态流与边界情况" / US-007/AC-011
+  - validateTransition(from : LoanStatus, to : LoanStatus) : void
+}
+
+class CreditService {
+  - scoring : ScoringRules
+  - config : ConfigService
+  - result : CreditResult
+  - order : LoanOrder
+  --
+  ' @logic approve: 自动审批评分；读评分规则配置计算分数，≥阈值则生成 CreditResult(approved) 且订单转 approved，否则生成 CreditResult(rejected) 含 reason 且订单转 rejected（自动审批即生效）。来源 design.md §"数据流（主流程）3" / §"creditService 自动审批评分" / DE-05 / §"范围外 无人工环节"
+  + approve(orderId : number) : CreditResult
+  ' @logic findByOrderId: 查询订单审批结果。来源 design.md §"creditService" / DE-04
+  + findByOrderId(orderId : number) : CreditResult
+}
+
+class ConfigService {
+  - approvalRepo : ApprovalConfig
+  - rateRepo : RateConfig
+  --
+  ' @logic getApprovalConfig: 读取评分规则（指标/权重/阈值）。来源 design.md §"configService 评分规则读取" / GET /config/approval / DE-06
+  + getApprovalConfig() : ApprovalConfig
+  ' @logic updateApprovalConfig: 更新评分规则。来源 design.md §"configService 评分规则读取" / PUT /config/approval / DE-06
+  + updateApprovalConfig(rules : ApprovalConfig) : void
+  ' @logic getRateConfig: 读取费率（年化利率/服务费/逾期罚息）。来源 design.md §"configService 费率读取" / GET /config/rates / DE-06
+  + getRateConfig() : RateConfig
+  ' @logic updateRateConfig: 更新费率配置。来源 design.md §"configService 费率读取" / PUT /config/rates / DE-06
+  + updateRateConfig(rates : RateConfig) : void
+}
+
+' ---------------- 规则层 ----------------
+
+class ScoringRules {
+  - defaultThreshold : number
+  --
+  ' @logic calculate: 从 ApprovalConfig 读取 metrics/weights/threshold，对 LoanOrder 计算综合评分；用于 CreditService.approve。来源 design.md §"rules/scoring.ts 评分规则计算" / DE-05 / §"风险与开放问题" 默认值（收入占比、负债率、阈值 60）
+  + calculate(config : ApprovalConfig, order : LoanOrder) : number
+}
+
+' ---------------- 关联 ----------------
+
+Borrower "1" --> "0..*" LoanOrder : 拥有
+LoanOrder "1" --> "0..1" CreditResult : 审批结果
+LoanOrder "1" --> "0..*" OrderLog : 操作日志
+LoanOrder ..> LoanStatus : 当前状态
+CreditResult ..> Decision : 审批结论
+
+CreditService ..> ApprovalConfig : 读取评分规则
+CreditService ..> ScoringRules : 计算评分
+CreditService ..> CreditResult : 生成
+CreditService ..> LoanOrder : 驱动状态迁移
+
+LoanOrderService ..> OrderLog : 写入日志
+LoanOrderService ..> LoanStatus : 校验状态机
+
+ConfigService ..> ApprovalConfig : 读写
+ConfigService ..> RateConfig : 读写
+
+BorrowerService ..> Borrower : 读写
+
+@enduml
