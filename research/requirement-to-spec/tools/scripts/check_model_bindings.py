@@ -97,7 +97,7 @@ def main():
     ap.add_argument('case_dir')
     ap.add_argument('--bindings', default=None)
     ap.add_argument('--register', default=None)
-    ap.add_argument('--id-regex', default=None, help='扩展 ID 前缀正则（如 FR-\d+(?:\.\d+)?）')
+    ap.add_argument('--id-regex', default=None, help='extended ID prefix regex')
     args = ap.parse_args()
 
     reg_path = args.register or os.path.join(args.case_dir, 'raw', 'requirements-register.md')
