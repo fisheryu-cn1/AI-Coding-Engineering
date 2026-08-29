@@ -1,0 +1,106 @@
+@startuml
+' ===== AST 确定性提取（typescript@5.9 Compiler API，双通道实验通道一）=====
+' 来源文件: 10 个（backend 8 + frontend 2）; 提取: interface/enum/typealias/class/模块级函数
+' 注: 方法参数为真实签名; 类型别名/枚举字面量全量; 无语义摘要(@logic 属 LLM 通道)
+enum LoanStatus {
+  draft
+  pending
+  approved
+  rejected
+  active
+  closed
+}
+interface Borrower {
+  +id
+  +name
+  +id_number
+  +phone
+  +income
+  +employer
+  +position
+  +created_at
+}
+interface LoanOrder {
+  +id
+  +borrower_id
+  +amount
+  +term_months
+  +purpose
+  +interest_rate
+  +status
+  +created_at
+}
+interface CreditResult {
+  +id
+  +order_id
+  +score
+  +approved_amount
+  +approved_rate
+  +decision
+  +decision_reason
+  +created_at
+}
+interface OrderLog {
+  +id
+  +order_id
+  +action
+  +comment
+  +created_at
+}
+interface ApprovalConfig {
+  +incomeWeight
+  +debtRatioLimit
+  +passThreshold
+}
+interface RateConfig {
+  +annualRate
+  +serviceFee
+  +overduePenalty
+}
+class types {
+  +canTransition(from, to) : boolean
+}
+interface ScoreInput {
+  +borrower
+  +amount
+  +termMonths
+}
+interface ScoreOutput {
+  +score
+  +passed
+  +decisionReason
+}
+class scoring {
+  +scoreLoan(input, config) : ScoreOutput
+  +autoApprove(orderId) :  score number decision approved | 
+}
+class rates {
+  +getContractRates()
+}
+class BorrowerService {
+  +list(keyword)
+  +get(id)
+  +create(data)
+  +update(id, data)
+  +remove(id)
+}
+class LoanOrderService {
+  +list(keyword)
+  +get(id)
+  +save(data) : LoanOrder
+  +submit(id)
+  +remove(id)
+}
+class ConfigService {
+  +getApprovalConfig()
+  +updateApprovalConfig(data)
+  +getRateConfig()
+  +updateRateConfig(data)
+}
+class OrderFlowService {
+  +sign(id)
+  +complete(id, comment)
+  +contractDetail(id)
+  +get(id)
+}
+@enduml
