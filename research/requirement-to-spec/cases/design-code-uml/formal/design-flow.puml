@@ -47,7 +47,7 @@ note left of active
   来源：design.md §"数据流（主流程）4-5"
 end note
 
-note as N1
+note right of pending
   非法流转（如 pending→closed、
   rejected→pending）由 service 层
   状态机校验拒绝
@@ -55,7 +55,5 @@ note as N1
   + US-007/AC-011
 end note
 
-N1 .. pending
-N1 .. rejected
 
 @enduml

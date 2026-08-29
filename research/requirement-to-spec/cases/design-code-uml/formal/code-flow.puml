@@ -79,7 +79,7 @@ closed --> [*]
 ' ----------------------------------------------------------
 ' 补充说明：submit() 原子性
 ' ----------------------------------------------------------
-note across
+note right of pending
   **代码观察：submit() 原子执行 draft→pending→{approved,rejected}**
   在 LoanOrderService.submit 中：
   ① store.updateOrder(status='pending')
@@ -94,18 +94,18 @@ end note
 ' ----------------------------------------------------------
 ' 合法迁移表（types.ts::STATUS_TRANSITIONS）
 ' ----------------------------------------------------------
-note across
-  **STATUS_TRANSITIONS（types.ts 声明）**
-  draft    → [pending]
-  pending  → [approved, rejected]
-  approved → [active]
-  rejected → []
-  active   → [closed]
-  closed   → []
 
-  代码中所有状态变更均先经 canTransition 校验：
-  canTransition(from, to) := STATUS_TRANSITIONS[from]?.includes(to) ?? false
-  非法迁移抛错：err.status = 400，message 含 "非法流转"
-end note
+'   **STATUS_TRANSITIONS（types.ts 声明）**
+'   draft    → [pending]
+'   pending  → [approved, rejected]
+'   approved → [active]
+'   rejected → []
+'   active   → [closed]
+'   closed   → []
+' 
+'   代码中所有状态变更均先经 canTransition 校验：
+'   canTransition(from, to) := STATUS_TRANSITIONS[from]?.includes(to) ?? false
+'   非法迁移抛错：err.status = 400，message 含 "非法流转"
+' end 迁移表注释
 
 @enduml
