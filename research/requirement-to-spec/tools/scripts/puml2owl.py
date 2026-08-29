@@ -116,8 +116,14 @@ def gen_shacl(onto, classes, enums, cls_map, enum_classes, out_path, ns, prefix,
         lines.append(f'  sh:targetClass {prefix}:{ename} ;')
         lines.append(f'  sh:property [ sh:path [ sh:inversePath {prefix}:has{ename} ] ] .')
     # 约束注解（method/13 §3）：@required → sh:minCount；@pattern → sh:pattern
+    # 枚举值域（Run-14 修复）：属性类型为枚举 → sh:in 约束（防"不挂类直接给字符串"——OWL disjoint 只防挂错类）
     import re as _re
     src = src_text
+    for cname, info in classes.items():
+        for _vis, aname, atype in info['attrs']:
+            if atype in enums:
+                lits = ' '.join(f'{prefix}:lit_{atype}_{l}' for l in enums[atype])
+                lines.append(f'{prefix}:{cname}Shape sh:property [ sh:path {prefix}:has{atype} ; sh:in ({lits}) ] .')
     prop_lines = []
     for m in _re.finditer(r"^'\s*@required:\s*(.+)$", src, _re.M):
         for spec in m.group(1).split(','):

@@ -17,6 +17,9 @@ loan:LoanPurposeShape a sh:NodeShape ;
 loan:CreditDecisionShape a sh:NodeShape ;
   sh:targetClass loan:CreditDecision ;
   sh:property [ sh:path [ sh:inversePath loan:hasCreditDecision ] ] .
+loan:LoanOrderShape sh:property [ sh:path loan:hasLoanPurpose ; sh:in (loan:lit_LoanPurpose_renovation loan:lit_LoanPurpose_education loan:lit_LoanPurpose_travel loan:lit_LoanPurpose_medical) ] .
+loan:LoanOrderShape sh:property [ sh:path loan:hasOrderStatus ; sh:in (loan:lit_OrderStatus_draft loan:lit_OrderStatus_pending loan:lit_OrderStatus_active loan:lit_OrderStatus_closed) ] .
+loan:CreditResultShape sh:property [ sh:path loan:hasCreditDecision ; sh:in (loan:lit_CreditDecision_under_review loan:lit_CreditDecision_approved loan:lit_CreditDecision_rejected) ] .
 loan:LoanOrderShape sh:property [ sh:path loan:attrAmount ; sh:minCount 1 ] .
 loan:LoanOrderShape sh:property [ sh:path loan:attrTerm_months ; sh:minCount 1 ] .
 loan:BorrowerShape sh:property [ sh:path loan:attrId_number ; sh:minCount 1 ] .

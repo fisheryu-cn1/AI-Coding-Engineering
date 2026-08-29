@@ -9,3 +9,4 @@ loan:LoanOrderShape a sh:NodeShape ;
 loan:OrderStatusShape a sh:NodeShape ;
   sh:targetClass loan:OrderStatus ;
   sh:property [ sh:path [ sh:inversePath loan:hasOrderStatus ] ] .
+loan:LoanOrderShape sh:property [ sh:path loan:hasOrderStatus ; sh:in (loan:lit_OrderStatus_draft loan:lit_OrderStatus_pending loan:lit_OrderStatus_approved loan:lit_OrderStatus_rejected loan:lit_OrderStatus_active loan:lit_OrderStatus_closed) ] .

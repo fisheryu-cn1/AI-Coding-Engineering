@@ -297,3 +297,27 @@ Z3: sat core [] | FSM: ALL_PROPERTIES_HOLD | 决定性: DETERMINISTIC
 
 > 归因：①传统系统的方法与状态机迁移**无损互转**（每条迁移=一个操作，映射表在模型注解）；
 > ②方法行对 OWL/检查链零影响（三层归因第三层的实证）；③与 kb-app 的受控对照结论见日志。
+
+## Run-14 2026-08-29 BDD 检验（loan-system 首次，触发原因：用户指示补齐 BDD 线）
+
+> 场景库：review/T6-预期场景库.md（9 场景：主线 3/边界 3 含负例/异常 3——三性质均衡，修正 kb-app 首练 6-0-0 失衡）。
+
+```
+== Z3 数值边界（SC4）==
+[SC4 边界 60] sat: True | approved 判定: True   ← 阈值含端值，与 48/72 场景族一致
+== SHACL（SC5/5N/5N2/6）==
+[SC5 正例 hasLoanPurpose=lit_医疗]      Conforms: True
+[SC5N 负例 hasLoanPurpose="其他"]       Conforms: False -> InConstraintComponent 违例
+[SC5N2 负例 用途挂错枚举个体]           Conforms: False -> InConstraintComponent 违例
+[SC6 负例 缺 amount]                    Conforms: False -> MinCountConstraintComponent 违例
+== 分歧对照（SC3/SC7/SC9 vs 四态模型）==
+三处分歧（六态语义×2/操作员×1）全部有 E41 裁决记录覆盖（D-B/D-A/TA2-02）——裁决完备性经独立场景复核
+```
+
+> **过程发现与修复（BDD 抓到管线缺口）**：SC5N 首跑意外通过——RULE-003 的枚举约束此前只有 OWL disjoint
+> （防挂错类，不防"不挂类直接给字符串"），SHACL 层无值域约束。修复在转换器层：puml2owl 对枚举类型属性
+> 自动生成 sh:in 值域约束（6 处），重转后 SC5N/SC5N2 均违例 ✓（且发现 sh:in 比 disjoint 更强：拦一切非
+> 成员值含错枚举个体）。另修一处测试谓词笔误（枚举属性名=hasLoanPurpose 非 hasPurpose）。
+>
+> **归因**：BDD 独立场景暴露防线缺口→转换器增强→全链回归（决定性 DETERMINISTIC/七项 ALL_GREEN/HermiT
+> consistent 17 类）——BDD 线在 loan-system 的检验价值闭环：场景复核裁决完备性 + 抓到并修复一条真实管线缺口。
