@@ -3,7 +3,7 @@
 #           vs US-006/design/实现侧"自动审批即生效, 无操作员环节"。
 # 原交付中两侧各自存活(US 澄清后未回写上游)。本脚本演示: 若翻译位把两侧都忠实编码,
 # S4 规则检查立即 unsat 且 unsat core 命名两条规则的文档来源——跨文档矛盾在本层必现。
-# 第二段: D-A 裁决采纳设计侧后仅留 O2 —— 回到 sat, 演示"决策消解矛盾"闭环。
+# 第二段: D-A 决策采纳设计侧后仅留 O2 —— 回到 sat, 演示"决策消解矛盾"闭环。
 from z3 import *
 
 Order = DeclareSort('Order')
@@ -27,5 +27,5 @@ s3.set(unsat_core=True)
 s3.assert_and_track(ForAll([x], Implies(A(x), Not(OperatorRecorded(x)))),
                     'O2_设计侧_US006_自动审批即生效无操作员环节')
 s3.assert_and_track(A(o), '事实_存在已通过订单')
-print('== 第二段: D-A 裁决后仅采设计侧 ==')
+print('== 第二段: D-A 决策后仅采设计侧 ==')
 print('规则集一致性:', s3.check(), '| core(空=自洽):', list(s3.unsat_core()))

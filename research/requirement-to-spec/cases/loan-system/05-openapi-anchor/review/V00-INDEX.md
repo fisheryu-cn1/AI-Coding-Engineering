@@ -5,8 +5,8 @@
 ## 本次待办（第 1 轮，2026-08-30 建）
 
 - **待评审行 17**（偏差行；判定=一致的 7 行免评）：E50 表 AA1-06~18、AA1-21~24
-- **待裁决决策节 10**：DA1 订单资源命名（8 行组）/ DA2 审批结果命名 / DA3 费率命名（2 行组）/ DA4 CreditResult 写操作取舍（4 行组）/ DA5 contract 端点归属 / DA6 health 豁免 / DA7 伪成功响应 / DA8 PUT 半 PATCH / DA9 错误双格式 / DA10 creditService 模块漂移
-- 全部裁决并执行后：重跑 `extract_routes.cjs` + 比对重生（回归签收，method/16 §3.1 第 6 条）
+- **待决策决策节 10**：DA1 订单资源命名（8 行组）/ DA2 审批结果命名 / DA3 费率命名（2 行组）/ DA4 CreditResult 写操作取舍（4 行组）/ DA5 contract 端点归属 / DA6 health 豁免 / DA7 伪成功响应 / DA8 PUT 半 PATCH / DA9 错误双格式 / DA10 creditService 模块漂移
+- 全部决策并执行后：重跑 `extract_routes.cjs` + 比对重生（回归签收，method/16 §3.1 第 6 条）
 
 ## 文件地图
 
@@ -18,6 +18,7 @@
 | [../gen/extract_routes.cjs](../gen/extract_routes.cjs) | G（工具，只读） | 反向生成脚本（收编 tools/ 候选） |
 | [../raw/design.md](../raw/design.md) | raw（只读） | 被评审的 API 契约源（"REST 接口"小节） |
 | [../reports/OpenAPI锚点实验报告.md](../reports/OpenAPI锚点实验报告.md) | 报告（只读） | 实验全过程+六项评审+结论 |
+| [G90-执行队列.md](G90-执行队列.md) | G（生成物，只读） | 执行队列（决策后执行 10 条；重生成：`python tools/scripts/collect_review_actions.py cases/loan-system/05-openapi-anchor`） |
 
 ## 与群内其他评审位的关系
 

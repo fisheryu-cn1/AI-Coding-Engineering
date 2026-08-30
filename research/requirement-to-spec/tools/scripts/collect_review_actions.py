@@ -2,17 +2,17 @@
 """collect_review_actions: 聚合 review/ 填写件中的执行标记 → G90-执行队列.md（method/16 §6）
 
 确定性脚本（零 LLM）。只扫 E 前缀填写件（V 只读/G 生成物不扫）。两类来源：
-  1) 评审表（E3x- 前缀）：表格行执行标记列（匹配 [待执行:…]/[裁决后执行:…]），
-     行锚点 = 第 1 列行 ID（如 TA1-03）；
-  2) 决策记录（E4x- 前缀）：`## 决策ID` 节的 `- 机器执行:` 行，锚点 = 决策 ID，
-     并带出 `- 状态:` 行。
-输出分两组：待执行（可立即执行，含已解锁）/ 裁决后执行（等待决策状态变更，含退回重议）。
+  1) 评审表（E3x/E5x- 前缀）：表格行执行标记列（匹配 [待执行:…]/[决策后执行:…]），
+     行锚点 = 第 1 列行 ID（如 TA1-03 / AA1-06）；
+  2) 决策记录（E4x/E5x- 前缀）：`## 决策ID` 节的 `- 机器执行:` 行，锚点 = 决策 ID，
+     并带出 `- 状态:` 行（E50 表型=表格与决策节同文件，两类来源统一扫描）。
+输出分两组：待执行（可立即执行，含已解锁）/ 决策后执行（等待决策状态变更，含退回重议）。
 用法: collect_review_actions.py <case_dir> [--expand]
 退出码: 0=正常生成（含零队列）。
 """
 import argparse, os, re, sys
 
-MARK_RE = re.compile(r'\[(待执行|裁决后执行|驳回执行)[:：]?\s*([^\]]*)\]')
+MARK_RE = re.compile(r'\[(待执行|决策后执行|驳回执行)[:：]?\s*([^\]]*)\]')
 ROWID_RE = re.compile(r'^[A-Z]{1,4}\d+-\d+$')          # TA1-03 / SC3-12
 SECTION_RE = re.compile(r'^##\s+(.+)$')                # 决策记录一决策一节（16 号规约 §4）
 
@@ -69,25 +69,25 @@ def main():
     if not os.path.isdir(rdir):
         sys.exit(f'ERR: {rdir} 不存在')
 
-    ready, gated = [], []   # 待执行(含已解锁) / 裁决后执行(含退回重议)
+    ready, gated = [], []   # 待执行(含已解锁) / 决策后执行(含退回重议)
     for fn in sorted(os.listdir(rdir)):
         if not fn.endswith('.md') or not fn.startswith('E'):
             continue        # 只扫 E 前缀人工填写件（V 只读 / G 生成物 / 其他不扫）
         p = os.path.join(rdir, fn)
-        if fn.startswith('E4'):   # 决策记录（S4 阶段）
-            for did, status, mk, text in collect_decisions(p):
-                # 解锁规则（16 号规约 §4）：裁决后执行 + 状态已裁决/已消解 → 决策已完成，动作转入待执行组
-                unlocked = mk[0] == '裁决后执行' and ('已裁决' in status or '已消解' in status)
-                (ready if (mk[0] == '待执行' or unlocked) else gated).append((did, status, mk, fn, text))
-        else:
-            for rid, cid, mk, line in collect_tables(p):
-                (ready if mk[0] == '待执行' else gated).append((rid, '', mk, fn, line))
+        # 表格行与决策节统一扫描（E50 表型=表格+决策节同文件；E30/E41 各自只含一形态，
+        # 普通标题节无"- 机器执行:"行自然无产出，2026-08-30 扩展）
+        for rid, cid, mk, line in collect_tables(p):
+            (ready if mk[0] == '待执行' else gated).append((rid, '', mk, fn, line))
+        for did, status, mk, text in collect_decisions(p):
+            # 解锁规则（16 号规约 §4）：决策后执行 + 状态已决策/已消解 → 决策已完成，动作转入待执行组
+            unlocked = mk[0] == '决策后执行' and ('已决策' in status or '已消解' in status)
+            (ready if (mk[0] == '待执行' or unlocked) else gated).append((did, status, mk, fn, text))
 
     L = ['# 执行队列（G90-）', '',
          '> 生成物：collect_review_actions.py 从 review/ 填写件聚合，勿手改；重生成命令见文末。',
          '> 下游 LLM 调用纪律（method/16 §6）：以本队列为调用上下文，按锚点拉取最小行级上下文，禁止整读填写件全表。', '']
 
-    for title, items in (('待执行（可立即执行）', ready), ('裁决后执行（等待对应决策/输入状态变更）', gated)):
+    for title, items in (('待执行（可立即执行）', ready), ('决策后执行（等待对应决策/输入状态变更）', gated)):
         L += [f'## {title}（{len(items)} 条）', '']
         if args.expand:
             for aid, status, mk, fn, text in items:
@@ -103,10 +103,10 @@ def main():
 
     L += ['## 生成记录', '',
           f'- 命令: python tools/scripts/collect_review_actions.py <case_dir>' + (' --expand' if args.expand else ''),
-          f'- 待执行 {len(ready)} 条 / 裁决后执行 {len(gated)} 条']
+          f'- 待执行 {len(ready)} 条 / 决策后执行 {len(gated)} 条']
     out = os.path.join(rdir, 'G90-执行队列.md')
     open(out, 'w', encoding='utf-8').write('\n'.join(L) + '\n')
-    print(f'OK: {out}（待执行 {len(ready)} / 裁决后执行 {len(gated)}）')
+    print(f'OK: {out}（待执行 {len(ready)} / 决策后执行 {len(gated)}）')
 
 
 if __name__ == '__main__':

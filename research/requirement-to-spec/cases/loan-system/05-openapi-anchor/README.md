@@ -15,4 +15,4 @@
 | `review/V00-INDEX.md` | 评审入口（本次待办+文件地图） |
 | `reports/OpenAPI锚点实验报告.md` | **入口**：实验设计/评审六项/内容与方法双层结论/局限/§7 发现的组织化 |
 
-发现速览：路径形近变体三组（/loans↔/orders、/credit-results↔/credits、/config/rates↔/rate——形近变体缺陷的第三种载体，前两种为 ID 变体与枚举子类化）；CreditResult 半实现（设计 5 端点→代码 1，派生实体 CRUD 取舍的待裁决分歧）；行为级发现四条（伪成功 200/PUT 半 PATCH/错误双格式/creditService 模块漂移）。
+发现速览：路径形近变体三组（/loans↔/orders、/credit-results↔/credits、/config/rates↔/rate——形近变体缺陷的第三种载体，前两种为 ID 变体与枚举子类化）；CreditResult 半实现（设计 5 端点→代码 1，派生实体 CRUD 取舍的待决策分歧）；行为级发现四条（伪成功 200/PUT 半 PATCH/错误双格式/creditService 模块漂移）。

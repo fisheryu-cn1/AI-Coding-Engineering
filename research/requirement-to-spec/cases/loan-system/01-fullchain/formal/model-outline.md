@@ -47,13 +47,13 @@
 
 - Z1: 评分规则默认阈值/权重取值 (RULE-001) → 决策记录: 配置表+默认60分阈值, 数值约束归 Z3 规则集
 - Z2: 固定费率默认值 (RULE-004) → 决策记录: 定位外部配置衔接点(MVP 退化固定值, 实现侧配置承载)
-- Z3: 操作员角色是否执行通过/驳回 (FLOW-002) → **已裁决(D-A 2026-08-27)**: 确认原始需求歧义;
+- Z3: 操作员角色是否执行通过/驳回 (FLOW-002) → **已决策(D-A 2026-08-27)**: 确认原始需求歧义;
   MVP 最简原则忽略人工环节(自动审批即生效), 采纳设计侧语义。@decision 注解在 concept-model.puml 尾部,
-  裁决后三件套重跑全绿(Run-4)。回填实验 B 实证: 双侧若被同时编码, Z3 unsat core 即按规则名点名来源(Run-7)
+  决策后三件套重跑全绿(Run-4)。回填实验 B 实证: 双侧若被同时编码, Z3 unsat core 即按规则名点名来源(Run-7)
 
 ## 流程线与绑定（2026-08-27 新增）
 
-- `flow-model.puml` / `.svg`: v2（D-B 裁决重构版）单据四态四迁移, closed 统一终态; 审批结果(approved/rejected)
+- `flow-model.puml` / `.svg`: v2（D-B 决策重构版）单据四态四迁移, closed 统一终态; 审批结果(approved/rejected)
   为属性维度由 CreditDecision 承载; "rejected 不可回流"转属性约束(单值持久)。fsm_check P1–P5 全 PASS(Run-11);
   删除条款=CRUD 操作不入状态机
 - `model-bindings.md`: 需求 ID ↔ 模型元素对照, check_model_bindings 覆盖/解析/反向三闭包 PASS(13/13, Run-12);

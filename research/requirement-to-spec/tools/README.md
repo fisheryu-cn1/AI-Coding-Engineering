@@ -20,7 +20,7 @@
 | check_model_bindings.py | 需求↔模型绑定三闭包（--id-regex 适配 FR 等编号体系） | 标准库 |
 | check_doc_closure.py | 文档级五项（私造/形近变体/覆盖/验收映射/词表漂移/验收行 ID） | 标准库 |
 | diff_models.py | 同骨架 puml 五维层间 diff（类/属性/枚举/关联/方法名） | puml2xmi |
-| collect_review_actions.py | review/ 执行队列聚合（含裁决解锁与退回归组） | 标准库 |
+| collect_review_actions.py | review/ 执行队列聚合（含决策解锁与退回归组） | 标准库 |
 | ast_extract_py.py | Python AST→PlantUML（标准库 ast，零依赖） | 标准库 |
 | ast_extract_ts.cjs | TypeScript AST→PlantUML（typescript@5；P2S_TYPESCRIPT 注入） | typescript@5 |
 | check_env.py | 环境检测+全组件冒烟 | 全部 |

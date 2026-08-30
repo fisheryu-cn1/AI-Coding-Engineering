@@ -20,17 +20,17 @@
 | 需求ID | 工件 | 元素定位符 | 说明 |
 |---|---|---|---|
 | FIELD-001 | formal/concept-model.puml | class:Borrower | 7 属性全量在此类下 |
-| FIELD-002 | formal/concept-model.puml | class:LoanOrder | borrower_id 由 places 关联承接（D-裁决对接简化） |
-| FIELD-003 | formal/concept-model.puml | class:CreditResult | decision 字段已按 D-B 裁决挂接三值 CreditDecision（2026-08-27 重构） |
-| FIELD-003 | formal/concept-model.puml | disjoint:CreditDecision_ | 审批结果三值互斥（D-B 裁决：独立状态维度） |
-| FUNC-002 | formal/flow-model.puml | trans:pending&gt;active | 可形式化核心=提交触发自动审批（D-B 裁决后 approved 路径特征迁移）；其记录 CRUD 属 FUNC-001 同类豁免范围 |
+| FIELD-002 | formal/concept-model.puml | class:LoanOrder | borrower_id 由 places 关联承接（D-决策对接简化） |
+| FIELD-003 | formal/concept-model.puml | class:CreditResult | decision 字段已按 D-B 决策挂接三值 CreditDecision（2026-08-27 重构） |
+| FIELD-003 | formal/concept-model.puml | disjoint:CreditDecision_ | 审批结果三值互斥（D-B 决策：独立状态维度） |
+| FUNC-002 | formal/flow-model.puml | trans:pending&gt;active | 可形式化核心=提交触发自动审批（D-B 决策后 approved 路径特征迁移）；其记录 CRUD 属 FUNC-001 同类豁免范围 |
 | RULE-001 | formal/rules_z3.py | z3tag:R1_达标通过 | 数值规则归 Z3；阈值默认 60 为 Z1 决策默认值 |
-| RULE-002 | formal/concept-model.puml | anno:@required | 必填四字段=Z4 裁决"全必填"（金额/期限/身份证/电话）→ 生成 sh:minCount 1 |
+| RULE-002 | formal/concept-model.puml | anno:@required | 必填四字段=Z4 决策"全必填"（金额/期限/身份证/电话）→ 生成 sh:minCount 1 |
 | RULE-002 | formal/concept-model.puml | anno:@pattern | 格式校验（身份证十八位/手机号十一位国标默认）→ 生成 sh:pattern |
 | RULE-003 | formal/concept-model.puml | disjoint:LoanPurpose_ | 枚举互斥=承接主体；配套 enum:LoanPurpose |
 | RULE-004 | formal/concept-model.puml | decision:RULE-004 | 外部配置衔接点决策注解（@decision 行）；费率默认值编码待 Z2 |
-| FLOW-001 | formal/concept-model.puml | disjoint:OrderStatus_ | 单据流程状态四态互斥（D-B 裁决：approved/rejected 移出此维度） |
-| FLOW-001 | formal/flow-model.puml | trans:closed&gt;__END__ | 流转部分=流程线承载；D-B 裁决后 closed 统一终态；"rejected 不可回流"转审批结果属性约束（单值持久，见概念模型注记） |
+| FLOW-001 | formal/concept-model.puml | disjoint:OrderStatus_ | 单据流程状态四态互斥（D-B 决策：approved/rejected 移出此维度） |
+| FLOW-001 | formal/flow-model.puml | trans:closed&gt;__END__ | 流转部分=流程线承载；D-B 决策后 closed 统一终态；"rejected 不可回流"转审批结果属性约束（单值持久，见概念模型注记） |
 | FLOW-002 | formal/flow-model.puml | trans:active&gt;closed | 完成流转；处理意见记录为标签文本约束（R4 场景检验域） |
 
 ## 定位符语法（供检查器与人工双向核对）
