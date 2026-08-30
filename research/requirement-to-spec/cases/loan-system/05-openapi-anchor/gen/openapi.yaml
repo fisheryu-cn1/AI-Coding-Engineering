@@ -1,0 +1,933 @@
+openapi: 3.0.3
+info:
+  title: 个人消费贷款管理系统 API（从代码反向生成）
+  version: 0.0.1-auto
+  description: |
+    由 backend/src/index.ts、backend/src/routes/*.ts、backend/src/types.ts
+    通过纯正则脚本（extract_routes.cjs）确定性反向生成的 OpenAPI 3.0.3 规格。
+    字段名 / 类型仅来自 types.ts 的 interface 定义与 middleware/validate.ts 的显式必填检查；
+    运行时才能确定的字段（如 service 返回的 data 字段实际类型）一律标 x-uncertain: true，
+    未做任何编造。
+  x-generator:
+    tool: extract_routes.cjs
+    source: D:\Users\Yu\Documents\Coding\giencoder-exam-P0151020\backend\src
+    method: regex (no AST, no LLM)
+servers:
+  - url: http://localhost:3000/api
+    description: 本地开发（参见 backend/src/index.ts 中 PORT 默认 3000、app.use('/api', router)）
+tags:
+  - name: Borrower
+  - name: Order
+  - name: CreditResult
+  - name: Config
+  - name: Health
+paths:
+  /api/borrowers:
+    get:
+      tags:
+        - Borrower
+      operationId: op01_get_borrowers
+      summary: GET /borrowers
+      description: |
+        代码位置：routes/index.ts:33
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:33）：/api/borrowers
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Borrower
+      operationId: op02_post_borrowers
+      summary: POST /borrowers
+      description: |
+        代码位置：routes/index.ts:39
+        中间件链：validateBorrower
+        路由声明原始行（routes/index.ts:39）：/api/borrowers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Borrower'
+                - type: object
+                  description: "必填字段来自 middleware/validate.ts:validateBorrower 的显式 if-检查；其他字段由 types.ts:Borrower 提供。"
+                  required:
+                    - name
+                    - id_number
+                    - phone
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          description: 请求参数错误（来自 validate 中间件或状态机非法流转）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 资源冲突（如 Borrower 身份证号重复）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/borrowers/{id}:
+    get:
+      tags:
+        - Borrower
+      operationId: op03_get_borrowers_id
+      summary: GET /borrowers/{id}
+      description: |
+        代码位置：routes/index.ts:36
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:36）：/api/borrowers/:id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Borrower
+      operationId: op04_put_borrowers_id
+      summary: PUT /borrowers/{id}
+      description: |
+        代码位置：routes/index.ts:42
+        中间件链：validateBorrower
+        路由声明原始行（routes/index.ts:42）：/api/borrowers/:id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Borrower'
+                - type: object
+                  description: "必填字段来自 middleware/validate.ts:validateBorrower 的显式 if-检查；其他字段由 types.ts:Borrower 提供。"
+                  required:
+                    - name
+                    - id_number
+                    - phone
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          description: 请求参数错误（来自 validate 中间件或状态机非法流转）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 资源不存在（来自 service 内 err.status = 404）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Borrower
+      operationId: op05_delete_borrowers_id
+      summary: DELETE /borrowers/{id}
+      description: |
+        代码位置：routes/index.ts:45
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:45）：/api/borrowers/:id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '404':
+          description: 资源不存在（来自 service 内 err.status = 404）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/config/approval:
+    get:
+      tags:
+        - Config
+      operationId: op06_get_config_approval
+      summary: GET /config/approval
+      description: |
+        代码位置：routes/index.ts:84
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:84）：/api/config/approval
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Config
+      operationId: op07_put_config_approval
+      summary: PUT /config/approval
+      description: |
+        代码位置：routes/index.ts:87
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:87）：/api/config/approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ApprovalConfig'
+                - type: object
+                  description: "无 validate 中间件；configService.updateApprovalConfig 直接 Object.assign，所有字段均可选；代码不强制必填。"
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/config/rate:
+    get:
+      tags:
+        - Config
+      operationId: op08_get_config_rate
+      summary: GET /config/rate
+      description: |
+        代码位置：routes/index.ts:90
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:90）：/api/config/rate
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Config
+      operationId: op09_put_config_rate
+      summary: PUT /config/rate
+      description: |
+        代码位置：routes/index.ts:93
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:93）：/api/config/rate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RateConfig'
+                - type: object
+                  description: "无 validate 中间件；configService.updateRateConfig 直接 Object.assign，所有字段均可选；代码不强制必填。"
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/credits:
+    get:
+      tags:
+        - CreditResult
+      operationId: op10_get_credits
+      summary: GET /credits
+      description: |
+        代码位置：routes/index.ts:79
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:79）：/api/credits
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/health:
+    get:
+      tags:
+        - Health
+      operationId: op11_get_health
+      summary: GET /health
+      description: |
+        代码位置：routes/health.ts:8
+        中间件链：（无）
+        路由声明原始行（routes/health.ts:8）：/api/health
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/orders:
+    get:
+      tags:
+        - Order
+      operationId: op12_get_orders
+      summary: GET /orders
+      description: |
+        代码位置：routes/index.ts:50
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:50）：/api/orders
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Order
+      operationId: op13_post_orders
+      summary: POST /orders
+      description: |
+        代码位置：routes/index.ts:56
+        中间件链：validateLoanOrder
+        路由声明原始行（routes/index.ts:56）：/api/orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/LoanOrder'
+                - type: object
+                  description: "必填字段来自 middleware/validate.ts:validateLoanOrder 的显式 if-检查。"
+                  required:
+                    - borrower_id
+                    - amount
+                    - term_months
+                    - purpose
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          description: 请求参数错误（来自 validate 中间件或状态机非法流转）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/orders/{id}:
+    get:
+      tags:
+        - Order
+      operationId: op14_get_orders_id
+      summary: GET /orders/{id}
+      description: |
+        代码位置：routes/index.ts:53
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:53）：/api/orders/:id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '404':
+          description: 资源不存在（来自 service 内 err.status = 404）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Order
+      operationId: op15_put_orders_id
+      summary: PUT /orders/{id}
+      description: |
+        代码位置：routes/index.ts:59
+        中间件链：validateLoanOrder
+        路由声明原始行（routes/index.ts:59）：/api/orders/:id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/LoanOrder'
+                - type: object
+                  description: "必填字段来自 middleware/validate.ts:validateLoanOrder 的显式 if-检查。"
+                  required:
+                    - borrower_id
+                    - amount
+                    - term_months
+                    - purpose
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          description: 请求参数错误（来自 validate 中间件或状态机非法流转）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 资源不存在（来自 service 内 err.status = 404）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Order
+      operationId: op16_delete_orders_id
+      summary: DELETE /orders/{id}
+      description: |
+        代码位置：routes/index.ts:74
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:74）：/api/orders/:id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '404':
+          description: 资源不存在（来自 service 内 err.status = 404）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/orders/{id}/complete:
+    post:
+      tags:
+        - Order
+      operationId: op17_post_orders_id_complete
+      summary: POST /orders/{id}/complete
+      description: |
+        代码位置：routes/index.ts:68
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:68）：/api/orders/:id/complete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "代码 OrderFlowService.complete(id, comment) 仅消费 comment 字段；handler 中 req.body?.comment 可选。"
+              properties:
+                comment:
+                  type: string
+                  description: 处理意见；OrderFlowService.complete 中可选
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          description: 请求参数错误（来自 validate 中间件或状态机非法流转）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 资源不存在（来自 service 内 err.status = 404）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/orders/{id}/contract:
+    get:
+      tags:
+        - Order
+      operationId: op18_get_orders_id_contract
+      summary: GET /orders/{id}/contract
+      description: |
+        代码位置：routes/index.ts:71
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:71）：/api/orders/:id/contract
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '404':
+          description: 资源不存在（来自 service 内 err.status = 404）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/orders/{id}/sign:
+    post:
+      tags:
+        - Order
+      operationId: op19_post_orders_id_sign
+      summary: POST /orders/{id}/sign
+      description: |
+        代码位置：routes/index.ts:65
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:65）：/api/orders/:id/sign
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          description: 请求参数错误（来自 validate 中间件或状态机非法流转）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 资源不存在（来自 service 内 err.status = 404）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/orders/{id}/submit:
+    post:
+      tags:
+        - Order
+      operationId: op20_post_orders_id_submit
+      summary: POST /orders/{id}/submit
+      description: |
+        代码位置：routes/index.ts:62
+        中间件链：（无）
+        路由声明原始行（routes/index.ts:62）：/api/orders/:id/submit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "资源 ID（handler 中以 Number(req.params.id) 消费）"
+      responses:
+        '200':
+          description: 成功（handle() 包装为 {code:0, data:<service-return>}，data 字段实际类型在运行时确定）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          description: 请求参数错误（来自 validate 中间件或状态机非法流转）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 资源不存在（来自 service 内 err.status = 404）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误（来自 errorHandler）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    SuccessEnvelope:
+      type: object
+      description: |
+        routes/index.ts 中 handle() 包装的成功响应：
+        { code: 0, data: <service-return> }
+        data 字段的实际类型由 services/*.ts 中各方法返回类型决定，
+        脚本未做静态推导（避免编造），故标记 x-uncertain。
+      properties:
+        code:
+          type: integer
+          enum: [0]
+        data:
+          type: object
+          additionalProperties: true
+          x-uncertain: true
+      required: [code, data]
+    ErrorResponse:
+      type: object
+      description: |
+        两类错误响应（来自代码，字段不完全一致）：
+        1) validate/handle 路径：{ code: <number>, message: <string> }
+        2) errorHandler 路径：{ success: false, message: <string> }
+        故 code 与 success 均为可选。
+      properties:
+        code:
+          type: integer
+          description: 数字错误码（validate/handle 路径）
+        success:
+          type: boolean
+          description: 失败标记（errorHandler 路径）
+        message:
+          type: string
+      required: [message]
+    ApprovalConfig:
+      type: object
+      description: "由 backend/src/types.ts 自动提取"
+      properties:
+        incomeWeight:
+          type: number
+        debtRatioLimit:
+          type: number
+        passThreshold:
+          type: number
+      required:
+        - incomeWeight
+        - debtRatioLimit
+        - passThreshold
+    Borrower:
+      type: object
+      description: "由 backend/src/types.ts 自动提取"
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        id_number:
+          type: string
+        phone:
+          type: string
+        income:
+          type: number
+        employer:
+          type: string
+        position:
+          type: string
+        created_at:
+          type: string
+      required:
+        - id
+        - name
+        - id_number
+        - phone
+        - income
+        - employer
+        - position
+    CreditResult:
+      type: object
+      description: "由 backend/src/types.ts 自动提取"
+      properties:
+        id:
+          type: number
+        order_id:
+          type: number
+        score:
+          type: number
+        approved_amount:
+          type: number
+        approved_rate:
+          type: number
+        decision:
+          type: string
+          enum:
+            - approved
+            - rejected
+        decision_reason:
+          type: string
+        created_at:
+          type: string
+      required:
+        - id
+        - order_id
+        - score
+        - approved_amount
+        - approved_rate
+        - decision
+        - decision_reason
+    LOAN_PURPOSES:
+      type: string
+      enum:
+        - "装修"
+        - "教育"
+        - "旅游"
+        - "医疗"
+    LoanOrder:
+      type: object
+      description: "由 backend/src/types.ts 自动提取"
+      properties:
+        id:
+          type: number
+        borrower_id:
+          type: number
+        amount:
+          type: number
+        term_months:
+          type: number
+        purpose:
+          type: string
+          enum:
+            - "装修"
+            - "教育"
+            - "旅游"
+            - "医疗"
+        interest_rate:
+          type: number
+        status:
+          $ref: "#/components/schemas/LoanStatus"
+        created_at:
+          type: string
+      required:
+        - id
+        - borrower_id
+        - amount
+        - term_months
+        - purpose
+        - interest_rate
+        - status
+    LoanStatus:
+      type: string
+      enum:
+        - draft
+        - pending
+        - approved
+        - rejected
+        - active
+        - closed
+    OrderLog:
+      type: object
+      description: "由 backend/src/types.ts 自动提取"
+      properties:
+        id:
+          type: number
+        order_id:
+          type: number
+        action:
+          type: string
+        comment:
+          type: string
+        created_at:
+          type: string
+      required:
+        - id
+        - order_id
+        - action
+        - comment
+    RateConfig:
+      type: object
+      description: "由 backend/src/types.ts 自动提取"
+      properties:
+        annualRate:
+          type: number
+        serviceFee:
+          type: number
+        overduePenalty:
+          type: number
+      required:
+        - annualRate
+        - serviceFee
+        - overduePenalty
