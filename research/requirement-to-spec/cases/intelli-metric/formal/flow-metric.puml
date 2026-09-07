@@ -1,0 +1,38 @@
+@startuml flow-metric
+title 指标版本生命周期状态机（F-LC-06 + F-LC-04/05/07 + F-SV-01，2026-08-30）
+
+state "草稿 draft" as draft
+state "测试中 testing" as testing
+state "已发布 published" as published
+state "暂停 paused" as paused
+state "已下架 delisted" as delisted
+
+[*] --> draft : 创建(F-LC-01 定义/模板实例化/F-AI-01 建议转草稿)
+
+draft --> testing : 发起测试(F-LC-03 试算+有效性评估)
+testing --> draft : 测试失败(F-LC-06 失败回草稿)
+testing --> published : 测试通过且发布(F-LC-03:测试通过是发布前置条件)
+published --> paused : 暂停服务(F-LC-04 服务管理) / 处置动作(F-LC-07)
+paused --> published : 恢复服务
+published --> delisted : 人工下架(F-LC-05:指令+原因记录)
+paused --> delisted : 下架(F-LC-07 处置动作三选一)
+delisted --> [*] : 版本个体终态
+
+note bottom of delisted
+  @decision(重新上架语义:版本个体下架即终态(F-LC-06原图无出边);
+  "可重新上架"(F-LC-05)指定义层重启——同口径变更,产生新版本
+  个体重走草稿→测试→发布,不回流旧版本。待需求方确认)
+end note
+note bottom of paused
+  @decision(paused→published 恢复的验证要求:F-LC-07"处置后需
+  重新试算/测试验证方可恢复发布"——严格读应经 testing,
+  本图按轻量恢复直连,待需求方确认)
+end note
+note bottom of published
+  ① 口径变更产生新版本(F-LC-04/F-SV-01-02):版本链上为新的
+  版本个体,重走草稿→测试→发布,不在本图重复展开;
+  重新上架同此(见 delisted 注记)
+  ② 运行期"服务降级/不可用(依赖异常)"为监控标记(MonitorFlag,
+  R-MON-1 恢复后自动解除),非本状态机状态——见概念模型 @decision
+end note
+@enduml

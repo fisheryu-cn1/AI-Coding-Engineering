@@ -1,0 +1,245 @@
+@startuml concept-req
+title intelli-metric 概念模型（自需求 v0.1~v0.3 提取，2026-08-30）
+' 来源锚：F-/R- 编号见 raw/ 三份需求文档；@decision=翻译歧义或需求未明处的显式标注
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+package "数据源与元数据域 (F-DS/F-MD)" {
+  class DataSource {
+    name : string @required
+    type : DataSourceType @required
+    status : available | unavailable @required
+    cipherCredential : string @decision(凭据加密存储,任何权限级别不可读明文=R-DS-4;建模为属性而非独立类)
+    lastSyncAt : datetime
+  }
+  class MetadataSnapshot {
+    version : int @required
+    collectedAt : datetime @required
+    trigger : manual | scheduled @required
+  }
+  class TableMetadata {
+    name : string @required
+    comment : string
+    businessDesc : string
+    owner : string
+    tags : string[]
+    sensitiveLevel : string
+  }
+  class FieldMetadata {
+    name : string @required
+    dataType : string @required
+    comment : string
+    nullable : boolean
+  }
+  class SchemaChangeEvent {
+    changeType : add | drop | typeChange | commentChange @required
+    detectedAt : datetime @required
+    detail : string
+  }
+  enum DataSourceType {
+    MySQL
+    PostgreSQL
+    Hive @decision(预留扩展点,F-DS-01)
+    Doris_StarRocks
+    ClickHouse
+    API
+  }
+  DataSource "1" --> "*" MetadataSnapshot : F-MD-01 采集
+  MetadataSnapshot --> "*" TableMetadata : 含表集
+  TableMetadata "1" --> "*" FieldMetadata
+  MetadataSnapshot ..> SchemaChangeEvent : 相邻快照对比产生 F-MD-03
+}
+
+package "知识库与本体域 (F-KB)" {
+  class KnowledgeEntry {
+    title : string @required
+    body : markdown @required
+    type : KnowledgeType @required
+    tags : string[]
+    source : string
+    version : int @required
+  }
+  class OntologyModel {
+    name : string @required
+    status : draft | confirmed @required
+  }
+  class OntologyEntity {
+    name : string @required
+    attributesJson : string
+    semantics : string
+  }
+  class OntologyRelation {
+    name : string @required
+  }
+  class EntityMapping {
+    confidence : float
+    confirmedBy : string @required
+  }
+  enum KnowledgeType {
+    构建模板
+    清洗方法
+    加工方法
+    业务术语口径
+    领域概念说明
+  }
+  KnowledgeEntry ..> OntologyModel : F-KB-02 LLM提取草稿→人工确认
+  OntologyModel *-- "*" OntologyEntity
+  OntologyModel *-- "*" OntologyRelation
+  OntologyEntity "0..*" --> "0..*" EntityMapping : F-KB-03 对齐
+  EntityMapping ..> TableMetadata : 映射目标(表/字段)
+}
+
+package "指标域 (F-LC, 核心)" {
+  class MetricDefinition {
+    cnName : string @required
+    enName : string @required @pattern(全局唯一标识)
+    category : atomic | derived | composite @required
+    caliber : string @required
+    owner : string @required
+    bizDomain : string
+    tags : string[]
+    dsl : json | yaml @required @decision(引擎解耦的结构化定义,F-LC-01)
+  }
+  class MetricVersion {
+    versionNo : int @required
+    createdAt : datetime @required
+    @decision(状态机挂版本而非指标实体:F-LC-04多版本并存+R-M-3权限随指标实体继承——权限挂定义,生命周期挂版本)
+  }
+  class MetricTemplate {
+    skeleton : string @required
+    scenarioDesc : string
+    acceptanceRuleTemplate : string
+    version : int @required
+  }
+  class AcceptanceRule {
+    ruleType : basic | consistency | business @required
+    expression : string @required
+  }
+  class TestReport {
+    sampleResult : string
+    costTime : float
+    verdict : pass | fail @required
+    evaluatedAt : datetime @required
+  }
+  class DependencyEdge {
+    level : source | table | field @required
+  }
+  enum MetricCategory {
+    原子指标
+    派生指标
+    复合指标
+  }
+  MetricDefinition "1" o-- "*" MetricVersion : F-LC-04 版本链
+  MetricDefinition ..> MetricTemplate : F-LC-02 模板实例化
+  MetricTemplate ..> KnowledgeEntry : 可由知识条目转化
+  MetricDefinition "1" --> "0..*" AcceptanceRule : F-LC-03 验收规则
+  MetricVersion "1" --> "0..*" TestReport : F-LC-03 试算与评估
+  MetricDefinition --> "*" DependencyEdge : F-LC-07 依赖图谱(构建时自动建立)
+  DependencyEdge --> DataSource
+  DependencyEdge --> TableMetadata
+  DependencyEdge --> FieldMetadata
+  KnowledgeEntry "0..*" -- "0..*" TableMetadata : 元数据↔知识关联(01§2)
+}
+
+package "服务域 (F-LC-04/F-SV/F-MON-02)" {
+  class ServingAPI {
+    apiType : realtime | batch @required
+    routeStrategy : latest | pinned @required
+  }
+  class ApiConsumer {
+    name : string @required
+    status : active | disabled @required
+  }
+  class AccessToken {
+    status : issued | revoked | expired @required
+    expireAt : datetime
+  }
+  class InvocationLog {
+    ts : datetime @required
+    params : string
+    latency : float
+    status : success | fail @required
+    errType : sourceError | badParam | timeout | permDenied | versionRetired
+    resultRows : int
+    sourceIp : string
+  }
+  MetricVersion "1" --> "0..1" ServingAPI : 发布提供服务
+  ApiConsumer "1" --> "*" AccessToken
+  ApiConsumer "0..*" --> "0..*" MetricDefinition : 按指标授权调用范围
+  InvocationLog --> ApiConsumer
+  InvocationLog --> MetricVersion
+}
+
+package "平台与权限域 (02-权限设计/3.5)" {
+  class User {
+    username : string @required
+    status : active | disabled @required
+  }
+  class Role {
+    name : string @required
+  }
+  class PermissionPoint {
+    code : string @required
+  }
+  class ResourceGrant {
+    resourceLevel : owner | manager | reader | none @required
+  }
+  class Principal {
+    subjectType : user | orgNode @decision(组织节点为预留,02§1授权主体抽象)
+  }
+  class DisposalTodo {
+    cause : structureChange | depUnhealthy | thresholdBreach @required
+    action : fix | pause | delist
+    status : open | done @required
+  }
+  class AuditLog {
+    actor : string @required
+    action : string @required
+    ts : datetime @required
+  }
+  class MonitorFlag {
+    flag : degraded | pendingEval | perfAbnormal @required
+    @decision(服务降级建模为运行期标记而非状态机状态:R-MON-1"恢复后自动解除"为可逆监控信号;状态机paused态为管理动作——两者区分待需求方确认)
+  }
+  User "0..*" --> "0..*" Role : RBAC 全局功能权限
+  Role --> "*" PermissionPoint
+  Principal --> "*" ResourceGrant : ACL 资源级授权
+  ResourceGrant --> DataSource
+  ResourceGrant --> MetricDefinition
+  Principal ..> User : 主体为用户(组织预留)
+  SchemaChangeEvent --> DisposalTodo : F-MD-03→F-LC-07 触发
+  DisposalTodo --> MetricDefinition : 处置对象
+  AuditLog --> User
+  MonitorFlag --> MetricVersion : R-MON-1 运行期标记
+}
+
+package "LLM 智能辅助域 (F-AI)" {
+  class LLMPipeline {
+    taskType : ontologyExtract | metricSuggest @required
+  }
+  class MetricSuggestion {
+    sourceData : string @required
+    processMethod : string
+    caliberDraft : string
+    acceptanceSuggestion : string
+  }
+  LLMPipeline ..> OntologyModel : F-KB-02
+  LLMPipeline --> MetricSuggestion : F-AI-01 RAG+生成
+  MetricSuggestion ..> MetricDefinition : 一键转为定义草稿
+}
+
+note bottom of MetricVersion
+  生命周期状态机见 flow-metric.puml:
+  草稿→测试中→已发布→(暂停)→已下架,
+  失败回草稿;口径变更→新版本重走测试(F-LC-06)
+end note
+note right of DataSource
+  R-DS-3: 任一时刻每数据源至少一名 owner
+  (删除保护:F-LC-07 存在未下架依赖指标的数据源不可删除)
+end note
+note right of MetricDefinition
+  R-M-2: 每指标至少保留一名 manager
+  R-M-3: 版本继承——权限随指标实体,不按版本割裂
+end note
+@enduml

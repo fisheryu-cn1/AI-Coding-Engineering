@@ -1,0 +1,754 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="http://example.org/loan"
+         xmlns="http://example.org/loan#">
+
+<owl:Ontology rdf:about="http://example.org/loan"/>
+
+<owl:ObjectProperty rdf:about="#hasMetadataSnapshot">
+  <rdfs:domain rdf:resource="#DataSource"/>
+  <rdfs:range rdf:resource="#MetadataSnapshot"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#含表集">
+  <rdfs:domain rdf:resource="#MetadataSnapshot"/>
+  <rdfs:range rdf:resource="#TableMetadata"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasFieldMetadata">
+  <rdfs:domain rdf:resource="#TableMetadata"/>
+  <rdfs:range rdf:resource="#FieldMetadata"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasSchemaChangeEvent">
+  <rdfs:domain rdf:resource="#MetadataSnapshot"/>
+  <rdfs:range rdf:resource="#SchemaChangeEvent"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasOntologyModel">
+  <rdfs:domain rdf:resource="#KnowledgeEntry"/>
+  <rdfs:range rdf:resource="#OntologyModel"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasEntityMapping">
+  <rdfs:domain rdf:resource="#OntologyEntity"/>
+  <rdfs:range rdf:resource="#EntityMapping"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasTableMetadata">
+  <rdfs:domain rdf:resource="#EntityMapping"/>
+  <rdfs:range rdf:resource="#TableMetadata"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasMetricTemplate">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="#MetricTemplate"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#可由知识条目转化">
+  <rdfs:domain rdf:resource="#MetricTemplate"/>
+  <rdfs:range rdf:resource="#KnowledgeEntry"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasAcceptanceRule">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="#AcceptanceRule"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasTestReport">
+  <rdfs:domain rdf:resource="#MetricVersion"/>
+  <rdfs:range rdf:resource="#TestReport"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasDependencyEdge">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="#DependencyEdge"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasDataSource">
+  <rdfs:domain rdf:resource="#DependencyEdge"/>
+  <rdfs:range rdf:resource="#DataSource"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#发布提供服务">
+  <rdfs:domain rdf:resource="#MetricVersion"/>
+  <rdfs:range rdf:resource="#ServingAPI"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasAccessToken">
+  <rdfs:domain rdf:resource="#ApiConsumer"/>
+  <rdfs:range rdf:resource="#AccessToken"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#按指标授权调用范围">
+  <rdfs:domain rdf:resource="#ApiConsumer"/>
+  <rdfs:range rdf:resource="#MetricDefinition"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasApiConsumer">
+  <rdfs:domain rdf:resource="#InvocationLog"/>
+  <rdfs:range rdf:resource="#ApiConsumer"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasMetricVersion">
+  <rdfs:domain rdf:resource="#InvocationLog"/>
+  <rdfs:range rdf:resource="#MetricVersion"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasRole">
+  <rdfs:domain rdf:resource="#User"/>
+  <rdfs:range rdf:resource="#Role"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasPermissionPoint">
+  <rdfs:domain rdf:resource="#Role"/>
+  <rdfs:range rdf:resource="#PermissionPoint"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasResourceGrant">
+  <rdfs:domain rdf:resource="#Principal"/>
+  <rdfs:range rdf:resource="#ResourceGrant"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasMetricDefinition">
+  <rdfs:domain rdf:resource="#ResourceGrant"/>
+  <rdfs:range rdf:resource="#MetricDefinition"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasUser">
+  <rdfs:domain rdf:resource="#Principal"/>
+  <rdfs:range rdf:resource="#User"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasDisposalTodo">
+  <rdfs:domain rdf:resource="#SchemaChangeEvent"/>
+  <rdfs:range rdf:resource="#DisposalTodo"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#处置对象">
+  <rdfs:domain rdf:resource="#DisposalTodo"/>
+  <rdfs:range rdf:resource="#MetricDefinition"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasMetricSuggestion">
+  <rdfs:domain rdf:resource="#LLMPipeline"/>
+  <rdfs:range rdf:resource="#MetricSuggestion"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#一键转为定义草稿">
+  <rdfs:domain rdf:resource="#MetricSuggestion"/>
+  <rdfs:range rdf:resource="#MetricDefinition"/>
+</owl:ObjectProperty>
+
+<owl:DatatypeProperty rdf:about="#attrName">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#Role"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrType">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#KnowledgeEntry"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrStatus">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#DisposalTodo"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCiphercredential">
+  <rdfs:domain rdf:resource="#DataSource"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrLastsyncat">
+  <rdfs:domain rdf:resource="#DataSource"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrVersion">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#MetricTemplate"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCollectedat">
+  <rdfs:domain rdf:resource="#MetadataSnapshot"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTrigger">
+  <rdfs:domain rdf:resource="#MetadataSnapshot"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrComment">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#FieldMetadata"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrBusinessdesc">
+  <rdfs:domain rdf:resource="#TableMetadata"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrOwner">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTags">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSensitivelevel">
+  <rdfs:domain rdf:resource="#TableMetadata"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDatatype">
+  <rdfs:domain rdf:resource="#FieldMetadata"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrNullable">
+  <rdfs:domain rdf:resource="#FieldMetadata"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrChangetype">
+  <rdfs:domain rdf:resource="#SchemaChangeEvent"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDetectedat">
+  <rdfs:domain rdf:resource="#SchemaChangeEvent"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDetail">
+  <rdfs:domain rdf:resource="#SchemaChangeEvent"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTitle">
+  <rdfs:domain rdf:resource="#KnowledgeEntry"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrBody">
+  <rdfs:domain rdf:resource="#KnowledgeEntry"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSource">
+  <rdfs:domain rdf:resource="#KnowledgeEntry"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAttributesjson">
+  <rdfs:domain rdf:resource="#OntologyEntity"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSemantics">
+  <rdfs:domain rdf:resource="#OntologyEntity"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrConfidence">
+  <rdfs:domain rdf:resource="#EntityMapping"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrConfirmedby">
+  <rdfs:domain rdf:resource="#EntityMapping"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCnname">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrEnname">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCategory">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCaliber">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrBizdomain">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDsl">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrVersionno">
+  <rdfs:domain rdf:resource="#MetricVersion"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCreatedat">
+  <rdfs:domain rdf:resource="#MetricVersion"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSkeleton">
+  <rdfs:domain rdf:resource="#MetricTemplate"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrScenariodesc">
+  <rdfs:domain rdf:resource="#MetricTemplate"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAcceptanceruletemplate">
+  <rdfs:domain rdf:resource="#MetricTemplate"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrRuletype">
+  <rdfs:domain rdf:resource="#AcceptanceRule"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrExpression">
+  <rdfs:domain rdf:resource="#AcceptanceRule"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSampleresult">
+  <rdfs:domain rdf:resource="#TestReport"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCosttime">
+  <rdfs:domain rdf:resource="#TestReport"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrVerdict">
+  <rdfs:domain rdf:resource="#TestReport"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrEvaluatedat">
+  <rdfs:domain rdf:resource="#TestReport"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrLevel">
+  <rdfs:domain rdf:resource="#DependencyEdge"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrApitype">
+  <rdfs:domain rdf:resource="#ServingAPI"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrRoutestrategy">
+  <rdfs:domain rdf:resource="#ServingAPI"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrExpireat">
+  <rdfs:domain rdf:resource="#AccessToken"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTs">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#AuditLog"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrParams">
+  <rdfs:domain rdf:resource="#InvocationLog"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrLatency">
+  <rdfs:domain rdf:resource="#InvocationLog"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrErrtype">
+  <rdfs:domain rdf:resource="#InvocationLog"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrResultrows">
+  <rdfs:domain rdf:resource="#InvocationLog"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSourceip">
+  <rdfs:domain rdf:resource="#InvocationLog"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrUsername">
+  <rdfs:domain rdf:resource="#User"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCode">
+  <rdfs:domain rdf:resource="#PermissionPoint"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrResourcelevel">
+  <rdfs:domain rdf:resource="#ResourceGrant"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSubjecttype">
+  <rdfs:domain rdf:resource="#Principal"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCause">
+  <rdfs:domain rdf:resource="#DisposalTodo"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAction">
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdfs:domain rdf:resource="#AuditLog"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrActor">
+  <rdfs:domain rdf:resource="#AuditLog"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrFlag">
+  <rdfs:domain rdf:resource="#MonitorFlag"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrTasktype">
+  <rdfs:domain rdf:resource="#LLMPipeline"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrSourcedata">
+  <rdfs:domain rdf:resource="#MetricSuggestion"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrProcessmethod">
+  <rdfs:domain rdf:resource="#MetricSuggestion"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrCaliberdraft">
+  <rdfs:domain rdf:resource="#MetricSuggestion"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrAcceptancesuggestion">
+  <rdfs:domain rdf:resource="#MetricSuggestion"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:Class rdf:about="#DataSourceType">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DataSourceType_MySQL">
+  <rdfs:subClassOf rdf:resource="#DataSourceType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DataSourceType_PostgreSQL">
+  <rdfs:subClassOf rdf:resource="#DataSourceType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DataSourceType_Hive">
+  <rdfs:subClassOf rdf:resource="#DataSourceType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DataSourceType_@decision(预留扩展点,F-DS-01)">
+  <rdfs:subClassOf rdf:resource="#DataSourceType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DataSourceType_Doris_StarRocks">
+  <rdfs:subClassOf rdf:resource="#DataSourceType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DataSourceType_ClickHouse">
+  <rdfs:subClassOf rdf:resource="#DataSourceType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DataSourceType_API">
+  <rdfs:subClassOf rdf:resource="#DataSourceType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#KnowledgeType">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#KnowledgeType_构建模板">
+  <rdfs:subClassOf rdf:resource="#KnowledgeType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#KnowledgeType_清洗方法">
+  <rdfs:subClassOf rdf:resource="#KnowledgeType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#KnowledgeType_加工方法">
+  <rdfs:subClassOf rdf:resource="#KnowledgeType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#KnowledgeType_业务术语口径">
+  <rdfs:subClassOf rdf:resource="#KnowledgeType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#KnowledgeType_领域概念说明">
+  <rdfs:subClassOf rdf:resource="#KnowledgeType"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MetricCategory">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MetricCategory_原子指标">
+  <rdfs:subClassOf rdf:resource="#MetricCategory"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MetricCategory_派生指标">
+  <rdfs:subClassOf rdf:resource="#MetricCategory"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MetricCategory_复合指标">
+  <rdfs:subClassOf rdf:resource="#MetricCategory"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DataSource">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MetadataSnapshot">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#TableMetadata">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#FieldMetadata">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#SchemaChangeEvent">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#KnowledgeEntry">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OntologyModel">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OntologyEntity">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OntologyRelation">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#EntityMapping">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MetricDefinition">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MetricVersion">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MetricTemplate">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#AcceptanceRule">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#TestReport">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DependencyEdge">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ServingAPI">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ApiConsumer">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#AccessToken">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#InvocationLog">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#User">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Role">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#PermissionPoint">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#ResourceGrant">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Principal">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DisposalTodo">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#AuditLog">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MonitorFlag">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#LLMPipeline">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#MetricSuggestion">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:NamedIndividual rdf:about="#lit_DataSourceType_MySQL">
+  <rdf:type rdf:resource="#DataSourceType_MySQL"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DataSourceType_PostgreSQL">
+  <rdf:type rdf:resource="#DataSourceType_PostgreSQL"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DataSourceType_Hive">
+  <rdf:type rdf:resource="#DataSourceType_Hive"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DataSourceType_@decision(预留扩展点,F-DS-01)">
+  <rdf:type rdf:resource="#DataSourceType_@decision(预留扩展点,F-DS-01)"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DataSourceType_Doris_StarRocks">
+  <rdf:type rdf:resource="#DataSourceType_Doris_StarRocks"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DataSourceType_ClickHouse">
+  <rdf:type rdf:resource="#DataSourceType_ClickHouse"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_DataSourceType_API">
+  <rdf:type rdf:resource="#DataSourceType_API"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_KnowledgeType_构建模板">
+  <rdf:type rdf:resource="#KnowledgeType_构建模板"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_KnowledgeType_清洗方法">
+  <rdf:type rdf:resource="#KnowledgeType_清洗方法"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_KnowledgeType_加工方法">
+  <rdf:type rdf:resource="#KnowledgeType_加工方法"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_KnowledgeType_业务术语口径">
+  <rdf:type rdf:resource="#KnowledgeType_业务术语口径"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_KnowledgeType_领域概念说明">
+  <rdf:type rdf:resource="#KnowledgeType_领域概念说明"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_MetricCategory_原子指标">
+  <rdf:type rdf:resource="#MetricCategory_原子指标"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_MetricCategory_派生指标">
+  <rdf:type rdf:resource="#MetricCategory_派生指标"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#lit_MetricCategory_复合指标">
+  <rdf:type rdf:resource="#MetricCategory_复合指标"/>
+</owl:NamedIndividual>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#MetricCategory_原子指标"/>
+    <rdf:Description rdf:about="#MetricCategory_派生指标"/>
+    <rdf:Description rdf:about="#MetricCategory_复合指标"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#KnowledgeType_构建模板"/>
+    <rdf:Description rdf:about="#KnowledgeType_清洗方法"/>
+    <rdf:Description rdf:about="#KnowledgeType_加工方法"/>
+    <rdf:Description rdf:about="#KnowledgeType_业务术语口径"/>
+    <rdf:Description rdf:about="#KnowledgeType_领域概念说明"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+<owl:AllDisjointClasses>
+  <owl:members rdf:parseType="Collection">
+    <rdf:Description rdf:about="#DataSourceType_MySQL"/>
+    <rdf:Description rdf:about="#DataSourceType_PostgreSQL"/>
+    <rdf:Description rdf:about="#DataSourceType_Hive"/>
+    <rdf:Description rdf:about="#DataSourceType_@decision(预留扩展点,F-DS-01)"/>
+    <rdf:Description rdf:about="#DataSourceType_Doris_StarRocks"/>
+    <rdf:Description rdf:about="#DataSourceType_ClickHouse"/>
+    <rdf:Description rdf:about="#DataSourceType_API"/>
+  </owl:members>
+</owl:AllDisjointClasses>
+
+
+</rdf:RDF>
