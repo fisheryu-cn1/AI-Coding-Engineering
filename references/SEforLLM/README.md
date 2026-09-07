@@ -23,6 +23,8 @@
 | `15-Ye-Readability_Issues_LLM_Code_v2.pdf` | LLM 生成代码的可读性问题模式与提示设计（北大） |
 | `16-Ogenrwot-AI_Coding_Agents_Modify_Code_v3.pdf` | AI 编码代理如何修改代码：GitHub PR 大规模研究 |
 | `17-Piskala-Spec_Driven_Development_v1.pdf` | Spec-Driven Development：从代码到契约（spec-as-source 学术化） |
+| `18-Oliveira-Reversa_Reverse_Documentation_v1.pdf` | Reversa：反向文档工程——遗留系统转 AI 代理可执行操作规格（备忘 §13.4-C2 课题生成侧） |
+| `19-Ouf-Reverse_Engineering_User_Stories_v1.pdf` | LLM 从源码逆向恢复用户故事的 prompt 设计实证（C2 课题·需求层反向整理） |
 
 摘要索引见 [`summaries/INDEX.md`](summaries/INDEX.md)。
 

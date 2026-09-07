@@ -94,3 +94,12 @@
 | 2507.23370 | v1 | Trae Agent: An LLM-based Agent for Software Engineering with Test-time Scaling | Trae Research Team; Pengfei Gao; Zhao Tian; et al. | 2025-07-31 | 2025-07-31 | [AgentParadigms/31-TraeAgent-Test_Time_Scaling_v1.pdf](AgentParadigms/31-TraeAgent-Test_Time_Scaling_v1.pdf) | 6081225 | `14c484acc76c08a70a0db90bc2179a0d63d90360d28c414df2872b8ff4929306` |
 | 2604.26572 | v1 | PICKLES: a Natural Language Framework for Requirement Specification and Model-Based Testing | María Belén Rodríguez; Petra van den Bos | 2026-04-15 | 2026-04-15 | [FormalMethodsLLM/06-Rodriguez-PICKLES_BDD_Formal_Models_v1.pdf](FormalMethodsLLM/06-Rodriguez-PICKLES_BDD_Formal_Models_v1.pdf) | 655130 | `134ee01bbe152f58ce8d3503d0458defbc0a0675aa98bacca6fd52104066cfbf` |
 | 2506.16639 | v1 | LLM-based Satisfiability Checking of String Requirements by Consistent Data and Checker Generation | Boqi Chen; Aren A. Babikian; Shuzhao Feng; Dániel Varró; Gunter Mussbacher | 2025-06-19 | 2025-06-19 | [FormalMethodsLLM/07-Chen-LLM_Satisfiability_String_Requirements_v1.pdf](FormalMethodsLLM/07-Chen-LLM_Satisfiability_String_Requirements_v1.pdf) | 771416 | `4e9ba240172fda3ba3c1f89a4adec4b807b10a7919fc86253c1b448803009a55` |
+
+## 2026-08-30 增补（第 36 场方向再检验·反向文档化课题文献入库）
+
+> 来源：外部批评与研究者反思的评价（研究备忘 §13）确立拓展课题 C-2"反向文档化的可信度验证"（敏捷多轮迭代后由 LLM 反向整理过程文档的设想）；两篇为该课题的直接先行工作（生成侧），本仓库差异化空间在验证层。元数据经 arXiv API 核对；PDF 经 pypdf 完整性验证（18 号 17 页/19 号 6 页）；摘要依 06-规范基于全文精读生成（并行子代理，并发 2）。
+
+| arXiv ID | Version | Title | Authors | Published | Updated | Local PDF | Bytes | SHA-256 |
+|---|---|---|---|---|---|---|---:|---|
+| 2605.18684 | v1 | Reversa: A Reverse Documentation Engineering Framework for Converting Legacy Software into Operational Specifications for AI Agents | Sanderson Oliveira de Macedo; Ronaldo Martins da Costa | 2026-05-18 | 2026-05-18 | [SEforLLM/18-Oliveira-Reversa_Reverse_Documentation_v1.pdf](SEforLLM/18-Oliveira-Reversa_Reverse_Documentation_v1.pdf) | 1760825 | `b0d149460fe11af032f0b8010670e7c36bad4f608e2c16ccd66a2f74652580ef` |
+| 2509.19587 | v1 | Reverse Engineering User Stories from Code using Large Language Models | Mohamed Ouf; Haoyu Li; Michael Zhang; Mariam Guizani | 2025-09-23 | 2025-09-23 | [SEforLLM/19-Ouf-Reverse_Engineering_User_Stories_v1.pdf](SEforLLM/19-Ouf-Reverse_Engineering_User_Stories_v1.pdf) | 619585 | `ea68ac160f01bb587df780fbc274aedbbda1c71548d58a0f87c47644db48ec6a` |

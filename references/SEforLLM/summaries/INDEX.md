@@ -1,8 +1,8 @@
 # SEforLLM 主题论文摘要索引
 
 > 主题：软件工程 × LLM 系统——LLM 作为软件构件、prompt 作为规约、evals/蜕变测试、神经符号混合架构、AI 编码生产力实证、agent harness 架构与表达力上限、人/机可读性与 spec-as-source
-> 文件数：17
-> 生成日期：2026-08-17（01–10，精读级 summary_version 3.0）；2026-08-24 增补 11–12（精读级 summary_version 1.0）；2026-08-25 增补 13–17（基于 PDF 全文的精读级 summary_version 1.0——来源：人机可读性分离点两轮讨论，备忘见 `../../../research/人机可读性分离点与验证边界_两轮讨论备忘_2026-08-25.md`）
+> 文件数：19
+> 生成日期：2026-08-17（01–10，精读级 summary_version 3.0）；2026-08-24 增补 11–12（精读级 summary_version 1.0）；2026-08-25 增补 13–17（基于 PDF 全文的精读级 summary_version 1.0——来源：人机可读性分离点两轮讨论，备忘见 `../../../research/人机可读性分离点与验证边界_两轮讨论备忘_2026-08-25.md`）；2026-08-30 增补 18–19（反向文档化课题文献，来源：备忘 §13 第 36 场方向再检验·课题 C-2）
 
 ## 论文列表
 
@@ -25,6 +25,8 @@
 | 15 | [15-LLM生成代码可读性问题模式.md](15-LLM生成代码可读性问题模式.md) | Characterizing Readability Issue Patterns and the Role of Prompt Design in LLM-Generated Code | LLM 代码可读性总体与人类相当但失败模式相反；prompt 设计作用有界 |
 | 16 | [16-AI编码代理如何修改代码.md](16-AI编码代理如何修改代码.md) | How AI Coding Agents Modify Code: A Large-Scale Study of GitHub Pull Requests | agent PR 与人类差异在变更结构而非规模（commits δ=0.54 大效应、additions 仅小效应）；描述-diff 语义对齐略优 |
 | 17 | [17-规约驱动开发从代码到契约.md](17-规约驱动开发从代码到契约.md) | Spec-Driven Development: From Code to Contract in the Age of AI Coding Assistants | SDD 三级严格度（spec-first/anchored/as-source）+决策树；核心是 spec 由 advisory 变 enforced |
+| 18 | [18-反向文档工程Reversa.md](18-反向文档工程Reversa.md) | Reversa: A Reverse Documentation Engineering Framework for Converting Legacy Software into Operational Specifications for AI Agents | 反向文档工程（遗留系统→可追溯操作规格）的开山定义+框架；备忘 §13.4-C2 课题生成侧直接先行 |
+| 19 | [19-从代码逆向恢复用户故事.md](19-从代码逆向恢复用户故事.md) | Reverse Engineering User Stories from Code using Large Language Models | LLM 从源码恢复用户故事的 prompt 设计实证；反向整理到需求层（比 Reversa 更近业务语义）；C2 课题生成侧 |
 
 ## 推荐先读
 
