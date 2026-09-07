@@ -1,6 +1,7 @@
 @startuml concept-req
 title intelli-metric 概念模型（自需求 v0.1~v0.3 提取，2026-08-30）
 ' 来源锚：F-/R- 编号见 raw/ 三份需求文档；@decision=翻译歧义或需求未明处的显式标注
+' 追踪锚：TA1-xx = review/E30-翻译审计表.md 第 1 轮人工审计条目 ID；审2-x = 第 2 轮评审条目
 
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
@@ -39,6 +40,7 @@ package "数据源与元数据域 (F-DS/F-MD)" {
     owner : string
     tags : string[]
     sensitiveLevel : string
+    stats : rowCount | nullRate | cardinality @decision(样例统计项,需求标注"可选"——本期采集与否未定,避免实现期争议,TA1-09/审2-遗留2)
   --
   ' @logic updateBusinessInfo: 元数据业务补充信息维护(业务描述/负责人/标签/敏感级别)。来源 F-MD-02
   + updateBusinessInfo(businessDesc, owner, tags, sensitiveLevel)
@@ -71,10 +73,10 @@ package "数据源与元数据域 (F-DS/F-MD)" {
     ClickHouse
     API
   }
-  DataSource "1" --> "*" DatabaseMetadata : F-MD-01 库级(TA1-09)
-  DatabaseMetadata "1" --> "*" TableMetadata
   DataSource "1" --> "*" MetadataSnapshot : F-MD-01 采集
-  MetadataSnapshot --> "*" TableMetadata : 含表集
+  MetadataSnapshot --> "*" DatabaseMetadata : 快照含库集(审2-4:库/表/字段均为快照下版本化副本)
+  DatabaseMetadata "1" --> "*" TableMetadata
+  TableMetadata "1" --> "*" FieldMetadata
   TableMetadata "1" --> "*" FieldMetadata
   MetadataSnapshot ..> SchemaChangeEvent : 相邻快照对比产生 F-MD-03
   SchemaChangeEvent --> DataSource : 受变更对象(TA1-03)
@@ -136,7 +138,8 @@ package "知识库与本体域 (F-KB)" {
   KnowledgeEntry ..> OntologyModel : F-KB-02 LLM提取草稿→人工确认
   OntologyModel *-- "*" OntologyEntity
   OntologyModel *-- "*" OntologyRelation
-  OntologyRelation "0..*" --> "2" OntologyEntity : source / target(TA1-01)
+  OntologyRelation "0..*" --> "1" OntologyEntity : source(TA1-01/审2-小1)
+  OntologyRelation "0..*" --> "1" OntologyEntity : target(TA1-01/审2-小1)
   OntologyEntity "0..*" --> "0..*" EntityMapping : F-KB-03 对齐
   EntityMapping ..> TableMetadata : 映射目标(表/字段,TA1-11)
   EntityMapping ..> FieldMetadata : 映射目标(字段)
@@ -214,7 +217,8 @@ package "指标域 (F-LC, 核心)" {
   + assess(rules : AcceptanceRule[]) : pass | fail
 }
   class DependencyEdge {
-    level : source | table | field @required
+    level : source | table | field | metric @required
+    @decision(level 补 metric 级(TA1-02):F-LC-07 原文图谱仅"数据源→表/字段→指标"三级,不含指标→指标——复合指标(F-LC-01 多指标运算)的影响传导是需求盲区,本模型补全,待需求方确认)
   --
   ' @logic locateAffected: 变更事件经依赖图谱(数据源→表/字段→指标)定位受影响指标集合。来源 F-LC-07
   + locateAffected(change : SchemaChangeEvent) : MetricDefinition[]
@@ -243,7 +247,7 @@ package "指标域 (F-LC, 核心)" {
 package "服务域 (F-LC-04/F-SV/F-MON-02)" {
   class ServingAPI {
     apiType : realtime | batch @required
-    routeStrategy : latest | pinned @required
+    @decision(routeStrategy 已移除(TA1-10/审2-遗留1):latest|pinned 是调用方每次调用的路由选择(F-SV-01-01"调用方可显式指定版本"),非服务实例属性——语义由 resolveRoute(consumer, versionSpec) 方法参数承载)
   --
   ' @logic query: 实时查询——按指标名+维度+时间范围,带缓存。来源 F-LC-04
   + query(metric, dims, timeRange) : rows
@@ -302,6 +306,10 @@ package "服务域 (F-LC-04/F-SV/F-MON-02)" {
 }
   MetricVersion "1" --> "0..1" ServingAPI : 发布提供服务
   ServingAPI "1" --> "*" BatchJob : 批处理任务(TA1-07,F-MON-02-01 另记)
+  note right of BatchJob
+    F-LC-04 批处理是"批量指标计算任务"——可跨多指标;
+    多指标参数置于 inputParams,任务经单一 API 入口提交(审2-小2)
+  end note
   ApiConsumer "1" --> "*" AccessToken
   ApiConsumer "*" --> "1" User : 负责对接的内部用户(TA1-06,F-SEC-API-01;版本切换通知目标 F-SV-01-02)
   ApiConsumer "0..*" --> "0..*" MetricDefinition : 按指标授权调用范围

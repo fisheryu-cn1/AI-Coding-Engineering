@@ -15,7 +15,9 @@ testing --> published : 测试通过且发布(F-LC-03:测试通过是发布前�
 published --> paused : 暂停服务(F-LC-04 服务管理) / 处置动作(F-LC-07)
 paused --> published : 恢复服务(限管理性暂停,TA1-05)
 paused --> testing : 处置恢复验证(F-SV-02第5步:重新试算+验收评估,通过方可重新发布)
+paused --> draft : 修复定义回草稿(审2-2:处置三选一对已暂停版本同样适用,F-LC-07/F-SV-02第4步)
 published --> draft : 修复定义回草稿(F-LC-07/F-SV-02第4步处置动作,TA1-04)
+note on link : @decision(修复定义的版本语义(TA1-04):"回到草稿修改"是本版本回退还是新版本个体,需求未明——本图按本版本回退建模(保留版本号),待需求方确认)
 published --> delisted : 人工下架(F-LC-05:指令+原因记录)
 paused --> delisted : 下架(F-LC-07 处置动作三选一)
 delisted --> [*] : 版本个体终态
@@ -25,7 +27,6 @@ note bottom of delisted
   "可重新上架"(F-LC-05)指定义层重启——同口径变更,产生新版本
   个体重走草稿→测试→发布,不回流旧版本。待需求方确认)
 end note
-note on link : @decision(修复定义的版本语义(TA1-04):"回到草稿修改"是本版本回退还是新版本个体,需求未明——本图按本版本回退建模(保留版本号),待需求方确认)
 note bottom of paused
   @decision(双恢复路径(TA1-05,依 F-SV-02 第5步):暂停须区分成因——
   管理性暂停(F-LC-04 发布/暂停)可直连恢复;处置性暂停(F-LC-07/

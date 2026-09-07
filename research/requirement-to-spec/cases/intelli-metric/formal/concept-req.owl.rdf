@@ -8,23 +8,18 @@
 
 <owl:Ontology rdf:about="http://example.org/loan"/>
 
-<owl:ObjectProperty rdf:about="#hasDatabaseMetadata">
-  <rdfs:domain rdf:resource="#DataSource"/>
-  <rdfs:range rdf:resource="#DatabaseMetadata"/>
-</owl:ObjectProperty>
-
-<owl:ObjectProperty rdf:about="#hasTableMetadata">
-  <rdfs:domain rdf:resource="#DatabaseMetadata"/>
-  <rdfs:range rdf:resource="#TableMetadata"/>
-</owl:ObjectProperty>
-
 <owl:ObjectProperty rdf:about="#hasMetadataSnapshot">
   <rdfs:domain rdf:resource="#DataSource"/>
   <rdfs:range rdf:resource="#MetadataSnapshot"/>
 </owl:ObjectProperty>
 
-<owl:ObjectProperty rdf:about="#含表集">
+<owl:ObjectProperty rdf:about="#hasDatabaseMetadata">
   <rdfs:domain rdf:resource="#MetadataSnapshot"/>
+  <rdfs:range rdf:resource="#DatabaseMetadata"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasTableMetadata">
+  <rdfs:domain rdf:resource="#DatabaseMetadata"/>
   <rdfs:range rdf:resource="#TableMetadata"/>
 </owl:ObjectProperty>
 
@@ -233,6 +228,11 @@
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
 </owl:DatatypeProperty>
 
+<owl:DatatypeProperty rdf:about="#attrStats">
+  <rdfs:domain rdf:resource="#TableMetadata"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
 <owl:DatatypeProperty rdf:about="#attrDatatype">
   <rdfs:domain rdf:resource="#FieldMetadata"/>
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
@@ -384,11 +384,6 @@
 </owl:DatatypeProperty>
 
 <owl:DatatypeProperty rdf:about="#attrApitype">
-  <rdfs:domain rdf:resource="#ServingAPI"/>
-  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-</owl:DatatypeProperty>
-
-<owl:DatatypeProperty rdf:about="#attrRoutestrategy">
   <rdfs:domain rdf:resource="#ServingAPI"/>
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
 </owl:DatatypeProperty>
