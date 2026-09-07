@@ -8,6 +8,16 @@
 
 <owl:Ontology rdf:about="http://example.org/loan"/>
 
+<owl:ObjectProperty rdf:about="#hasDatabaseMetadata">
+  <rdfs:domain rdf:resource="#DataSource"/>
+  <rdfs:range rdf:resource="#DatabaseMetadata"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasTableMetadata">
+  <rdfs:domain rdf:resource="#DatabaseMetadata"/>
+  <rdfs:range rdf:resource="#TableMetadata"/>
+</owl:ObjectProperty>
+
 <owl:ObjectProperty rdf:about="#hasMetadataSnapshot">
   <rdfs:domain rdf:resource="#DataSource"/>
   <rdfs:range rdf:resource="#MetadataSnapshot"/>
@@ -28,9 +38,24 @@
   <rdfs:range rdf:resource="#SchemaChangeEvent"/>
 </owl:ObjectProperty>
 
+<owl:ObjectProperty rdf:about="#hasDataSource">
+  <rdfs:domain rdf:resource="#SchemaChangeEvent"/>
+  <rdfs:range rdf:resource="#DataSource"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#受变更对象">
+  <rdfs:domain rdf:resource="#SchemaChangeEvent"/>
+  <rdfs:range rdf:resource="#TableMetadata"/>
+</owl:ObjectProperty>
+
 <owl:ObjectProperty rdf:about="#hasOntologyModel">
   <rdfs:domain rdf:resource="#KnowledgeEntry"/>
   <rdfs:range rdf:resource="#OntologyModel"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasOntologyEntity">
+  <rdfs:domain rdf:resource="#OntologyRelation"/>
+  <rdfs:range rdf:resource="#OntologyEntity"/>
 </owl:ObjectProperty>
 
 <owl:ObjectProperty rdf:about="#hasEntityMapping">
@@ -38,9 +63,9 @@
   <rdfs:range rdf:resource="#EntityMapping"/>
 </owl:ObjectProperty>
 
-<owl:ObjectProperty rdf:about="#hasTableMetadata">
-  <rdfs:domain rdf:resource="#EntityMapping"/>
-  <rdfs:range rdf:resource="#TableMetadata"/>
+<owl:ObjectProperty rdf:about="#hasMetricDefinition">
+  <rdfs:domain rdf:resource="#MetricDefinition"/>
+  <rdfs:range rdf:resource="#MetricDefinition"/>
 </owl:ObjectProperty>
 
 <owl:ObjectProperty rdf:about="#hasMetricTemplate">
@@ -68,19 +93,24 @@
   <rdfs:range rdf:resource="#DependencyEdge"/>
 </owl:ObjectProperty>
 
-<owl:ObjectProperty rdf:about="#hasDataSource">
-  <rdfs:domain rdf:resource="#DependencyEdge"/>
-  <rdfs:range rdf:resource="#DataSource"/>
-</owl:ObjectProperty>
-
 <owl:ObjectProperty rdf:about="#发布提供服务">
   <rdfs:domain rdf:resource="#MetricVersion"/>
   <rdfs:range rdf:resource="#ServingAPI"/>
 </owl:ObjectProperty>
 
+<owl:ObjectProperty rdf:about="#hasBatchJob">
+  <rdfs:domain rdf:resource="#ServingAPI"/>
+  <rdfs:range rdf:resource="#BatchJob"/>
+</owl:ObjectProperty>
+
 <owl:ObjectProperty rdf:about="#hasAccessToken">
   <rdfs:domain rdf:resource="#ApiConsumer"/>
   <rdfs:range rdf:resource="#AccessToken"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#hasUser">
+  <rdfs:domain rdf:resource="#ApiConsumer"/>
+  <rdfs:range rdf:resource="#User"/>
 </owl:ObjectProperty>
 
 <owl:ObjectProperty rdf:about="#按指标授权调用范围">
@@ -98,6 +128,11 @@
   <rdfs:range rdf:resource="#MetricVersion"/>
 </owl:ObjectProperty>
 
+<owl:ObjectProperty rdf:about="#告警对象">
+  <rdfs:domain rdf:resource="#AlertRule"/>
+  <rdfs:range rdf:resource="#MetricDefinition"/>
+</owl:ObjectProperty>
+
 <owl:ObjectProperty rdf:about="#hasRole">
   <rdfs:domain rdf:resource="#User"/>
   <rdfs:range rdf:resource="#Role"/>
@@ -111,16 +146,6 @@
 <owl:ObjectProperty rdf:about="#hasResourceGrant">
   <rdfs:domain rdf:resource="#Principal"/>
   <rdfs:range rdf:resource="#ResourceGrant"/>
-</owl:ObjectProperty>
-
-<owl:ObjectProperty rdf:about="#hasMetricDefinition">
-  <rdfs:domain rdf:resource="#ResourceGrant"/>
-  <rdfs:range rdf:resource="#MetricDefinition"/>
-</owl:ObjectProperty>
-
-<owl:ObjectProperty rdf:about="#hasUser">
-  <rdfs:domain rdf:resource="#Principal"/>
-  <rdfs:range rdf:resource="#User"/>
 </owl:ObjectProperty>
 
 <owl:ObjectProperty rdf:about="#hasDisposalTodo">
@@ -185,7 +210,7 @@
 
 <owl:DatatypeProperty rdf:about="#attrComment">
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  <rdfs:domain rdf:resource="#FieldMetadata"/>
+  <rdfs:domain rdf:resource="#DatabaseMetadata"/>
 </owl:DatatypeProperty>
 
 <owl:DatatypeProperty rdf:about="#attrBusinessdesc">
@@ -368,9 +393,49 @@
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
 </owl:DatatypeProperty>
 
+<owl:DatatypeProperty rdf:about="#attrTokenhash">
+  <rdfs:domain rdf:resource="#AccessToken"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrRemark">
+  <rdfs:domain rdf:resource="#AccessToken"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
 <owl:DatatypeProperty rdf:about="#attrExpireat">
   <rdfs:domain rdf:resource="#AccessToken"/>
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrJobid">
+  <rdfs:domain rdf:resource="#BatchJob"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrInputparams">
+  <rdfs:domain rdf:resource="#BatchJob"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrOutputlocation">
+  <rdfs:domain rdf:resource="#BatchJob"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrStartat">
+  <rdfs:domain rdf:resource="#BatchJob"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrEndat">
+  <rdfs:domain rdf:resource="#BatchJob"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrDatavolume">
+  <rdfs:domain rdf:resource="#BatchJob"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
 </owl:DatatypeProperty>
 
 <owl:DatatypeProperty rdf:about="#attrTs">
@@ -400,6 +465,16 @@
 
 <owl:DatatypeProperty rdf:about="#attrSourceip">
   <rdfs:domain rdf:resource="#InvocationLog"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrThresholdtype">
+  <rdfs:domain rdf:resource="#AlertRule"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#attrThreshold">
+  <rdfs:domain rdf:resource="#AlertRule"/>
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
 </owl:DatatypeProperty>
 
@@ -560,6 +635,10 @@
   <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
 </owl:Class>
 
+<owl:Class rdf:about="#DatabaseMetadata">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
 <owl:Class rdf:about="#KnowledgeEntry">
   <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
 </owl:Class>
@@ -616,7 +695,15 @@
   <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
 </owl:Class>
 
+<owl:Class rdf:about="#BatchJob">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
 <owl:Class rdf:about="#InvocationLog">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#AlertRule">
   <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
 </owl:Class>
 

@@ -29,8 +29,8 @@ package "数据源与元数据域 (F-DS/F-MD)" {
     collectedAt : datetime @required
     trigger : manual | scheduled @required
   --
-  ' @logic diff: 与前序快照对比,识别表/字段新增·删除·类型变更·注释变更。来源 F-MD-03
-  + diff(prev : MetadataSnapshot) : SchemaChangeEvent[]
+  ' @logic diff: 与任意指定快照对比差异(版本管理视图,F-MD-02"对比任意两版");相邻版对比即变更检测输入(F-MD-03)。来源 F-MD-02/F-MD-03
+  + diff(other : MetadataSnapshot) : SchemaChangeEvent[]
 }
   class TableMetadata {
     name : string @required
@@ -59,6 +59,10 @@ package "数据源与元数据域 (F-DS/F-MD)" {
   ' @logic publishToStream: 变更事件入事件流,供指标模块订阅。来源 F-MD-03
   + publishToStream()
 }
+  class DatabaseMetadata {
+    name : string @required
+    comment : string
+  }
   enum DataSourceType {
     MySQL
     PostgreSQL
@@ -67,10 +71,15 @@ package "数据源与元数据域 (F-DS/F-MD)" {
     ClickHouse
     API
   }
+  DataSource "1" --> "*" DatabaseMetadata : F-MD-01 库级(TA1-09)
+  DatabaseMetadata "1" --> "*" TableMetadata
   DataSource "1" --> "*" MetadataSnapshot : F-MD-01 采集
   MetadataSnapshot --> "*" TableMetadata : 含表集
   TableMetadata "1" --> "*" FieldMetadata
   MetadataSnapshot ..> SchemaChangeEvent : 相邻快照对比产生 F-MD-03
+  SchemaChangeEvent --> DataSource : 受变更对象(TA1-03)
+  SchemaChangeEvent --> TableMetadata : 受变更对象
+  SchemaChangeEvent --> FieldMetadata : 受变更对象
 }
 
 package "知识库与本体域 (F-KB)" {
@@ -127,8 +136,10 @@ package "知识库与本体域 (F-KB)" {
   KnowledgeEntry ..> OntologyModel : F-KB-02 LLM提取草稿→人工确认
   OntologyModel *-- "*" OntologyEntity
   OntologyModel *-- "*" OntologyRelation
+  OntologyRelation "0..*" --> "2" OntologyEntity : source / target(TA1-01)
   OntologyEntity "0..*" --> "0..*" EntityMapping : F-KB-03 对齐
-  EntityMapping ..> TableMetadata : 映射目标(表/字段)
+  EntityMapping ..> TableMetadata : 映射目标(表/字段,TA1-11)
+  EntityMapping ..> FieldMetadata : 映射目标(字段)
 }
 
 package "指标域 (F-LC, 核心)" {
@@ -137,7 +148,7 @@ package "指标域 (F-LC, 核心)" {
     enName : string @required @pattern(全局唯一标识)
     category : atomic | derived | composite @required
     caliber : string @required
-    owner : string @required
+    owner : string @required @decision(业务元信息"负责人"(F-LC-01 元信息清单)——非权限载体,权限事实源是 ResourceGrant 的 manager 体系(TA1-15))
     bizDomain : string
     tags : string[]
     dsl : json | yaml @required @decision(引擎解耦的结构化定义,F-LC-01)
@@ -150,7 +161,7 @@ package "指标域 (F-LC, 核心)" {
   + toDraftFromSuggestion(s : MetricSuggestion) : MetricDefinition
   ' @logic newVersion: 口径变更生成指标新版本(重新走测试);权限随定义继承。来源 F-LC-04/R-M-3
   + newVersion(reason) : MetricVersion
-  ' @logic grantAccess: manager 为其他主体授权/降级,受"至少一名 manager"约束。来源 R-M-2
+  ' @logic grantAccess: manager 为其他主体授权/降级的入口,委托 ResourceGrant.grant 执行(权限事实源单一,TA1-15),受"至少一名 manager"约束。来源 R-M-2
   + grantAccess(principal : Principal, level : manager | reader | none)
   ' @logic checkEnNameUnique: 英文名全局唯一性校验(创建/改名时)。来源 F-LC-01
   + checkEnNameUnique(enName) : bool
@@ -216,6 +227,7 @@ package "指标域 (F-LC, 核心)" {
     复合指标
   }
   MetricDefinition "1" o-- "*" MetricVersion : F-LC-04 版本链
+  MetricDefinition "0..*" --> "0..*" MetricDefinition : 复合组成(TA1-02,复合指标=多指标运算 F-LC-01;上游变更/下架经依赖图谱 metric 级传导)
   MetricDefinition ..> MetricTemplate : F-LC-02 模板实例化
   MetricTemplate ..> KnowledgeEntry : 可由知识条目转化
   MetricDefinition "1" --> "0..*" AcceptanceRule : F-LC-03 验收规则
@@ -225,6 +237,7 @@ package "指标域 (F-LC, 核心)" {
   DependencyEdge --> TableMetadata
   DependencyEdge --> FieldMetadata
   KnowledgeEntry "0..*" -- "0..*" TableMetadata : 元数据↔知识关联(01§2)
+  KnowledgeEntry "0..*" -- "0..*" FieldMetadata : 字段级关联(F-KB-01,TA1-11)
 }
 
 package "服务域 (F-LC-04/F-SV/F-MON-02)" {
@@ -251,6 +264,8 @@ package "服务域 (F-LC-04/F-SV/F-MON-02)" {
   + grantMetricScope(metric : MetricDefinition)
 }
   class AccessToken {
+    tokenHash : string @required @decision(明文仅创建时展示一次,服务端只存哈希(F-SEC-API-02,TA1-13)——与 DataSource 凭据同等待遇)
+    remark : string
     status : issued | revoked | expired @required
     expireAt : datetime
   --
@@ -261,6 +276,14 @@ package "服务域 (F-LC-04/F-SV/F-MON-02)" {
   ' @logic verify: 每次服务调用前校验(token 有效且在授权范围内)。来源 F-LC-04
   + verify() : bool
 }
+  class BatchJob {
+    jobId : string @required
+    inputParams : string @required
+    outputLocation : string
+    startAt : datetime
+    endAt : datetime
+    dataVolume : int
+  }
   class InvocationLog {
     ts : datetime @required
     params : string
@@ -278,10 +301,26 @@ package "服务域 (F-LC-04/F-SV/F-MON-02)" {
   + aggregate(window)
 }
   MetricVersion "1" --> "0..1" ServingAPI : 发布提供服务
+  ServingAPI "1" --> "*" BatchJob : 批处理任务(TA1-07,F-MON-02-01 另记)
   ApiConsumer "1" --> "*" AccessToken
+  ApiConsumer "*" --> "1" User : 负责对接的内部用户(TA1-06,F-SEC-API-01;版本切换通知目标 F-SV-01-02)
   ApiConsumer "0..*" --> "0..*" MetricDefinition : 按指标授权调用范围
   InvocationLog --> ApiConsumer
+  InvocationLog --> User : 内部用户调用(TA1-12,调用方=用户|下游系统)
   InvocationLog --> MetricVersion
+}
+
+package "监控告警域 (F-MON)" {
+  class AlertRule {
+    thresholdType : successRate | latency | depException @required
+    threshold : float @required
+    @decision(F-MON-03"阈值规则模型先行,本期预留不做通知通道"——模型先行承载,实现后置)
+  }
+  AlertRule "0..*" --> "1" MetricDefinition : 告警对象
+  note bottom of AlertRule
+    看板内视觉告警;触发后经 F-SV-02 闭环进入 DisposalTodo
+    (cause=thresholdBreach)
+  end note
 }
 
 package "平台与权限域 (02-权限设计/3.5)" {

@@ -12,6 +12,8 @@ loan:FieldMetadataShape a sh:NodeShape ;
   sh:targetClass loan:FieldMetadata .
 loan:SchemaChangeEventShape a sh:NodeShape ;
   sh:targetClass loan:SchemaChangeEvent .
+loan:DatabaseMetadataShape a sh:NodeShape ;
+  sh:targetClass loan:DatabaseMetadata .
 loan:KnowledgeEntryShape a sh:NodeShape ;
   sh:targetClass loan:KnowledgeEntry .
 loan:OntologyModelShape a sh:NodeShape ;
@@ -40,8 +42,12 @@ loan:ApiConsumerShape a sh:NodeShape ;
   sh:targetClass loan:ApiConsumer .
 loan:AccessTokenShape a sh:NodeShape ;
   sh:targetClass loan:AccessToken .
+loan:BatchJobShape a sh:NodeShape ;
+  sh:targetClass loan:BatchJob .
 loan:InvocationLogShape a sh:NodeShape ;
   sh:targetClass loan:InvocationLog .
+loan:AlertRuleShape a sh:NodeShape ;
+  sh:targetClass loan:AlertRule .
 loan:UserShape a sh:NodeShape ;
   sh:targetClass loan:User .
 loan:RoleShape a sh:NodeShape ;
