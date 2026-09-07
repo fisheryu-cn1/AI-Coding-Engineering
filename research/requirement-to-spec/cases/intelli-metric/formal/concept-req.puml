@@ -1,7 +1,7 @@
 @startuml concept-req
 title intelli-metric 概念模型（自需求 v0.1~v0.3 提取，2026-08-30）
 ' 来源锚：F-/R- 编号见 raw/ 三份需求文档；@decision=翻译歧义或需求未明处的显式标注
-' 追踪锚：TA1-xx = review/E30-翻译审计表.md 第 1 轮人工审计条目 ID；审2-x = 第 2 轮评审条目
+' 追踪锚：TA1-xx = 第 1 轮人工审计条目（共 15 条）；审2-x = 第 2 轮复核条目。审计全文=E30-翻译审计表.md：交付拷贝中位于本图同级 review/ 子目录；研究仓库源位于 cases/intelli-metric/review/
 
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
@@ -76,7 +76,6 @@ package "数据源与元数据域 (F-DS/F-MD)" {
   DataSource "1" --> "*" MetadataSnapshot : F-MD-01 采集
   MetadataSnapshot --> "*" DatabaseMetadata : 快照含库集(审2-4:库/表/字段均为快照下版本化副本)
   DatabaseMetadata "1" --> "*" TableMetadata
-  TableMetadata "1" --> "*" FieldMetadata
   TableMetadata "1" --> "*" FieldMetadata
   MetadataSnapshot ..> SchemaChangeEvent : 相邻快照对比产生 F-MD-03
   SchemaChangeEvent --> DataSource : 受变更对象(TA1-03)
