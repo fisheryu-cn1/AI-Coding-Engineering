@@ -12,12 +12,26 @@ package "数据源与元数据域 (F-DS/F-MD)" {
     status : available | unavailable @required
     cipherCredential : string @decision(凭据加密存储,任何权限级别不可读明文=R-DS-4;建模为属性而非独立类)
     lastSyncAt : datetime
-  }
+  --
+  ' @logic testConnection: 连通性测试,失败置 status=unavailable。来源 F-DS-01
+  + testConnection() : bool
+  ' @logic collectMetadata: 元数据采集(手动全量/定时增量),生成新快照。来源 F-MD-01
+  + collectMetadata(mode : manual | scheduled) : MetadataSnapshot
+  ' @logic updateConfig: 修改连接配置前预检——返回依赖本数据源的未下架指标清单供评估;确认修改后受影响指标标记待评估。来源 F-LC-07
+  + updateConfig(params) : MetricDefinition[]
+  ' @logic remove: 删除保护——存在未下架依赖指标时拒绝删除。来源 F-LC-07
+  + remove() : bool
+  ' @logic grantAccess: owner 为其他主体授权/降级/移除(含把其他 owner 降级),受"至少一名 owner"约束。来源 R-DS-2/R-DS-3
+  + grantAccess(principal : Principal, level : owner | reader | none)
+}
   class MetadataSnapshot {
     version : int @required
     collectedAt : datetime @required
     trigger : manual | scheduled @required
-  }
+  --
+  ' @logic diff: 与前序快照对比,识别表/字段新增·删除·类型变更·注释变更。来源 F-MD-03
+  + diff(prev : MetadataSnapshot) : SchemaChangeEvent[]
+}
   class TableMetadata {
     name : string @required
     comment : string
@@ -25,7 +39,12 @@ package "数据源与元数据域 (F-DS/F-MD)" {
     owner : string
     tags : string[]
     sensitiveLevel : string
-  }
+  --
+  ' @logic updateBusinessInfo: 元数据业务补充信息维护(业务描述/负责人/标签/敏感级别)。来源 F-MD-02
+  + updateBusinessInfo(businessDesc, owner, tags, sensitiveLevel)
+  ' @logic search: 按关键字/标签/数据源检索表与字段(静态查询)。来源 F-MD-02
+  + search(keyword, tags, source) : TableMetadata[]
+}
   class FieldMetadata {
     name : string @required
     dataType : string @required
@@ -36,7 +55,10 @@ package "数据源与元数据域 (F-DS/F-MD)" {
     changeType : add | drop | typeChange | commentChange @required
     detectedAt : datetime @required
     detail : string
-  }
+  --
+  ' @logic publishToStream: 变更事件入事件流,供指标模块订阅。来源 F-MD-03
+  + publishToStream()
+}
   enum DataSourceType {
     MySQL
     PostgreSQL
@@ -59,11 +81,25 @@ package "知识库与本体域 (F-KB)" {
     tags : string[]
     source : string
     version : int @required
-  }
+  --
+  ' @logic save: 知识条目 CRUD 维护(标题/正文/类型/标签/关联元数据/版本)。来源 F-KB-01
+  + save()
+  ' @logic importBatch: Markdown 批量导入(单文件/压缩包,导入时指定类型与标签)——冷启动灌入。来源 F-KB-01
+  + importBatch(files, type, tags)
+  ' @logic exportBackup: 知识导出备份。来源 F-KB-01
+  + exportBackup()
+  ' @logic searchHybrid: 全文+语义(向量化)混合检索,支持类型/标签过滤。来源 F-KB-01
+  + searchHybrid(query, type, tags) : KnowledgeEntry[]
+}
   class OntologyModel {
     name : string @required
     status : draft | confirmed @required
-  }
+  --
+  ' @logic confirm: 本体草稿经人工审核确认后入库。来源 F-KB-02
+  + confirm()
+  ' @logic mergeIncremental: 增量补充合并,实体冲突时产生提示。来源 F-KB-02
+  + mergeIncremental(draft : OntologyModel) : string[]
+}
   class OntologyEntity {
     name : string @required
     attributesJson : string
@@ -75,7 +111,12 @@ package "知识库与本体域 (F-KB)" {
   class EntityMapping {
     confidence : float
     confirmedBy : string @required
-  }
+  --
+  ' @logic suggest: 本体实体与物理表/字段的映射自动建议。来源 F-KB-03
+  + suggest(entity : OntologyEntity, target : TableMetadata)
+  ' @logic confirmBy: 映射人工确认——业务语言→本体实体→物理数据的关键中间层。来源 F-KB-03
+  + confirmBy(user : User)
+}
   enum KnowledgeType {
     构建模板
     清洗方法
@@ -100,31 +141,75 @@ package "指标域 (F-LC, 核心)" {
     bizDomain : string
     tags : string[]
     dsl : json | yaml @required @decision(引擎解耦的结构化定义,F-LC-01)
-  }
+  --
+  ' @logic create: 低代码构建——选源表字段/聚合/过滤/维度/时间粒度/口径,存为引擎无关 DSL。来源 F-LC-01
+  + create(params) : MetricDefinition
+  ' @logic instantiate: 基于模板填参生成指标定义草稿。来源 F-LC-02
+  + instantiate(template : MetricTemplate, params) : MetricDefinition
+  ' @logic toDraftFromSuggestion: LLM 构建建议一键转为定义草稿。来源 F-AI-01
+  + toDraftFromSuggestion(s : MetricSuggestion) : MetricDefinition
+  ' @logic newVersion: 口径变更生成指标新版本(重新走测试);权限随定义继承。来源 F-LC-04/R-M-3
+  + newVersion(reason) : MetricVersion
+  ' @logic grantAccess: manager 为其他主体授权/降级,受"至少一名 manager"约束。来源 R-M-2
+  + grantAccess(principal : Principal, level : manager | reader | none)
+  ' @logic checkEnNameUnique: 英文名全局唯一性校验(创建/改名时)。来源 F-LC-01
+  + checkEnNameUnique(enName) : bool
+}
   class MetricVersion {
     versionNo : int @required
     createdAt : datetime @required
     @decision(状态机挂版本而非指标实体:F-LC-04多版本并存+R-M-3权限随指标实体继承——权限挂定义,生命周期挂版本)
-  }
+  --
+  ' @logic submit: 发起测试(draft→testing)。来源 F-LC-03/F-LC-06
+  + submit()
+  ' @logic evaluate: 试算(生成查询在源数据执行,返回样例与耗时)+有效性评估,产出报告;测试通过是发布前置条件。来源 F-LC-03
+  + evaluate() : TestReport
+  ' @logic publish: 测试通过后发布,即时切换默认路由(无中断),留痕并通知调用方负责人。来源 F-LC-04/F-SV-01-02
+  + publish()
+  ' @logic pause: 暂停服务(管理动作或处置动作)。来源 F-LC-04/F-LC-07
+  + pause()
+  ' @logic resume: 恢复服务(验证要求待需求方确认,见 @decision)。来源 F-LC-04
+  + resume()
+  ' @logic delist: 下架——人工指令+原因记录;自动触发时经处置待办确认。来源 F-LC-05
+  + delist(reason)
+}
   class MetricTemplate {
     skeleton : string @required
     scenarioDesc : string
     acceptanceRuleTemplate : string
     version : int @required
-  }
+  --
+  ' @logic instantiate: 参数化骨架填参即生成指标定义草稿。来源 F-LC-02
+  + instantiate(params) : MetricDefinition
+  ' @logic fromKnowledge: 模板可从知识库知识条目转化。来源 F-LC-02
+  + fromKnowledge(entry : KnowledgeEntry) : MetricTemplate
+  ' @logic fromMetric: 模板可由成功指标沉淀而来。来源 F-LC-02
+  + fromMetric(def : MetricDefinition) : MetricTemplate
+}
   class AcceptanceRule {
     ruleType : basic | consistency | business @required
     expression : string @required
-  }
+  --
+  ' @logic check: 单条验收规则对试算结果的校验执行(如 退款率∈[0,1])。来源 F-LC-03
+  + check(sample) : bool
+}
   class TestReport {
     sampleResult : string
     costTime : float
     verdict : pass | fail @required
     evaluatedAt : datetime @required
-  }
+  --
+  ' @logic assess: 有效性评估执行——基础校验(空值率/取值范围/非负性/枚举合法)+一致性校验(同类指标/历史值波动率)+业务规则校验(知识库/模板规则)。来源 F-LC-03
+  + assess(rules : AcceptanceRule[]) : pass | fail
+}
   class DependencyEdge {
     level : source | table | field @required
-  }
+  --
+  ' @logic locateAffected: 变更事件经依赖图谱(数据源→表/字段→指标)定位受影响指标集合。来源 F-LC-07
+  + locateAffected(change : SchemaChangeEvent) : MetricDefinition[]
+  ' @logic listActiveDependents: 列出依赖某数据源的未下架指标(配置变更预检/删除保护)。来源 F-LC-07
+  + listActiveDependents(ds : DataSource) : MetricDefinition[]
+}
   enum MetricCategory {
     原子指标
     派生指标
@@ -146,15 +231,36 @@ package "服务域 (F-LC-04/F-SV/F-MON-02)" {
   class ServingAPI {
     apiType : realtime | batch @required
     routeStrategy : latest | pinned @required
-  }
+  --
+  ' @logic query: 实时查询——按指标名+维度+时间范围,带缓存。来源 F-LC-04
+  + query(metric, dims, timeRange) : rows
+  ' @logic submitBatch: 批处理任务——结果输出到表/文件/消息(首版至少结果表导出)。来源 F-LC-04
+  + submitBatch(params, output) : jobId
+  ' @logic resolveRoute: 版本路由——默认最新发布版本,支持调用方显式指定;退役版本返回 VERSION_RETIRED。来源 F-SV-01-01
+  + resolveRoute(consumer, versionSpec) : MetricVersion
+  ' @logic retire: 版本退役——前置检查"近 7 天无调用";退役仅影响显式指定,默认路由不变。来源 F-SV-01-03
+  + retire(version : MetricVersion)
+}
   class ApiConsumer {
     name : string @required
     status : active | disabled @required
-  }
+  --
+  ' @logic disable: 调用方账户停用。来源 3.5
+  + disable()
+  ' @logic grantMetricScope: 按指标授权调用范围。来源 3.5/F-LC-04
+  + grantMetricScope(metric : MetricDefinition)
+}
   class AccessToken {
     status : issued | revoked | expired @required
     expireAt : datetime
-  }
+  --
+  ' @logic issue: 颁发 token(绑定调用方与授权范围)。来源 F-LC-04/3.5
+  + issue(consumer : ApiConsumer, scopes)
+  ' @logic revoke: 吊销。来源 F-LC-04
+  + revoke()
+  ' @logic verify: 每次服务调用前校验(token 有效且在授权范围内)。来源 F-LC-04
+  + verify() : bool
+}
   class InvocationLog {
     ts : datetime @required
     params : string
@@ -163,7 +269,14 @@ package "服务域 (F-LC-04/F-SV/F-MON-02)" {
     errType : sourceError | badParam | timeout | permDenied | versionRetired
     resultRows : int
     sourceIp : string
-  }
+  --
+  ' @logic record: 每次调用记录——时间/调用方/指标与版本/参数/耗时/状态与错误类型/结果行数/来源IP;批处理另记任务详情。来源 F-MON-02-01
+  + record(call)
+  ' @logic queryLogs: 按指标/调用方/时间窗/状态组合检索,支持导出。来源 F-MON-02-03
+  + queryLogs(filters) : rows
+  ' @logic aggregate: 监控聚合(延迟分位/成功率/错误分类/用量,按分钟/小时粒度存时序表)。来源 F-MON-01/R-MON-2
+  + aggregate(window)
+}
   MetricVersion "1" --> "0..1" ServingAPI : 发布提供服务
   ApiConsumer "1" --> "*" AccessToken
   ApiConsumer "0..*" --> "0..*" MetricDefinition : 按指标授权调用范围
@@ -175,7 +288,16 @@ package "平台与权限域 (02-权限设计/3.5)" {
   class User {
     username : string @required
     status : active | disabled @required
-  }
+  --
+  ' @logic bootstrapAdmin: 空实例首次启动经初始化向导创建首个超级管理员;系统始终保留至少一名。来源 3.5/02§6
+  + bootstrapAdmin()
+  ' @logic disable: 停用/启用。来源 3.5
+  + disable()
+  ' @logic resetPassword: 重置密码。来源 3.5
+  + resetPassword()
+  ' @logic assignRoles: 角色分配。来源 3.5
+  + assignRoles(roles : Role[])
+}
   class Role {
     name : string @required
   }
@@ -184,7 +306,12 @@ package "平台与权限域 (02-权限设计/3.5)" {
   }
   class ResourceGrant {
     resourceLevel : owner | manager | reader | none @required
-  }
+  --
+  ' @logic grant: 资源级授权(数据源 owner/reader/none;指标 manager/reader/none),主体为用户(组织节点预留继承)。来源 02§1/§2/§3
+  + grant(principal : Principal, resource, level)
+  ' @logic check: 鉴定点——功能权限(RBAC)+资源级(ACL)合成判定。来源 02§1
+  + check(user, action, resource) : allow | deny
+}
   class Principal {
     subjectType : user | orgNode @decision(组织节点为预留,02§1授权主体抽象)
   }
@@ -192,16 +319,31 @@ package "平台与权限域 (02-权限设计/3.5)" {
     cause : structureChange | depUnhealthy | thresholdBreach @required
     action : fix | pause | delist
     status : open | done @required
-  }
+  --
+  ' @logic assignTo: 向指标 manager 生成处置待办(站内通知);数据源 owner 同时可见影响范围。来源 F-SV-02
+  + assignTo(manager : User)
+  ' @logic execute: 处置三选一——修复定义(回草稿)/暂停服务/下架;处置后需重新试算验证方可恢复;过程留痕。来源 F-LC-07
+  + execute(action : fix | pause | delist)
+  ' @logic pauseAllAffected: 紧急情况一键暂停全部受影响指标。来源 F-SV-02
+  + pauseAllAffected(scope)
+}
   class AuditLog {
     actor : string @required
     action : string @required
     ts : datetime @required
-  }
+  --
+  ' @logic append: 管理类操作留痕(发布/暂停/下架/权限变更/数据源配置变更),只增不改。来源 F-MON-02-02
+  + append(entry)
+}
   class MonitorFlag {
     flag : degraded | pendingEval | perfAbnormal @required
     @decision(服务降级建模为运行期标记而非状态机状态:R-MON-1"恢复后自动解除"为可逆监控信号;状态机paused态为管理动作——两者区分待需求方确认)
-  }
+  --
+  ' @logic mark: 运行期标记——依赖异常(降级/不可用)/待评估/性能异常,状态回传指标详情与看板。来源 R-MON-1/F-SV-02
+  + mark(flag, cause)
+  ' @logic autoClear: 数据源恢复后自动解除依赖异常标记(可逆监控信号,非状态机状态)。来源 R-MON-1
+  + autoClear()
+}
   User "0..*" --> "0..*" Role : RBAC 全局功能权限
   Role --> "*" PermissionPoint
   Principal --> "*" ResourceGrant : ACL 资源级授权
@@ -217,13 +359,21 @@ package "平台与权限域 (02-权限设计/3.5)" {
 package "LLM 智能辅助域 (F-AI)" {
   class LLMPipeline {
     taskType : ontologyExtract | metricSuggest @required
-  }
+  --
+  ' @logic extractOntology: 从知识库自然语言文本抽取实体定义与逻辑关联,产出本体草稿。来源 F-KB-02
+  + extractOntology(texts) : OntologyModel
+  ' @logic suggestMetric: 需求解析→本体与知识库检索(RAG)→生成结构化建议(源数据+理由/加工方法/口径草稿/验收规则建议)。来源 F-AI-01
+  + suggestMetric(nlRequirement) : MetricSuggestion
+}
   class MetricSuggestion {
     sourceData : string @required
     processMethod : string
     caliberDraft : string
     acceptanceSuggestion : string
-  }
+  --
+  ' @logic toDraft: 建议一键转为指标定义草稿,进入 F-LC-01 流程。来源 F-AI-01
+  + toDraft() : MetricDefinition
+}
   LLMPipeline ..> OntologyModel : F-KB-02
   LLMPipeline --> MetricSuggestion : F-AI-01 RAG+生成
   MetricSuggestion ..> MetricDefinition : 一键转为定义草稿
