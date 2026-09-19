@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>看过的不一定能理解：大模型上下文窗口的特点｜上下文的纪律 · 第 2 篇</title>
+</head>
+<body style="margin:0;padding:0;background:#ffffff;">
+
+<!--
+═══════════════════════════════════════════════════════════════
+【生产注记 · 已发布存档 2026-09-06】
+
+□ 发布记录：
+  2026-09-06 23:43 发表于公众号
+  https://mp.weixin.qq.com/s/5XThzOJasbOj2cCEWqOtaw
+  发表时对定稿的修改已同步回本文件（共 10 处）：
+  · 标题改为《看过的不一定能理解：大模型上下文窗口的特点》
+    （原定稿《看过的不一定记得住：大模型理解上下文的特点》）
+  · 开头段删除"一个典型的场景…"场景引入句，残句"而且它们合力给出
+    这三篇论文给出"改为"论文通过实验给出"
+  · "模型自己的参数记忆"→"模型的参数记忆"
+  · 删锚点括注例（"详见中部第3节的接口定义"）；删"成本低，"
+  · "128K/1M"→"256K/1M"；自测分档"标称 50%"→"512K"
+  · 自测法收束句改为"通过针对性的测试，确定实际的上下文边界——
+    这比任何论文和厂商规格页都可靠。"
+  · 结尾"两个实用方法"一段拆为三段（引导段+1.+2.）
+  · "十分钟自测法"改名"有效上下文窗口自测法"（含结尾证据块）
+  · 公众号摘要栏未单独设置（默认同标题）
+
+□ 原发布前注记（历史保留）：
+
+□ 标题：看过的不一定能理解：大模型上下文窗口的特点（发表版）
+
+□ 摘要文案（公众号"摘要"栏，120 字内）：
+  窗口标到 1M，就能把整个代码库塞给大模型吗？三篇论文的实测答案：
+  有效窗口远小于标称，越过边界是断崖式退化；关键信息放在中部还可能
+  被"遗忘"。本文整理成两条使用纪律和一份自测方法。
+
+□ 图片：4 张，位于 images/ 目录。发布用 article-1-wechat.html（图片已
+  内联 base64，随粘贴带入）：litm-fig5-ucurve（图1 U形曲线）
+  / litm-fig9-queryaware（图2 查询感知）/ mecw-fig5-degradation（图3 退化曲线）
+  / wang-fig1-cliff（图4 断崖）
+
+□ 格式约定（承接 EP01 定稿）：正文不使用 <strong> 加粗；开头/结尾为
+  蓝灰虚线草稿框（人工补写后可去框）；三处英文原文引录框（灰底蓝边）。
+
+□ 证据标注：表 2（预算表）与"有效上下文窗口自测法"为作者实践建议、非论文
+  内容，文中已显式标注；V4 架构细节为博客级信息，文中已标注。
+  正文中所有数字均已对照三篇论文 PDF 原文核验（引文为原文直录）。
+
+□ 原文：arXiv:2307.03172（LitM, TACL 2024）；Paulsen 2025 ACM 会议
+  论文（MECW）；arXiv:2601.15300（Wang）
+═══════════════════════════════════════════════════════════════
+-->
+
+<div style="max-width:677px;margin:0 auto;padding:10px 18px 40px;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
+
+  <!-- ═══ 系列眉标 ═══ -->
+  <p style="text-align:center;font-size:12px;color:#999999;letter-spacing:2px;margin:16px 0 4px;">「上下文的纪律」系列 · 第 2 篇</p>
+  <p style="text-align:center;font-size:13px;color:#bbbbbb;margin:0 0 10px;line-height:1.6;">大模型的胃口越来越大，是否都能消化好呢？</p>
+  <div style="border-top:1px solid #ececec;height:1px;line-height:1;font-size:0;margin:10px 0 26px;"></div>
+
+  <!-- ═══════════ 开头 · 场景引入【草稿区】 ═══════════ -->
+  <div style="border:2px dashed #8FA9BE;background:#F4F7FA;border-radius:10px;padding:16px 18px;margin:0 0 30px;">
+    <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 14px;">▍那条著名的曲线</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">最近一年多时间里，大模型的上下文窗口长度普遍从256K升级到了1M规模。这样大的窗口规模，理论上几乎装得下整个代码仓库了。那么是不是只要能装得下，就可以把所有的资料都一股脑扔给大模型呢？</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">本期三篇关于大模型上下文窗口研究的论文给出的答案都是"不"。论文通过实验给出两条建议：<span style="color:#0F6BAB;">放多少</span>——上下文总量要控制在实际理解劣化边界以内，而不是规格窗口以内；<span style="color:#0F6BAB;">怎么放</span>——注意力在上下文的两头权重较大、中部可能被遗忘，需要合理安排内容的顺序。</p>
+
+    <p style="font-size:13px;color:#4A6B85;line-height:1.8;margin:0;padding-top:10px;border-top:1px dashed #D9E2EA;">对于大模型应用者来说，“Context is all you need”已经逐步成为共识。但即使是经过仔细检查和整理，确保不存在错误信息、并且结构标签经过精心设计，过于饱和的上下文仍然会造成大模型输出偏离预期。一个经常出现的情景是，虽然辛辛苦苦在提示词中详细地规定了任务目标、执行任务的步骤、每一步的工作要求和标准。但任务执行到一半时，Agent忽然就忽略了中间步骤的要求，按自己的方法“自说自话”地“抄近路”，造成整个任务崩溃。以至于“把任务拆分开”、“每个任务新建一个会话”，成为大部分通用Agent的使用建议。</p>
+  </div>
+
+  <!-- ═══════════ 正文 ═══════════ -->
+
+  <!-- 论文卡片 -->
+  <div style="background:#F5F8FA;border:1px solid #E3EAEE;border-radius:10px;padding:16px 18px;margin:0 0 14px;">
+    <p style="font-size:15px;font-weight:bold;color:#0F6BAB;margin:0 0 10px;line-height:1.6;">本期荐读论文（三篇）</p>
+    <p style="font-size:14px;color:#3a3a3a;line-height:1.85;margin:0 0 10px;">① Lost in the Middle: How Language Models Use Long Contexts<br>
+    <span style="font-size:13px;color:#666666;">迷失在中部：语言模型如何使用长上下文</span><br>
+    <span style="color:#888;">Nelson F. Liu et al.（Stanford / Berkeley / Samaya AI），2023，TACL 2024｜对应纪律二：位置</span></p>
+    <p style="font-size:14px;color:#3a3a3a;line-height:1.85;margin:0 0 10px;padding-top:10px;border-top:1px solid #E8EEF1;">② Context Is What You Need: The Maximum Effective Context Window for Real World Limits of LLMs<br>
+    <span style="font-size:13px;color:#666666;">你需要的其实是上下文：大模型现实极限的最大有效上下文窗口</span><br>
+    <span style="color:#888;">Norman Paulsen（Accion Group），2025，ACM 会议论文｜对应纪律一：容量</span></p>
+    <p style="font-size:14px;color:#3a3a3a;line-height:1.85;margin:0;padding-top:10px;border-top:1px solid #E8EEF1;">③ Intelligence Degradation in Long-Context LLMs: Critical Threshold Determination via Natural Length Distribution Analysis<br>
+    <span style="font-size:13px;color:#666666;">长上下文大模型的智能退化：基于自然长度分布的临界阈值判定</span><br>
+    <span style="color:#888;">Weiwei Wang, Jiyong Min, Weijie Zou，2026-01（arXiv:2601.15300）｜对应纪律一：边界形态</span></p>
+  </div>
+
+  <!-- 名词速查 -->
+  <div style="background:#FAFAFA;border-radius:10px;padding:14px 18px;margin:0 0 30px;font-size:13.5px;color:#555;line-height:1.9;">
+    <p style="margin:0 0 6px;"><span style="color:#0F6BAB;font-weight:bold;">名词速查</span></p>
+    <p style="margin:0 0 4px;">▸ <span style="font-weight:bold;">MCW（最大上下文窗口）</span>：厂商规格页上写的窗口上限（128K、1M 等），是架构能"装下"的 token 数。</p>
+    <p style="margin:0 0 4px;">▸ <span style="font-weight:bold;">MECW（最大有效上下文窗口）</span>：某类任务上模型准确率开始可测下降的 token 阈值，是实际"读得好"的边界。</p>
+    <p style="margin:0 0 4px;">▸ <span style="font-weight:bold;">大海捞针（needle-in-a-haystack）</span>：在长文本里藏一条关键信息再让模型找出来的测试，是最常见的长上下文考题。</p>
+    <p style="margin:0;">▸ <span style="font-weight:bold;">RoPE（旋转位置编码）</span>：主流模型表达"token 之间距离"的方式，像时钟指针——转过了一圈，远处的位置就开始长得一样。</p>
+  </div>
+
+  <!-- §1 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">一、著名的U型曲线：位置决定权重</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">Lost in the Middle的实验中给模型 10、20、30 篇文档，其中只有一篇包含答案，其余全是干扰项。然后只动一个变量：把那篇"金文档"放到第 1、第 5、第 10……直到最后一篇。如果模型对上下文的利用与位置无关，那么成绩应该是一条水平线。而实际画出来的是一条U形曲线：</p>
+
+  <div style="margin:24px 0;">
+    <img src="images/litm-fig5-ucurve.png" alt="图1：多文档问答中金文档位置与准确率的关系" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 1｜多文档问答：横轴是金文档所在位置，纵轴是准确率。六个模型画出的都是U形——开头与结尾用得好，中部塌陷（原论文Figure 5）</p>
+  </div>
+
+  <div style="background:#F5F8FA;border-left:3px solid #0F6BAB;border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;">
+    <p style="font-size:13.5px;color:#555;line-height:1.85;margin:0;">"…when relevant information is placed in the middle of its input context, GPT-3.5-Turbo's performance on the multi-document question task is lower than its performance when predicting without any documents (i.e., the closed-book setting; 56.1%). Furthermore … models often have identical performance to their extended-context counterparts, indicating that extended-context models are not necessarily better at using their input context."</p>
+    <p style="font-size:13px;color:#888;line-height:1.8;margin:6px 0 0;">── 中译：当相关信息放在输入上下文的中部时，GPT-3.5-Turbo的表现甚至低于完全不给文档的"闭卷"设定（准确率56.1%）。而且模型与自家扩窗版本的成绩几乎相同——扩了大上下文窗口，并不能直接提升使用上下文的能力。</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 14px;">实验中的两个现象得关注。其一，"给文档反而不如不给"：闭卷56.1%意味着中部位置的信息不仅没帮上忙，干扰项还把模型的参数记忆带偏了。其二，扩窗无效：16K版GPT-3.5与100K版Claude的曲线和原版几乎重合（下表）。虽然上下文窗口变大，但中部的上下文盲区没有变小。</p>
+
+  <div style="margin:0 0 6px;">
+    <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
+      <tr style="background:#F0F5F8;">
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">模型</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">闭卷（不给文档）</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">开卷满分（文档含答案）</th>
+      </tr>
+      <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">GPT-3.5-Turbo</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">56.1%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">88.3%</td></tr>
+      <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">GPT-3.5-Turbo（16K）</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">56.0%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">88.6%</td></tr>
+      <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">Claude-1.3</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">48.3%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">76.1%</td></tr>
+      <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">Claude-1.3（100K）</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">48.2%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">76.4%</td></tr>
+      <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">MPT-30B-Instruct</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">31.5%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">81.9%</td></tr>
+      <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">LongChat-13B（16K）</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">35.0%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">83.4%</td></tr>
+    </table>
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">表 1｜闭卷 vs 开卷满分：扩窗版本与原版几乎相同（原论文Table 1）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">论文中还尝试了一个简单的优化策略：查询感知上下文——把问题本身在文档前后各复述一遍。这一方法在合成的键值检索任务上效果惊人。最差情况从 45.6% 拉到接近满分；但在真实的多文档问答上，曲线形态几乎没变。这个简单的方法能够改善"检索"，但不能提升"理解"。</p>
+
+  <div style="margin:24px 0;">
+    <img src="images/litm-fig9-queryaware.png" alt="图2：查询感知上下文的效果" style="width:88%;margin:0 auto;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 2｜查询感知上下文（绿）：键值检索近乎满分，多文档QA的U形依旧（原论文Figure 9）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">简单总结一下论文给出的使用建议：</p>
+
+  <div style="background:#F5F8FA;border-radius:10px;padding:14px 18px;margin:0 0 18px;font-size:14px;color:#3a3a3a;line-height:1.95;">
+    <p style="margin:0 0 6px;">▸ 关键信息（要被引用、被执行的内容）放开头和结尾；</p>
+    <p style="margin:0 0 6px;">▸ 长材料的中部只放背景性内容，并给它们装上"锚"——明确的编号、关键词、被上下文两端显式引用；</p>
+    <p style="margin:0;">▸ 查询感知：把问题/指令在长上下文的首尾各放一份，对"查找"类内容效果显著。</p>
+  </div>
+
+  <!-- §2 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">二、悬崖式的有效上下文边界：实际可用的上下文窗口到底有多大？</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">第一篇论文已经为总量问题提供了两条线索：简单扩窗不涨分，以及"阅读器饱和"——检索器从20篇加到50篇文档，GPT-3.5只提高了约1.5%。接下来两篇论文对有效上下文窗口的特点做了进一步的量化研究。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">MECW 论文拿11个前沿模型（GPT-5、Gemini 2.5、Claude 3.5、o4-mini、Grok-3等），在四类由易到难的任务上做长度梯度测试，累计数十万个数据点，找出每个模型"准确率开始可测下降"的位置——也就是MECW。结论是：</p>
+
+  <div style="background:#F5F8FA;border-left:3px solid #0F6BAB;border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;">
+    <p style="font-size:13.5px;color:#555;line-height:1.85;margin:0;">"A few top-of-the-line models in our test group failed with as few as 100 tokens in context; most had severe degradation in accuracy by 1000 tokens in context. All models fell far short of their Maximum Context Window by as much as &gt;99%."</p>
+    <p style="font-size:13px;color:#888;line-height:1.8;margin:6px 0 0;">── 中译：少数顶级模型在上下文只有 100 个token时就已出现失败；大多数模型到1000 token左右准确率严重退化。所有模型离自己的标称窗口都差得很远，差距最大的超过 99%。</p>
+  </div>
+
+  <div style="margin:24px 0;">
+    <img src="images/mecw-fig5-degradation.png" alt="图3：各模型准确率随上下文长度的退化曲线" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 3｜准确率随上下文长度的退化曲线（原论文 Figure 5，四个任务面板）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">两个细节让这个结论比"窗口虚标"更有意思。其一，MECW不是单值而是一组谱线：同一个模型，简单的"大海捞针"能撑很久，多条件聚合类任务几百token就开始掉。模型之间的排名也会随任务洗牌（o4-mini在多针任务顶尖，在单针任务反而垫底）。其二，论文测了RAG的分界线：上下文控制在MECW以内时，简单RAG的幻觉率接近0%；一旦越界，飙到接近100%。体现出有效上下文边界控制对于实际任务有重要意义。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">那越过边界之后会发生什么？第三篇论文给出了模型超出有效上下文范围后的劣化模式：不是缓坡，而是断崖。用自然长度的真实语料（不截断、不填充）测Qwen2.5-7B的阅读理解，F1分数在标称窗口的40–50%区间从0.55上下直坠到0.30，统计效应量Cohen's d高达8.2，而且：</p>
+
+  <div style="background:#F5F8FA;border-left:3px solid #0F6BAB;border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;">
+    <p style="font-size:13.5px;color:#555;line-height:1.85;margin:0;">"…performance does not recover even at longer contexts (up to 95%), suggesting that once the critical threshold is exceeded, the model's processing capabilities fundamentally break down."</p>
+    <p style="font-size:13px;color:#888;line-height:1.8;margin:6px 0 0;">── 中译：即使把上下文推到标称窗口的95%，性能也不再恢复。临界阈值一旦越过，模型的处理能力是“根本性的崩溃”，而非仅在某个区间内发生劣化。</p>
+  </div>
+
+  <div style="margin:24px 0;">
+    <img src="images/wang-fig1-cliff.png" alt="图4：自然长度分布与三区段" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 4｜自然长度分布分析：稳定区（0–40%）→ 断崖过渡区（40–50%）→ 退化区（50–95%，无恢复）（原论文Figure 1）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">为什么会有边界？Wang给了一个能算出来的解释：RoPE位置编码像时钟指针，周期之外远处的位置开始"长得一样"（位置混叠）。对Qwen2.5-7B，理论预测断崖在标称窗口的约49%，实测43.2%，误差仅13.4%；统一的临界点公式是三条瓶颈取最小值——位置编码、注意力聚焦、信息容量，达到任意一个极限即会出现崩溃。这也解释了为什么"断崖"而不是"缓坡"：混叠不是渐渐变差，是过了周期就分辨不出。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">于是上下文预算的确定原则，可以给出数字了：</p>
+
+  <div style="background:#F5F8FA;border-radius:10px;padding:14px 18px;margin:0 0 18px;font-size:14px;color:#3a3a3a;line-height:1.95;">
+    <p style="margin:0 0 6px;">▸ 实际可用窗口不是模型规格的上下文窗口，实际的边界需要通过测试来确定——规格页上的 256K/1M 是"装得下"，不是"读得好"；</p>
+    <p style="margin:0 0 6px;">▸ 经验起点：长任务控制在标称窗口的40%以内（第三篇论文给出的红线）；</p>
+    <p style="margin:0;">▸ 超预算的内容，要么砍掉，要么拆开——分次会话、按子任务分发，强行增加上下文长度很可能会触发断崖式的退化。</p>
+  </div>
+
+  <!-- §3 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">三、结合三篇论文观点得到的实际应用策略：上下文预算管理</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 14px;">把"放多少"和"怎么放"合成一张表，就是一次典型任务的上下文预算：</p>
+
+  <div style="margin:0 0 6px;">
+    <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
+      <tr style="background:#F0F5F8;">
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">预算上限</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">首部（高权重）</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">中部（低权重）</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">尾部（高权重）</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">超预算处置</th>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">实测边界内<br>（如标称的 40%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">任务指令、关键约束、待答问题</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">背景资料、参考代码，配编号锚点</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">问题复述、输出要求、验收标准</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">先砍中部冗余；仍超则拆子任务</td>
+      </tr>
+    </table>
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">表 2｜上下文预算表（示例）：预算上限需要通过自测或者使用经验确定，位置分配参照U形曲线</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">这张表也部分解释了上一期论文荐读中提到的一个现象：AGENTS.md为什么推高了使用成本却没有达成预期收益？因为LLM自动生成的AGENTS.md文件往上下文里塞的是"仓库概览"这类冗余背景。这既占了预算，又大概率落在低权重的位置区。</p>
+
+  <!-- §4 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">四、实际的有效上下文边界最好根据自己的应用场景来测定</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 14px;">三篇论文放在一张表里，会看到一个非常有用的现象——用三个不同测算方法给出的"有效窗口"结果相差最多约 50 倍：</p>
+
+  <div style="margin:0 0 6px;">
+    <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
+      <tr style="background:#F0F5F8;">
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">论文</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">任务口径</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">有效窗口读数</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">证据强度</th>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">LitM（2023）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">真实文档问答</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">数千～上万 token 已饱和（20 篇文档后增益 ~1.5%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">高（TACL，真实语料）</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">MECW（2025）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">合成聚合任务</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">多数 ~1K token 显著退化（个别 100）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">中（单作者，合成数据）</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">Wang（2026）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">长文阅读理解</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">~55K（标称 43.2%）处断崖</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">中（单模型单任务）</td>
+      </tr>
+    </table>
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">表 3｜三个不同估算方法的结果：差异来自任务、模型与判定标准，总体方向一致——有效远小于标称</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 14px;">测算结果不一致，说明"有效窗口"不是一个物理常数，而是"任务 × 模型 × 判定标准"的函数。所以实际使用中的有效上下文边界需要基于实际场景进行实测。一个可操作的自测法（笔者实践建议）：</p>
+
+  <div style="background:#F5F8FA;border-radius:10px;padding:14px 18px;margin:0 0 18px;font-size:14px;color:#3a3a3a;line-height:1.95;">
+    <p style="margin:0 0 6px;">① 取你自己任务的5–10个真实样本（不是通用测试集）；</p>
+    <p style="margin:0 0 6px;">② 按长度分4–5档（如 16K/64K/256K/512K），用填充背景材料的方式控制长度；</p>
+    <p style="margin:0 0 6px;">③ 每档跑 3 次取平均，人工判定或脚本判定成功率；</p>
+    <p style="margin:0;">④ 找到成功率明显下滑的拐点，日常预算取拐点的8成。</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">通过针对性的测试，确定实际的上下文边界——这比任何论文和厂商规格页都可靠。</p>
+
+  <!-- §5 注记框 -->
+  <div style="background:#FAFAFA;border:1px solid #E3E8EB;border-radius:10px;padding:14px 18px;margin:0 0 18px;">
+    <p style="font-size:13px;color:#4A6B85;font-weight:bold;margin:0 0 8px;">▍注记：1M窗口的新模型，会改变这三篇论文的发现吗？</p>
+    <p style="font-size:13.5px;color:#555;line-height:1.9;margin:0;">最新一代模型（DeepSeek V4、Kimi K3、MiniMax M3 等）用稀疏选择或线性状态的新式注意力把窗口推到1M——但它们解决的是"装得下"的成本问题，不是"读得好"的利用率问题（后者主要受训练分布制约）。可以预期的变化是：检索型任务的可用长度大幅扩展，聚合推理型仍然远小于标称。也就是说，有效窗口大小限制和上下文位置对注意力的影响仍然是存在的，而且更显得重要。</p>
+  </div>
+
+  <!-- ═══════════ 结尾【草稿区】 ═══════════ -->
+  <div style="border-top:1px solid #ececec;height:1px;line-height:1;font-size:0;margin:30px 0 26px;"></div>
+
+  <div style="border:2px dashed #8FA9BE;background:#F4F7FA;border-radius:10px;padding:16px 18px;margin:0;">
+    <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 14px;">▍写在曲线之后</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">本次三篇论文的观点综合起来就是：上下文窗口是稀缺资源，不仅有总量上限，而且权重分布不是均匀的。要把上下文当内存去管理——提前预算、合理放置、定时清理——而不是当仓库去堆放。</p>
+
+    <p style="font-size:13px;color:#4A6B85;line-height:1.8;margin:0 0 14px;padding-top:10px;border-top:1px dashed #D9E2EA;">在实际应用中，每次大模型调用提交给大模型的上下文往往是由Agent来自动化管理的。除了考虑上下文窗口大小，还需要为提升缓存命中率进行大量优化。最终决定上下文选择和组装策略是一个很复杂的工程问题。大部分情况下，我们不需要深入到细节Agent的上下文组装逻辑中去，只需要采用两个实用方法：</p>
+    <p style="font-size:13px;color:#4A6B85;line-height:1.8;margin:0 0 14px;">1. 在宏观层面控制好总体的任务尺度、参考文档规模，通过设定合理的文档目录结构、将过长的文档按内容结构进行合理拆分、建立文档库索引以便Agent执行渐进加载，就可以起到很不错的应用效果。</p>
+    <p style="font-size:13px;color:#4A6B85;line-height:1.8;margin:0 0 14px;">2. 给文档的各个关键段落用规范化的编号规则打上引用锚点，并且在文档相互关联之处使用锚点来标记关联关系（这个措施可以使用大模型来完成）。这些锚点对于人类阅读并不方便，但是在大模型处理较大规模的文档时有很大的价值。</p>
+  </div>
+
+  <!-- 参考信息 -->
+  <div style="margin-top:30px;padding:14px 16px;background:#FAFAFA;border-radius:8px;">
+    <p style="font-size:12.5px;color:#888;line-height:1.9;margin:0;">论文：Lost in the Middle（arXiv:2307.03172，TACL 2024）；Context Is What You Need（Paulsen，2025 ACM 会议论文）；Intelligence Degradation in Long-Context LLMs（arXiv:2601.15300）。<br>文中图表均引自原论文（LitM 图 5/9、表 1；MECW 图 5；Wang 图 1），引文为原文直录并附中译；数字已逐项与 PDF 原文核对。表 2（预算表）与"有效上下文窗口自测法"为作者实践建议，非论文内容。</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>让AI自己找上下文，三成任务找不到关键文件｜上下文的纪律 · 第 3 篇</title>
+</head>
+<body style="margin:0;padding:0;background:#ffffff;">
+
+<!--
+═══════════════════════════════════════════════════════════════
+【生产注记 · 发布前必读，发布时删除本注释块】
+
+□ 标题（已选定）：
+  让AI自己找上下文，三成任务找不到关键文件
+
+□ 摘要文案（公众号"摘要"栏，120 字内）：
+  先翻一遍仓库再动手，已是编码智能体的标准行为。这层"找上下文"
+  的能力刚被单独测了一次：427个真实工作流任务，最强检索器MRR
+  只有0.24，智能体交互翻找有三成任务碰不到关键文件。语义与结构
+  信号互补，零训练融合即可明显提升。
+
+□ 修订记录：2026-09-11 人工改写约三分之一（开场新增工具选型段；
+  标题、小标题、结尾重写），review 清单 17 项已处置
+  （6 阻断+5 事实项全修，建议级采纳 3 项），清单存
+  草稿-人工补充.md §四；改写涉及数字已对 PDF 复核。
+
+□ 图片：2 张，位于 images/ 目录，上传公众号素材库后替换各 <img> 的 src：
+  arb-fig1-overview（图1 基准协议与任务总览）/ arb-fig2-bcy（图2 BCY预算曲线）
+
+□ 格式约定（承接 EP01/EP02 定稿）：正文不使用 <strong>；开头/结尾为蓝灰
+  虚线草稿框（人工补写后可去框）；两处英文原文引录框（灰底蓝边）；
+  数字与中文之间不加空格；中文语境用全角标点。
+
+□ 证据标注：表 1–4 依据原论文 Table 2/4/6/13/16 由作者整理（非原图截取）；
+  种子实验数字为论文单次先导实验值（无置信区间，论文已声明）；
+  正文中所有数字均已对照论文 PDF v1 原文核验（引文为原文直录）。
+
+□ 原文：arXiv:2607.24882v1（Agent Retrieval Bench，2026-07）
+═══════════════════════════════════════════════════════════════
+-->
+
+<div style="max-width:677px;margin:0 auto;padding:10px 18px 40px;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
+
+  <!-- ═══ 系列眉标 ═══ -->
+  <p style="text-align:center;font-size:12px;color:#999999;letter-spacing:2px;margin:16px 0 4px;">「上下文的纪律」系列 · 第 3 篇</p>
+  <p style="text-align:center;font-size:13px;color:#bbbbbb;margin:0 0 10px;line-height:1.6;">上下文交给AI自己找，是好主意吗？</p>
+  <div style="border-top:1px solid #ececec;height:1px;line-height:1;font-size:0;margin:10px 0 26px;"></div>
+
+  <!-- ═══════════ 开场 · 场景引入【草稿区】 ═══════════ -->
+  <div style="border:2px dashed #8FA9BE;background:#F4F7FA;border-radius:10px;padding:16px 18px;margin:0 0 30px;">
+    <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 14px;">▍既然AI能读能写，是否就能自己管理上下文？</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">先看一遍工作目录内容，再开始任务，基本成为开发Agent和通用任务Agent的标准行为模式。智能体在开启一个新任务时，先列目录、grep关键词、读文件，循环多次把代码仓库翻找一遍，然后才按任务目标开始工作。找文件这个自然的前置步骤，在Context is all You Need的信条下，对Agent执行质量的重要性不言而喻。从工程角度看，这一步决定了进入模型上下文的材料是什么。那么，让智能体自己翻找工作目录，确定上下文的方式，是否合理呢？</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">目前主流的AI Coding工具基本都内置了使用大模型自动进行上下文查找的功能。但是各家对于“怎样查”有不同的答案。最具代表性的，Claude Code自2025年开始放弃了向量检索方法，提出grep/列目录/读文件循环效率更高且效果足够好。而Cursor、Qoder等工具则通常结合向量检索、AST（抽象语法树）、Repo Wiki等多种方法来辅助大模型检索。用户社区中也有很多关于不同厂家大模型与不同的Coding Agent搭配使用的效果评论。那么到底怎样的做法是最有效的？</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">上述两个问题一直没有单独的答案。编码智能体的评测通常只看最终结果：代码的运行效果好不好、测试通过率是多少。查找上下文能力被包含在端到端的分数里。本期推荐阅读的论文中，把找上下文的能力单独拿出来做了一次成规模的测量，其结果可以帮助我们更清楚地理解各种不同策略的实际效果。</p>
+  </div>
+
+  <!-- ═══ 本期论文 ═══ -->
+  <div style="background:#F5F8FA;border:1px solid #E3EAEE;border-radius:10px;padding:16px 18px;margin:0 0 14px;">
+    <p style="font-size:15px;font-weight:bold;color:#0F6BAB;margin:0 0 10px;line-height:1.6;">本期论文</p>
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.8;margin:0 0 10px;">Agent Retrieval Bench: Evaluating Repository Context Retrieval for Coding Agents<br>
+    <span style="font-size:13px;color:#666666;">智能体检索基准：评测编码智能体的仓库上下文检索效果</span><br>
+    <span style="color:#888;">Bowen Qin（新加坡国立大学）、Yi Xie（北京大学），2026-07（arXiv:2607.24882）</span></p>
+    <p style="font-size:14px;color:#555;line-height:1.8;margin:0;">简要结论：427个来自真实工作流的检索任务上，没有全能的检索器——三项不同指标有三个不同的冠军、四类任务场景有四个不同的冠军。智能体自己交互翻找上下文，有27–35%的任务从头到尾没能发现真正的关键文件。语义与结构两类检索信号存在互补性，简单使用零训练的融合评分就能明显提升上下文查找的质量。</p>
+  </div>
+
+  <!-- ═══ 名词速查 ═══ -->
+  <div style="background:#FAFAFA;border-radius:10px;padding:14px 18px;margin:0 0 30px;font-size:13.5px;color:#555;line-height:1.8;">
+    <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 10px;">名词速查</p>
+    <p style="margin:0 0 8px;">▸ gold文件：经过仓库工作流证据（PR、review、修复提交）实际验证的、智能体完成任务真正需要读的文件。</p>
+    <p style="margin:0 0 8px;">▸ Recall@k与MRR：排序指标。Recall@20指前20名里找回了几成gold文件。MRR是"第一个gold文件排名的倒数"的平均值，例如0.24粗大致对应第一个关键文件平均排到第4名上下的位置。</p>
+    <p style="margin:0 0 8px;">▸ BCY@8k：预算内上下文产出率。给定8k token的预算，按检索排序依次装入文件，检查gold文件被装进上下文的比例。它测的是真实预算下检索结果是否能够实际进入后续流程，是一个更为实际的指标。</p>
+    <p style="margin:0 0 8px;">▸ RepoMap：aider所用的结构化仓库地图，不依赖嵌入模型，按代码结构给文件排序，代表"结构信号"这一方法。</p>
+    <p style="margin:0;">▸ RRF：倒数排名融合。把多个检索器给出的排名合并成一个的零训练方法。</p>
+  </div>
+
+  <!-- ═══════════ 一 ═══════════ -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">一、怎样才是正确的上下文文件由工作任务决定——论文设定的四种检索任务</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">代码搜索对"相关"的定义并不等同于通常的语义检索。论文的引言给了几个具体情形：PR描述了当前改动的情况，而智能体下一步需要的则可能是回归测试文件；review评论对应A文件中的代码，而其中的约束却可能写在B模块里；报错的调用栈显示的是测试文件，需要改的根因文件和报错文本在语义上毫不相似。还有一种常见却更极端的情形——问题的答案根本不在当前的仓库里，而是在上游依赖或者用户自己的用法错误里，这时如果错判了相关的信息，反而会产生干扰。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">这就是论文的核心概念：面向智能体的相关性，由工作流下一步任务实际需要的信息是什么来决定。</p>
+
+  <div style="background:#F5F8FA;border-left:3px solid #0F6BAB;border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;">
+    <p style="font-size:13.5px;color:#555;line-height:1.85;margin:0;">"…relevance in Agent Retrieval Bench is defined by what an agent needs next, not by direct semantic similarity between query and file."<br>── 中译：在Agent Retrieval Bench中，相关性由智能体下一步需要什么来定义，而不是由查询与文件之间的直接语义相似度来定义。（原论文摘要）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">围绕这个定义，论文构造了四个取材于真实代码仓库工作流的正向检索任务和一个弃权任务：</p>
+
+  <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
+    <tr style="background:#F0F5F8;">
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">任务</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">工作流信号（查询）</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">要找的文件（gold）</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">样本数</th>
+    </tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">code2test</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">PR意图/实现改动摘要</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">对应的测试文件</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">106</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">comment2context</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">review评论+被评文件</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">理解评论所需的额外文件</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">80</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">trace2code</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">复现命令+报错摘录</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">根因所在的实现文件</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">101</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">edit2ripple</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">定位编辑+改动意图</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">受波及的源码/测试文件</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">58</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">selective</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">issue信号</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">无gold：应识别"本地无答案"</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">50+32</td></tr>
+  </table>
+  <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">表 1｜五个任务面（原论文Table 2及§4，作者整理）。50条自然无gold（维护者证据表明答案在上游依赖/外部服务/用户错误）案例+32条反事实错误仓库对照</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">数据集的构造包含了：25个仓库、6种语言，共427个样本；每个样本把仓库冻结在修复发生前的base commit上做检索，防止修复代码泄漏。对查询文本做了清洗，移除补丁、修复提交哈希、和gold文件的精确路径。确认四类典型泄漏（gold路径直出、原始diff、修复哈希、自动生成的review文本）的检查结果全部为零。</p>
+
+  <div style="margin:24px 0;">
+    <img src="images/arb-fig1-overview.png" alt="图1：Agent Retrieval Bench的协议与任务总览" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 1｜基准协议：工作流信号作查询、冻结在base commit的仓库作语料，按"智能体下一步应该读什么"定义相关性（原论文Figure 1）</p>
+  </div>
+
+  <!-- ═══════════ 二 ═══════════ -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">二、检索器排行榜：不同的任务中有不同的冠军</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">论文在345个正向样本上跑了各种类型的检索器：词法的BM25和路径感知的lexical、结构化的RepoMap、五个开源代码嵌入模型。结果没有一个全能冠军——三个总榜指标，三个不同的第一名：</p>
+
+  <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
+    <tr style="background:#F0F5F8;">
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">指标</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">冠军</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">数值</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">说明</th>
+    </tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">MRR（345样本）</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">Qwen3-Embedding-4B</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">0.2379</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">与第2名差距很小</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">Recall@20</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">Qwen3-Embedding-8B</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">0.7029</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">前20名找回七成gold</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">BCY@8k</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">RepoMap</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">0.3788</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">8k预算下产出率最高</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">code2test冠军</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">Qwen3-4B</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">MRR 0.3225</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">实现找测试，语义占优</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">comment2context冠军</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">jina-code-0.5b</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">MRR 0.3043</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">小模型也能单项夺魁</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">trace2code冠军</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">RepoMap</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">MRR 0.2742</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">报错找根因，结构占优</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">edit2ripple冠军</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">pplx-4B（暂定）</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">MRR 0.2877</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">分词器有问题，论文标暂定</td></tr>
+  </table>
+  <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">表 2｜总榜三指标三个冠军，四类任务四个冠军（原论文Table 4/6，作者整理）</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">有几个指标值得仔细评估：MRR 0.24的意思是：就算用最强的检索器，第一个该读的文件平均也要排到第4名上下——而智能体的第一步通常只读一两个文件。Recall@20的0.70看上去是70%的召回率，但那是前20名的召回，如果往上下文里塞20个文件早就越过有效边界了。换成8k token预算下的BCY，最好的结果也只有0.38。这些指标的结果指向同一个现状：静态检索远没有到"直接可用"的水平。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">区分不同的任务来看，冠军的分布体现出了具体原因：不同任务需要不同类型的信号。最极端的是trace2code——报错文本和根因文件在语义上不相干，语义嵌入的效果显著弱于结构方法。总榜MRR冠军Qwen3-4B在这个任务上MRR只有0.0827，Recall@20只有0.5050。反而是不用嵌入的RepoMap拿到0.8366的Recall@20和0.2742的MRR。连词法检索的MRR（0.2075）都比多数嵌入模型的结果好。报错栈里给出的是测试文件和局部符号，结构信息能把它们连到旁边的实现文件，而通过语义相似度则无法匹配。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">既然语义和结构各管一段，合起来会怎样？论文用RRF把Qwen3-8B和RepoMap的排名做了个零训练融合：整体MRR从最佳单模型的0.2296提升到0.2713，Recall@20从0.7070提到0.7331；在trace2code上，融合后的Recall@20达到0.8795，超过了两个输入各自的0.8366和0.7970。两类检索信号互不替代，可以低成本合并来取得更好的结果。</p>
+
+  <div style="margin:24px 0;">
+    <img src="images/arb-fig2-bcy.png" alt="图2：edit2ripple任务上的BCY预算曲线" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 2｜edit2ripple任务上的BCY预算曲线：4k预算下Qwen3-4B领先，8k预算下Qwen3-8B反超——上下文预算大小也是重要的影响因素（原论文Figure 2；†为暂定运行，16k/32k点为下界）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">图2还显示了另一个工程上的细节：换一个窗口大小，最佳方法就不同了。edit2ripple任务上，4k token预算时Qwen3-4B的产出率最高，8k时Qwen3-8B反超。报告里只给一个分数的检索器评测，会把这些信息压缩掉。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">顺带一提，论文自己做了个去偏检查：样本在仓库间分布不均（Gin一个仓库占了25.5%，前四名占58.8%），按仓库等权重新加权后，Recall@20的冠军从Qwen3-8B换成了Qwen3-4B。我们常见的评测中，使用单一分值，实际无法有效回答具体情景下如何得到最佳效果的问题。</p>
+
+  <!-- ═══════════ 三 ═══════════ -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">三、让智能体自己查找仓库，有三成轨迹没有触碰到关键文件</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">静态榜单之外，论文还记录了交互式翻找的轨迹：在287个样本（code2test、comment2context、trace2code三项任务）上，看真实智能体自己翻仓库能得到怎样的效果。测评使用的是OpenAI的严格上下文模式智能体（GPT-5.4-mini）和Codex CLI（GPT-5.4、GPT-5.5两个版本）：</p>
+
+  <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
+    <tr style="background:#F0F5F8;">
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">智能体</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">每样本事件数</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">触达过gold</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">从未触达gold</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">首次命中中位步数</th>
+    </tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">OpenAI GPT-5.4-mini（严格上下文）</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">3.2</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">64.8%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">35.2%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">2</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">Codex CLI GPT-5.4</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">6.2</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">72.8%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">27.2%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">3</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">Codex CLI GPT-5.5</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">6.5</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">70.7%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">29.3%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">3</td></tr>
+  </table>
+  <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">表 3｜交互翻找的轨迹成本与命中（原论文Table 13，287样本）。"首次命中中位步数"只在最终触达gold的样本上统计</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">这里的关键在第三列：就算允许智能体交互式地翻找——grep、读文件、再grep——仍有30%左右的任务，从头至尾没有碰过任何一个关键文件。这些任务在端到端评测里会被简单记为整体任务失败，但无法指出失败的原因是在找关键文件这一步。</p>
+
+  <div style="background:#F5F8FA;border-left:3px solid #0F6BAB;border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;">
+    <p style="font-size:13.5px;color:#555;line-height:1.85;margin:0;">"Yet these trajectories still never touch any gold file on 35.2% of OpenAI samples and 27.2–29.3% of Codex samples."<br>── 中译：然而在这些轨迹中，35.2%的OpenAI样本和27.2–29.3%的Codex样本从未触碰过任何gold文件。（原论文§1）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">把轨迹和静态检索的排名同一批样本上并列查看，还能发现存在互补结构。以Codex GPT-5.4的轨迹和Qwen3-4B的检索为例：两边都命中的占50.9%；静态检索排进了前20、智能体却始终没检索到的占17.8%；反过来，智能体检索到了、静态检索前20却漏掉的占22.0%；两边都漏的占9.4%。两个方法都有一定的成功比例——静态检索能为智能体提供它自己找不到的文件，交互翻找也能发现被检索排名漏掉的文件。两种方法有很好的互补效果。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">交互查的产出质量的量化结果，按最终提交的上下文算文件F1：三个智能体在0.31–0.33之间，比静态检索取前3名的F1（最好的Qwen3-4B只有0.1247）高得多。这体现出多花几倍的工具调用和token，确实换来了更好的最终上下文（Claude Code的选择）。另一面，按8k预算的BCY算，融合检索器能达到0.4884，静态注入的性价比仍然占优。论文还观察到一个具有方向性的关联：按BCY把样本排序质量分成低中高三档，从低档到高档，Codex轨迹的gold触达率从0.600升到0.792，最终F1从0.268升到0.370。就是说，文档初始排序的质量，和轨迹翻找的结果质量正相关。</p>
+
+  <!-- ═══════════ 四 ═══════════ -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">四、通过一次受控实验来评估初始上下文质量的影响</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">以上所述都是观察结果。论文接着做了一个干预实验，来测试"初始上下文的质量"的价值：把Codex GPT-5.5放到固定的闭盒工具环境（只能用列目录、grep、读文件、提交四个动作，最多16次工具调用、8k读token），45个样本，只改变每次初始的上下文种子：</p>
+
+  <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
+    <tr style="background:#F0F5F8;">
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">种子</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">最终F1</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">提升</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">触达gold</th>
+      <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">翻找token（中位数）</th>
+    </tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">不给种子</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">0.3222</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">—</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">51.1%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">2137</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">随机非gold文件</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">0.3437</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">+0.0215</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">73.3%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">3682</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">词法检索结果</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">0.3981</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">+0.0759</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">80.0%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">2244</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">RRF融合结果</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">0.3967</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">+0.0744</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">80.0%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">1857</td></tr>
+    <tr><td style="border:1px solid #E3E8EB;padding:7px 6px;">oracle（含gold）</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">0.6337</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">+0.3115</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">100%</td><td style="border:1px solid #E3E8EB;padding:7px 6px;">1736</td></tr>
+  </table>
+  <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">表 4｜种子干预实验：同一闭盒策略，只换初始上下文（原论文Table 16，45样本，每组单次运行）</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">这张表可以先看随机的那一行：随机选择几个文件，F1也能涨0.02。就是说简单地多给一些材料就有扰动收益。其他检索种子的效果可以用这个随机选择的效果作为基线来看：采用词法和RRF选择种子的方法，结果的F1各涨约0.075。而且基于这两种种子，翻找用的token比随机种子少将近一半（RRF为1857，随机为3682）。这说明好的初始上下文不仅有好的引导作用，还能减少翻找次数。实验显示，oracle方法的效果最好：含gold文件的种子把F1抬到0.6337。但是它也没能取得满分，找到文件之后，在有限的上下文预算中提交哪几个文件，是另一重考验。0.63和0.32之间的差距，就是好的初始上下文可以带来的价值。</p>
+
+  <!-- ═══════════ 五 ═══════════ -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">五、仓库中没有目标文件的时候，检索器不知道自己不知道</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">部署中的上下文引擎还有一项职责：判断"这个问题本地仓库里没有答案"。在所有测试样本中，设置了50条自然无gold样本用来测试这个场景。维护者证据表明当答案在上游依赖、外部服务或用户错误里的时候，正确的选择是放弃查找。论文测试中使用了最简单的弃权规则：检索的top分数低于阈值就弃权。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">第一轮结果看起来不错：把345个正向样本、50条自然无gold和32条错仓库对照混在一起测（mixed协议），词法检索的弃权把成功率从0.461提到0.496。但这个"有用"的实际价值并不显著——那32条错仓库对照太好认了。相当于拿一个仓库回答不了的问题去问另一个仓库，top分数会明显偏低，词法检索对这32条全部弃权。把它们拿掉、只在50条自然无gold上重新校准阈值再测（natural-only协议）时，结论有显著的变化：词法从0.499跌到0.294，jina从0.489跌到0.334，BM25从0.463跌到0.220。就是说，在真实场景下，三种检索器的弃权判断能力都很弱。对于那些"貌似合理、答案却在外部"的自然案例，词法检索只能识别出34%。</p>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">论文把这个现象叫校准缺口。具体来说：弃权规则把检索打分当作置信度来用，而这个分数显示，只在问题错误的容易的情形中，检索器是具备分辨能力的。到了真正需要判断的情形——问题本身合理、答案只是恰好不在本地仓库——打分和普通问题拉不开差距，弃权规则就失灵了。检索器不知道自己什么时候找不到。</p>
+
+  <!-- ═══════════ 注记 ═══════════ -->
+  <div style="background:#FAFAFA;border-radius:10px;padding:14px 18px;margin:30px 0;font-size:13.5px;color:#555;line-height:1.8;">
+    <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 10px;">▍注记：这篇论文的边界</p>
+    <p style="margin:0 0 8px;">427个样本是诊断性规模：每条样本都有工作流证据背书、构造昂贵，它不是海量统计基准。仓库分布也不均匀（Gin一个仓库占阳性样本的25.5%）。文件级命中不等于定位到行：gold文件行数中位数为515行。标注的有效证据区间中位只有27行（占文件的4.7%）。论文的行级敏感性分析显示，文件级Recall冠军按行F1算会掉到第四。它测的是上下文获取层，不声称检索失败导致修复失败，也不报告与代码修补成功的相关性。</p>
+  </div>
+
+  <!-- ═══════════ 结尾 · 评论【草稿区】 ═══════════ -->
+  <div style="border:2px dashed #8FA9BE;background:#F4F7FA;border-radius:10px;padding:16px 18px;margin:0 0 30px;">
+    <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 14px;">▍找到合适的文件并不是一件容易的事</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">这篇论文把"找上下文"从端到端的分数里拆出来，做了一次单独测试。测试结果可以概括成三句话：1. 静态检索方法没有全能冠军（最强的MRR只有0.24）；2. 智能体自己交互式查找，有三成任务没有识别到关键文件；3. 实际"本地没有结果"的时候，检索器无法判断。单一方法查找上下文的结果并不足以支持高质量的代码修改/迭代工作。</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">回到实际的应用场景中，论文的研究提供了三个启示：</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 8px;">1. 应该使用不同检索方法做互补：语义嵌入和结构信号各管一段，通过RRF进行结果整合，额外成本很低而trace2code上的提升最大。</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 8px;">2. 按任务类型选检索策略：报错找根因，优先结构/词法检索；查找测试文件，语义嵌入占优。单一通过嵌入模型进行向量查找的方法，在报错类任务上是不适用的。</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">3. 给智能体的初始上下文值得专门投入：种子实验里oracle与不给初始上下文开局的0.31个F1差距，证明了合理的检索起点具有很大的价值。因此，代码仓库本身的结构管理和索引构建，是值得重视的工作。</p>
+
+    <p style="font-size:13.5px;color:#8FA9BE;line-height:1.8;margin:0 0 6px;">在代码库中进行上下文检索，是主流AI Coding工具的重要功能。在设计思路上，Claude Code采用了极简的依赖大模型自身能力的方法，而其他众多厂商往往采用结合向量、图谱和关键词检索多种方法的思路。结合论文的启示，检索方法根据不同的应用场景、不同的基模能力，并不存在包打天下的银弹。而对于普通使用者来说，在不对工具做深度定制的情况下，主动做好仓库中的目录结构、文件名、文件格式等规范化管理，合理构建多级索引文件，是一个成本并不高但收益较为确定的工作。</p>
+  </div>
+
+  <!-- ═══ 参考信息 ═══ -->
+  <div style="border-top:1px solid #ececec;padding-top:14px;margin-top:30px;">
+    <p style="font-size:12.5px;color:#999;line-height:1.8;margin:0;">论文：Agent Retrieval Bench（arXiv:2607.24882v1，2026-07，Bowen Qin / Yi Xie）。文中图表均引自原论文（Figure 1/2）；表1–4依据原论文Table 2/4/6/13/16由作者整理，非原文截取；引文为原文直录并附中译；数字已逐项与论文PDF原文核对。种子实验数字为论文声明的单次先导实验值。</p>
+  </div>
+
+</div>
+
+</body>
+</html>

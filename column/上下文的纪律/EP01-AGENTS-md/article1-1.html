@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>你仓库里的 AGENTS.md，可能白写了｜上下文的纪律 · 第 1 篇</title>
+</head>
+<body style="margin:0;padding:0;background:#ffffff;">
+
+<div style="max-width:677px;margin:0 auto;padding:10px 18px 40px;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
+
+  <!-- ═══ 系列眉标 ═══ -->
+  <p style="text-align:center;font-size:12px;color:#999999;letter-spacing:2px;margin:16px 0 4px;">「上下文的纪律」系列 · 第 1 篇</p>
+  <p style="text-align:center;font-size:13px;color:#bbbbbb;margin:0 0 10px;line-height:1.6;">我们在给编码智能体喂什么，它们消化得怎么样</p>
+  <div style="border-top:1px solid #ececec;margin:10px 0 26px;"></div>
+
+  <!-- ═══════════ 开头 · 场景引入【草稿区】 ═══════════ -->
+  <div style="border:2px dashed #8FA9BE;background:#F4F7FA;border-radius:10px;padding:16px 18px;margin:0 0 30px;">
+    <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 14px;">▍AI搬砖工平凡一周的开始</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">周日晚上8点，你刚把团队的新项目仓库 clone 下来，准备接入编码智能体。按官方文档的指引，第一步不是写代码，而是跑一句 <code style="background:#f2f2f2;border-radius:3px;padding:1px 5px;font-size:13px;color:#c7254e;">/init</code>——于是仓库根目录多了一个 CLAUDE.md（或者 AGENTS.md）。你往里面填：目录结构说明、构建命令、测试怎么跑、"提交前务必跑 lint"……12个小时后，一份像模像样的"仓库说明书"诞生了。组长点点头："好，以后 AI 就懂咱们项目了。"</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">这一幕正在全世界上演。AGENTS.md 官网报告：已有超过 60,000 个开源仓库放进了这样的文件；几乎所有主流 agent 框架都支持它，各家厂商的文档也在推荐你写。</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">但"大家都在写"和"写了真有用"之间，隔着一堵证据的墙——从来没有人为这件事做过严格实验。直到 ETH 苏黎世的一组研究者把它当成一次临床试验来做：三种设置对照、四个编码智能体、438 个真实任务。结论有点扎心：成功率纹丝不动，账单稳定上涨 20%。</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0;">大家刚学会“没有AGENTS.md的项目是不专业的”也没多久，この世界のコンティニュイティは、既に崩壊してしまったのだろうか？？！！ Ne vous emportez pas습니다，还是耐心看一下到底发生了什么吧。</p>
+  </div>
+
+  <!-- ═══════════ 正文（成品） ═══════════ -->
+
+  <!-- 论文卡片 -->
+  <div style="background:#F5F8FA;border:1px solid #E3EAEE;border-radius:10px;padding:16px 18px;margin:0 0 14px;">
+    <p style="font-size:15px;font-weight:bold;color:#0F6BAB;margin:0 0 10px;line-height:1.6;">本期论文</p>
+    <p style="font-size:14px;color:#3a3a3a;line-height:1.85;margin:0;">Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?<br>
+    <span style="font-size:14px;color:#666666;">《评测 AGENTS.md：仓库级上下文文件对编码智能体有帮助吗？》<br>
+    作者：Thibaud Gloaguen, Niels Mündler, Mark Müller, Veselin Raychev, Martin Vechev</span><br>
+    <span style="color:#888;">ETH Zürich &amp; LogicStar ｜ arXiv:2602.11988（2026-02 首发，v2 更新于 2026-06）</span></p>
+    <p style="font-size:14px;color:#3a3a3a;line-height:1.85;margin:10px 0 0;padding-top:10px;border-top:1px solid #E8EEF1;">简要结论：仓库级上下文文件不显著提升任务成功率（p=0.87 / 0.37），却把推理成本平均抬高 20% 以上（p&lt;0.001）。</p>
+  </div>
+
+  <!-- 术语速查 -->
+  <div style="background:#FAFAFA;border-radius:10px;padding:14px 18px;margin:0 0 30px;font-size:13.5px;color:#555;line-height:1.9;">
+    <p style="margin:0 0 6px;">名词速查</p>
+    <p style="margin:0 0 4px;">▸ 上下文文件（context file）：AGENTS.md、CLAUDE.md 这类放在仓库根目录、专门写给 AI 编码助手看的说明文件，内容通常包括仓库概览、构建与测试命令、代码约定等。</p>
+    <p style="margin:0 0 4px;">▸ SWE-bench：从真实 GitHub issue 构建的编码任务基准，任务是修复 issue 并通过测试；"Lite" 子集 300 题，是行业最常用的Agent编码能力测试集之一。</p>
+    <p style="margin:0;">▸ p 值：粗略地说，p 越小，越不像是巧合。惯例 p&lt;0.05 算"显著"；p=0.87 意味着"与噪声无法区分"。</p>
+  </div>
+
+  <!-- §1 实验 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">一、把"感觉有用"变成可测量的东西</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">研究者要回答的问题只有一个：给编码智能体一份仓库说明书，它修 bug 的成功率和花销会变吗？实验设计成一个标准的"临床试验"：同一个仓库、同一个任务，只改变一个变量——上下文文件的有无与来源，共三种设置：</p>
+
+  <div style="background:#F5F8FA;border-radius:10px;padding:14px 18px;margin:0 0 18px;font-size:14px;color:#3a3a3a;line-height:1.95;">
+    <p style="margin:0 0 6px;">① DEV：仓库里开发者亲手写的文件保持原样（真实写作场景）</p>
+    <p style="margin:0 0 6px;">② None：把文件拿掉（对照组）</p>
+    <p style="margin:0;">③ LLM：删掉原文件，按厂商推荐的方式用智能体自己生成（<code style="background:#eef2f5;border-radius:3px;padding:0 4px;font-size:13px;">/init</code> 一键生成那类）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">任务来自两个互补的基准。一边是行业标尺 SWE-bench Lite（300 题，11 个热门 Python 仓库）——但热门仓库大多没有开发者手写的上下文文件，只能测"LLM 生成"这一格。为补上"真人手写"这个实验设置，作者自建了 CTXBENCH：从 GitHub 上筛出根目录带 AGENTS.md/CLAUDE.md、以 Python 为主语言、有测试套件、PR 数不少于 400 的小众仓库，从 5,694 个 PR 中经双重过滤，再由智能体自动搭建环境（通过率 87%）、LLM 重写任务描述防止泄漏解法、LLM 生成回归测试并人工排查过拟合，最终得到 12 个仓库、138 个实例。被测的是四个主流组合：Claude Code + Sonnet-4.5、Codex + GPT-5.2、Codex + GPT-5.1 Mini、Qwen Code + Qwen3-30B-Coder（本地部署）。</p>
+
+  <div style="margin:24px 0;">
+    <img src="images/fig1-pipeline.png" alt="图1：评测流水线总览" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 1｜评测流水线：同一仓库派生三种设置（①保留开发者文件 ②不放上下文文件 ③智能体自动生成），交由编码智能体解题，再对补丁与行为轨迹做双重分析（原论文 Figure 1）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">双基准的选择本身是经过深思熟虑的：SWE-bench 的仓库太热门，可能早就被模型"背过"；CTXBENCH 专挑小众仓库，还按模型知识截止日期做了切分检验（训练截止前的任务占比最高 40%，结论不变）。一热一冷互为印证。</p>
+
+  <!-- §2 结果一 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">二、结果一：成功率，纹丝不动</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">先看主指标——任务解决率。LLM 生成的上下文文件，在 8 个"智能体 × 基准"设置中有 5 个不升反降：SWE-bench 上平均 −0.5 个百分点（p=0.87），CTXBENCH 上平均 −2 个百分点（p=0.37）——统计上与零无法区分，翻译过来就是：加了等于没加，还可能略有反作用。</p>
+
+  <div style="margin:24px 0;">
+    <img src="images/fig3-success-rate.png" alt="图2：四个模型三设置下的成功率" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 2｜四组智能体的解决率：左为 SWE-bench Lite（None vs LLM），右为 CTXBENCH（None / LLM / DEV）。柱子高度的差别始终在误差范围内（原论文 Figure 3）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 14px;">逐个智能体看（下表，单位 %，± 后为标准误），涨跌互现、幅度全在噪声量级：</p>
+
+  <div style="margin:0 0 6px;overflow-x:auto;">
+    <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
+      <tr style="background:#F0F5F8;">
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">基准 / 设置</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">Sonnet-4.5</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">GPT-5.2</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">GPT-5.1 Mini</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">Qwen3-30B</th>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">SWE-bench · None</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">59.9 ± 3.0</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">56.6 ± 2.9</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">47.7 ± 3.1</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">31.1 ± 2.7</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">SWE-bench · LLM</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">58.7 ± 2.9</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">54.4 ± 2.9</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">47.6 ± 3.2</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">32.4 ± 2.7</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">CTXBENCH · None</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">73.2 ± 3.8</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">65.2 ± 4.1</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">54.3 ± 4.3</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">45.7 ± 4.3</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">CTXBENCH · LLM</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">65.2 ± 4.1</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">68.1 ± 4.0</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">50.7 ± 4.3</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">47.1 ± 4.3</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">CTXBENCH · DEV</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">70.3 ± 3.9</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">68.1 ± 4.0</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">55.8 ± 4.2</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;color:#0F6BAB;font-weight:bold;">53.6 ± 4.3</td>
+      </tr>
+    </table>
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">表 1｜各设置解决率（%）。SWE-bench 仓库无开发者文件，故无 DEV 行。数据取自原论文 Table 5，显著性检验见 Table 3</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">表里藏着一个真正显著的差别：开发者手写的文件显著优于 LLM 生成的文件（p=0.038，平均领先约 7 个百分点），对除 Claude Code 之外的智能体都有提升——但手写相对"完全不放文件"也只平均 +2.4 个百分点（p=0.21，不显著）。这组数字很有意思："写不写"不重要，写对内容才有价值；如果让AI替你写，那连这点价值也会写没了。顺带一提，CTXBENCH 上提升最明显的是最小的模型 Qwen3-30B（45.7 → 53.6），越弱的模型越吃手写说明——这个梯度后面还会用到。</p>
+
+  <!-- §3 结果二 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">三、结果二：账单，稳定上涨</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 14px;">成功率不动，成本却动得很坚决：每一个设置、每一个智能体，成本都在涨。SWE-bench 平均 +20%、CTXBENCH 平均 +23%（置换检验 p&lt;0.001），步数平均多出 2.45 / 3.92 步。</p>
+
+  <div style="margin:0 0 6px;overflow-x:auto;">
+    <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
+      <tr style="background:#F0F5F8;">
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">智能体组合</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">SWE-bench：None → LLM</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">CTXBENCH：None → LLM</th>
+        <th style="border:1px solid #E3E8EB;padding:7px 6px;font-weight:bold;">CTXBENCH：None → DEV</th>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">Claude Code · Sonnet-4.5</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$1.30 → $1.51（+16%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$1.15 → $1.33（+16%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$1.15 → $1.30（+13%）</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">Codex · GPT-5.2</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$0.32 → $0.43（+34%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$0.38 → $0.57（+50%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$0.38 → $0.54（+42%）</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">Codex · GPT-5.1 Mini</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$0.18 → $0.22（+22%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$0.18 → $0.20（+11%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$0.18 → $0.19（+6%）</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;background:#FAFCFD;">Qwen Code · Qwen3-30B</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$0.12 → $0.13（+8%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$0.13 → $0.15（+15%）</td>
+        <td style="border:1px solid #E3E8EB;padding:7px 6px;">$0.13 → $0.15（+15%）</td>
+      </tr>
+    </table>
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">表 2｜每实例平均执行成本（美元）。基础数据取自原论文 Table 2，括号内百分比由基础数据换算</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">注意一个不太直觉的细节：成本上涨不只是"文件本身占 token"那点钱——文件最多几百 token，涨的却是两三成的总开销。多出来的钱花在了后面：智能体遵循说明书里的指示，跑了更多测试、grep 和读写了更多文件、翻来覆去重读已经注入的上下文文件。说明书被"念"了，而且是被认真地念了。</p>
+
+  <!-- §4 机制 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">四、追问：指令明明被执行了，为什么没用？</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">面对"不涨点"，第一个自然的怀疑是：智能体根本没理会说明书。作者用行为轨迹分析否证了这一点。把工具按"说明书是否提及"分组，差距是一到两个数量级：被提及的 uv 工具平均被调用 1.6 次/实例，未被提及的工具不足 0.01 次；仓库自有工具 repo_tool 是 2.5 次对不足 0.05 次。指令不仅被读了，还被执行了。</p>
+
+  <div style="margin:24px 0;">
+    <img src="images/fig9-tool-mentioned.png" alt="图3：工具被提及与否的调用次数对比" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 3｜工具平均调用次数：实心 = 说明书提及，斜纹 = 未提及。提及与否，差出一到两个数量级（原论文 Figure 9）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">说明书还让智能体整体"更忙"：带上下文文件时，pytest、python、grep、read/write 等工具的调用量普遍上升（图 4）。对具备自适应推理的模型还能看到一笔隐性开销——GPT-5.2 的推理 token（reasoning tokens）平均多花了 22%（SWE-bench，GPT-5.1 Mini 为 +10%）。用论文的话说：遵循额外指令，本身就更"费脑子"。</p>
+
+  <div style="margin:24px 0;">
+    <img src="images/fig5-tool-use.png" alt="图4：带上下文文件后各类工具调用增量" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 4｜引入上下文文件（LLM 生成 / 开发者手写）后各工具平均调用量的变化，普遍右移即增加（原论文 Figure 5）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">那无效的是哪部分内容？作者逐一检查了文件的组成。最受厂商青睐的"仓库概览（repository overview）"并不能减少智能体找到关键文件所需的步数；而删除概览、工具说明、测试说明等类别的消融实验，也没有任何一类删掉后成功率显著变化。测试与工具类的指令倒是显著推高了成本（删掉 Testing 类，GPT-5.2 的成本从 $0.47 降到 $0.37）。被认真执行的指令，没有换来任何收益。</p>
+
+  <!-- §5 反转 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">五、最有意思的反转：删光文档，它就有用了</h2>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">实验做到这里，作者提出了一个漂亮的假说：LLM 生成的上下文文件，本质上是仓库既有文档的冗余复读。验证方法简单粗暴——把仓库里所有文档（*.md、docs/、示例）全部删掉，让上下文文件成为唯一的信息来源，再跑一遍。</p>
+
+  <div style="margin:24px 0;">
+    <img src="images/fig12-docs-removed.png" alt="图5：删除全部文档后的成功率" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
+    <p style="font-size:12px;color:#999;text-align:center;margin:8px 0 0;line-height:1.7;">图 5｜删光仓库文档后，LLM 生成的文件（绿）平均 +2.7%，并反超开发者手写版本（原论文 Figure 12，CTXBENCH）</p>
+  </div>
+
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">结果：LLM 生成的文件平均提升 2.7%，而且反超了开发者手写的版本。这个反转同时解释了两件事：其一，为什么它在正常仓库里没用——它讲的东西，模型翻翻 README 和文档本来就能知道；其二，为什么坊间一直有"加了文件确实变好"的传言——很多小众仓库本来就没有文档，此时说明书是雪中送炭。作者的措辞很克制，但意思很清楚：在文档健全的仓库里，让 AI 生成的 AGENTS.md 大概率是在为冗余信息付费。</p>
+
+  <!-- §6 建议 -->
+  <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">六、论文的启示</h2>
+
+  <div style="background:#F5F8FA;border-radius:10px;padding:14px 18px;margin:0 0 18px;font-size:14px;color:#3a3a3a;line-height:1.95;">
+    <p style="margin:0 0 6px;">① 暂缓把"LLM 一键生成上下文文件"当默认动作——这与当前多数厂商的推荐正好相反；</p>
+    <p style="margin:0 0 6px;">② 手写文件只写 README 之外的非标准约定：易错的构建陷阱、非常规的项目结构、必须遵守的非功能性要求；</p>
+    <p style="margin:0;">③ 对上下文文件进行改动的效果，是值得用可度量方法进行记录和总结的。</p>
+  </div>
+
+  <!-- ═══════════ 结尾 · 评论与伏笔【草稿区】 ═══════════ -->
+  <div style="border-top:1px solid #ececec;margin:30px 0 26px;"></div>
+
+  <div style="border:2px dashed #8FA9BE;background:#F4F7FA;border-radius:10px;padding:16px 18px;margin:0;">
+    <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 14px;">▍那么到底还要不要AGENTS.md？</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">Pro rerum natura：AI应用的本质是上下文管理，有用的上下文就有用，没用的上下文是纯负担。往上下文中添加的每一个字，都应该考虑这是不是必要的信息。"手写的上下文说明比AI自动生成的结果好7个点、却只比完全不写高2.4个不显著的点"，这组数字说明：不是所有的附加信息都有价值。需要的是 README 里查不到的非标准约定，而把文档里已有的东西换个格式再写一遍，只是付两遍钱。</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">事实上，大部分转型中团队面对的现状是：文档不全的祖传屎山代码库，能力不一的组员（有些还是刚从其他项目上调过来的），和还没来得及问明白的需求。这种情况下，由核心成员整理出一份共享的基础说明/规约自然是很有必要的。但是，切不可“因为组长说了要写AGENTS.md”而写，或者无脑让AI照着标准模板自动生成一份。</p>
+
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0;">这篇论文中还有一个值得思考的现象：指令明明被执行了，测试多跑了，推理 token 多花了 22%，成功率却分毫不动。多提供的信息，多做的工作，为什么没有效果？虽然主流模型的上下文窗口普遍达到了百万级——大部分情况下，整个仓库都放得下——但显然，并不是只要窗口装得下，就能随便塞进去的。</p>
+  </div>
+
+  <!-- 参考信息 -->
+  <div style="margin-top:30px;padding:14px 16px;background:#FAFAFA;border-radius:8px;">
+    <p style="font-size:12.5px;color:#888;line-height:1.9;margin:0;">论文：Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?（arXiv:2602.11988，v2）<br>文中图表均引自原论文（图 1/3/5/9/12、表 2/3/5），转引仅作学习交流；数字已逐项与 v2 原文核对，百分比增幅由原文数据换算。</p>
+  </div>
+
+</div>
+</body>
+</html>
