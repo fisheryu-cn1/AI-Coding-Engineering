@@ -151,7 +151,7 @@
 
   <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">OpenClaw上，单任务平均token从1.36M降到0.66M，总降幅51.5%；成本降36.4%；动作数从32.1降到17.2，降46.4%，其中读文件和搜索类的上下文获取动作从572降到461。Claude Code上，总token从85.97M降到52.55M，降38.9%，成本降27.3%，动作数降35.7%。动作数同步下降说明过滤改变了行为：模型收到的每次输出更紧凑，重复翻找随之减少。</p>
 
-  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">修复率的措辞值得照录：当前结果支持的是效率主张，而不是解决率提升主张。两个宿主上修复数各降1个（26.0%到24.0%、32.0%到30.0%），且验证环节的错误报告不均衡，论文明确说这不足以对修复成功率下强结论。诚实的读法是：这层插入件省了钱，没有白送修复率提升，也没有可测的损失。</p>
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">修复率这边，论文自己的定性是：当前结果支持的是效率主张，而不是解决率提升主张。两个宿主上修复数各降1个（26.0%到24.0%、32.0%到30.0%），但这个差距不能全当修复质量的变化读：官方验证在部分任务上没能正常完成、给不出判定，这类验证故障在基线与插入层之间次数不均；而差距本身只有1个任务，故障分布稍偏一点就足以制造或抹掉它。论文因此明确说，这不足以对修复成功率下强结论。诚实的读法是：这层插入件省了钱，没有白送修复率提升，也没有可测的损失。</p>
 
   <div style="margin:24px 0;">
     <img src="images/sniper-fig1-overview.png" alt="图1：基线与插入层对照及操作点" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
@@ -198,7 +198,7 @@
   <!-- ═══════════ 注记 ═══════════ -->
   <div style="background:#FAFAFA;border-radius:10px;padding:14px 18px;margin:30px 0;font-size:13.5px;color:#555;line-height:1.8;">
     <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 10px;">▍注记：这篇论文的边界</p>
-    <p style="margin:0 0 8px;">每宿主50任务属试点规模，论文自列的待办包括更标准的验证、更多任务、SWE-bench Verified与置信区间。修复率差异受验证错误不均衡影响，本文只能主张效率。效果依赖检索与索引质量：证据信号弱、分布在不寻常文件里、或只有跑完测试才可见时，检索可能漏。过滤策略太激进会删掉有用证据，论文把可学习的过滤策略与可人工检查的取舍轨迹列为未来工作。基准为单一Python仓库集合，跨语言未验证。5任务Django试点是探索性证据。</p>
+    <p style="margin:0 0 8px;">每宿主50任务属试点规模，论文自列的待办包括更标准的验证、更多任务、SWE-bench Verified与置信区间。修复率差异受验证故障分布不均的影响，本文只能主张效率。效果依赖检索与索引质量：证据信号弱、分布在不寻常文件里、或只有跑完测试才可见时，检索可能漏。过滤策略太激进会删掉有用证据，论文把可学习的过滤策略与可人工检查的取舍轨迹列为未来工作。基准为单一Python仓库集合，跨语言未验证。5任务Django试点是探索性证据。</p>
   </div>
 
   <!-- ═══════════ 结尾 · 评论【草稿区】 ═══════════ -->
