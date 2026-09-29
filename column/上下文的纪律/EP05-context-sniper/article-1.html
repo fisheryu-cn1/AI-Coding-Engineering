@@ -11,19 +11,29 @@
 ═══════════════════════════════════════════════════════════════
 【生产注记 · 发布前必读，发布时删除本注释块】
 
-□ 标题候选（供选择或自定）：
-  主推：在进窗口之前拦住它
-  备选1：token省四成，修复率基本不变
-  备选2：智能体找不到证据时，它会再读一遍
+□ 标题（已选定）：
+  在进窗口之前拦住它
+  副题（眉标下）：翻找花掉的token，能拦下来多少？
 
 □ 摘要文案（公众号"摘要"栏，120 字内）：
   编码智能体执行bug修复任务时，token最大的工作是在翻找依据而非写补丁。这篇论文的研究工作尝试把上下文控制
   关口前移：读文件、执行命令的输出在进入上下文窗口之前先过一道意图感知的门禁。确认为证据的放行、可能为噪声的则拦截后另行保存并确保可恢复。SWE-bench Lite对照
   实验中，OpenClaw可节省51.5% token、Claude Code则可节省38.9%，修复率基本不变。
 
+  （注：上版 192 字，超公众号 120 字上限；下面是 113 字压缩备选，发布时任选其一）
+  编码智能体修bug，token大头花在翻找而非写补丁。这篇论文把关口前移：
+  输出进窗口前先过一道意图感知的门，证据放行、噪声外存可恢复。
+  OpenClaw省51.5%、Claude Code省38.9%的token，修复率基本不变。
+
 □ 图片：3 张，位于 images/ 目录，上传公众号素材库后替换各 <img> 的 src：
   sniper-fig1-overview（图1 对照与操作点）/ sniper-fig2-architecture
   （图2 架构）/ sniper-fig7-scatter（图3 逐任务散点）
+
+□ 修订记录：2026-09-29 人工改写约70%（开场注入 pi/Claude Code 压缩触发
+  机制素材、结尾新增观点段与下篇预告），review 清单 18 项处置：阻断 9
+  项与事实项 B1（验证故障两组不均限定）/B3（RepoGraph 句意）/B4（同
+  类设计口径）已修；B2"二级记忆"与建议级 C1–C4 为作者保留。清单存
+  草稿-人工补充.md §四；改写涉及数字已对 PDF 复核无变动。
 
 □ 格式约定（承接前四期定稿）：正文不使用 <strong>；开头/结尾为蓝灰
   虚线草稿框（人工补写后可去框）；两处英文原文引录框（灰底蓝边）；
@@ -52,9 +62,9 @@
 
     <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">智能体每一轮重读仓库文件，都会往上下文里加东西：大段的文件读取内容、宽泛的搜索结果、几百行的终端输出。执行修复任务需要的信息混在上下文中，但夹杂其中的还有无关函数、重复日志和上一次失败探索的残留信息。华为的论文把重复翻找代码库的代价归纳为两条：一是成本，后续每一步推理都要背负越来越多的token；二是决策质量，关键信息被大量无关内容稀释。关于长上下文研究表明，模型在长输入中并不能可靠地利用所有上下文信息（参考本系列第二篇荐读论文，关于上下文窗口中部信息利用率下降的讨论）。</p>
 
-    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">这篇论文探索了一种和常见思路提供的做法。通常的方法是等prompt已经很长了再压缩，而ContextSniper把处理前移到输出产生的那一刻：读取文件、执行命令的结果先进行一次按意图过滤的检查，只放行与当前任务相关的证据，其余存进窗口外的记忆层，需要时可以取回。</p>
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">这篇论文探索了一种和常见思路不同的做法。通常的方法是等prompt已经很长了再压缩，而ContextSniper把处理前移到输出产生的那一刻：读取文件、执行命令的结果先进行一次按意图过滤的检查，只放行与当前任务相关的证据，其余存进窗口外的记忆层，需要时可以取回。</p>
 
-    <p style="font-size:13.5px;color:#8FA9BE;line-height:1.8;margin:0 0 6px;">对于上下文的管理是编码智能体的核心功能，目前最常见的方法包括类似Pi这样比较简化通过长度阈值触发、或者Claude Code采用的微压缩+长度触发双重机制。无论哪种方法，核心思路都是在尽量提供完整信息和控制上下文长度之间做取舍。由于上下文管理限于处理成本和效率因素通常只能通过简单逻辑来实现，现有编码智能体的上下文管理仍然是较为粗放的。这篇论文提供一种与常见方法不同的思路，虽然同样也只是一种权衡后的策略，但对于进一步提高上下文管理效率，不失为一种有价值的参考。</p>
+    <p style="font-size:13.5px;color:#8FA9BE;line-height:1.8;margin:0 0 6px;">上下文管理是编码智能体的核心功能，目前最常见的方法包括类似Pi这样比较简化通过长度阈值触发、或者Claude Code采用的微压缩+长度触发双重机制。无论哪种方法，核心思路都是在尽量提供完整信息和控制上下文长度之间做取舍。由于上下文管理限于处理成本和效率因素通常只能通过简单逻辑来实现，现有编码智能体的上下文管理仍然是较为粗放的。这篇论文提供一种与常见方法不同的思路，虽然同样也只是一种权衡后的策略，但对于进一步提高上下文管理效率，不失为一种有价值的参考。</p>
   </div>
 
   <!-- ═══ 本期论文 ═══ -->
@@ -63,7 +73,7 @@
     <p style="font-size:15px;color:#3a3a3a;line-height:1.8;margin:0 0 10px;">ContextSniper: AntTrail's Token-Efficient Code Memory for Repository-Level Program Repair<br>
     <span style="font-size:13px;color:#666666;">ContextSniper：AntTrail面向仓库级程序修复的token效率优化代码记忆方法</span><br>
     <span style="color:#888;">Chiwang Luk et al.（华为、香港科技大学广州、南洋理工大学），2026-07（arXiv:2607.01916v3）</span></p>
-    <p style="font-size:14px;color:#555;line-height:1.8;margin:0;">简要结论：在编码智能体和代码仓库之间插一层"上下文访问层"。读取文件、执行命令的输出在进入上下文窗口之前先按意图过滤。与任务相关的证据均附带出处信息、原始信息在外部记忆保存并可恢复读取入上下文。在SWE-bench Lite同任务对照下，OpenClaw总token可节省51.5%、Claude Code可节省38.9%，修复率各下降2个百分点，修复率损失可接受。</p>
+    <p style="font-size:14px;color:#555;line-height:1.8;margin:0;">简要结论：在编码智能体和代码仓库之间插一层"上下文访问层"。读取文件、执行命令的输出在进入上下文窗口之前先按意图过滤。与任务相关的证据均附带出处信息、原始信息在外部记忆保存并可恢复读入上下文。在SWE-bench Lite同任务对照下，OpenClaw总token可节省51.5%、Claude Code可节省38.9%，修复率各下降2个百分点，修复率损失可接受。</p>
   </div>
 
   <!-- ═══ 名词速查 ═══ -->
@@ -79,7 +89,7 @@
   <!-- ═══════════ 一 ═══════════ -->
   <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">一、token开销的大部分在翻找环节，查找结果需要在进入上下文窗口之前进行控制</h2>
 
-  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">主流编码智能体通过原生仓库工具获取证据：grep式搜索、整文件读取、bash命令。这些工具的输出不经筛选，直接进入上下文窗口，论文称之为"原始访问"（raw access）。修复任务里最贵的部分往往不是写补丁，而是反复找到那些相关的文件、符号和测试结果。上一篇荐读论文讨论的ACQUIRE是在动手之前把该知道的事备齐，这一篇面对的是另一个环节：每次读文件、每次跑执行命令，后把哪些结果信息放进上下文窗口。</p>
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">主流编码智能体通过原生仓库工具获取证据：grep式搜索、整文件读取、bash命令。这些工具的输出不经筛选，直接进入上下文窗口，论文称之为"原始访问"（raw access）。修复任务里最贵的部分往往不是写补丁，而是反复找到那些相关的文件、符号和测试结果。上一篇荐读论文讨论的ACQUIRE是在动手之前把该知道的事备齐，这一篇面对的是另一个环节：每次读文件、每次执行命令，后把哪些结果信息放进上下文窗口。</p>
 
   <div style="background:#F5F8FA;border-left:3px solid #0F6BAB;border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;">
     <p style="font-size:13.5px;color:#555;line-height:1.85;margin:0;">"When a coding agent cannot find the evidence it needs, it does not stop; it rereads."<br>── 中译：编码智能体找不到所需证据时，它不会停下来，而是再读一遍。（原论文§1.1，全文第一句）</p>
@@ -115,7 +125,7 @@
 
   <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">记忆层分为两族。代码族存仓库快照：L0是代码摘要，L1是结构化元数据（路径、行区域、符号、签名、图关系），L2是源码切片，Python按顶层类和函数用tree-sitter切分，其他语言退化为重叠行窗。动作族存本次运行的产生物：L0是过滤后的视图，L1是工具名、路径、命令状态，L2是原始未过滤输出。两族都放在AGFS后端上，每个记忆节点是一个目录，保存这三种粒度的文本视图。</p>
 
-  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">由于增加了一层索引，引入了的新问题：直接读原始文件，智能体拿到的永远是磁盘上的当前版本，而通过索引检索，拿到的可能是编辑前的旧信息。旧片段同样带着路径和行号，基于过期代码做的判断会与它先前的编辑冲突。比如重复修改已经改过的地方，或者按已经漂移的行号去定位。针对这个问题，通过“两阶段同步”的机制来解决：第一阶段挂在智能体动作的运行时钩子上：搜索、读文件、编辑、跑命令都会记录触碰路径与修改。通过本层工具进行编辑时还会校验路径、应用替换并触发该文件的记忆刷新。第二阶段在每轮新用户提示到达时，用工作树的改动对索引状态进行核对。通过这样的方式来确保索引信息与实际代码仓库同步。</p>
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">由于增加了一层索引，引入了新的问题：直接读原始文件，智能体拿到的永远是磁盘上的当前版本，而通过索引检索，拿到的可能是编辑前的旧信息。旧片段同样带着路径和行号，基于过期代码做的判断会与它先前的编辑冲突。比如重复修改已经改过的地方，或者按已经漂移的行号去定位。针对这个问题，通过“两阶段同步”的机制来解决：第一阶段挂在智能体动作的运行时钩子上：搜索、读文件、编辑、跑命令都会记录触碰路径与修改。通过本层工具进行编辑时还会校验路径、应用替换并触发该文件的记忆刷新。第二阶段在每轮新用户提示到达时，用工作树的改动对索引状态进行核对。通过这样的方式来确保索引信息与实际代码仓库同步。</p>
 
   <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">检索采用混合多路的方式，包含了语义嵌入、BM25词法、ctags符号、图关系（import、调用、包含、相邻文件）四种检索路径。使用加权RRF融合进行结果排序，索引检索太弱时退到ripgrep全文搜索作为兜底。查询意图决定各路的预算：回溯类查询加重路径、符号和搜索词；行为类查询加重语义和图；带状态的调试轮会提升最近触碰过的文件。返回条数随上下文预算自适应调整。</p>
 
@@ -149,7 +159,7 @@
 
   <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:18px 0 18px;">OpenClaw上，单任务平均token从1.36M降到0.66M，总降幅51.5%；成本降低36.4%；动作数从32.1降到17.2，降低46.4%，其中读文件和搜索类的上下文获取动作从572降到461。Claude Code上，总token从85.97M降到52.55M，降低38.9%，成本降低27.3%，动作数降低35.7%。动作数同步下降说明过滤改变了行为：模型收到的每次输出更紧凑，重复翻找随之减少。</p>
 
-  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">修复率的结果体现出这一方法主要是提高效率，而不是提升解决率。两个宿主上修复数各下降1个案例（26.0%到24.0%、32.0%到30.0%）。由于SWE-bench对修复完成的验证本身存在验证任务执行失败造成无法有效判定的情况，1个案例的差异不足以对修复成功率影响形成有效结论。可以大致认为增加这层上下文过滤机制大幅节省了成本，没有修复率提升效果，但也没有可测的修复率损失。</p>
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">修复率的结果体现出这一方法主要是提高效率，而不是提升解决率。两个宿主上修复数各下降1个案例（26.0%到24.0%、32.0%到30.0%）。由于SWE-bench对修复完成的验证本身存在验证任务执行失败造成无法有效判定的情况，且这类故障在两组之间次数不均，因此1个案例的差异不足以形成有效结论。可以大致认为增加这层上下文过滤机制大幅节省了成本，没有修复率提升效果，但也没有可测的修复率损失。</p>
 
   <div style="margin:24px 0;">
     <img src="images/sniper-fig1-overview.png" alt="图1：基线与插入层对照及操作点" style="width:100%;border:1px solid #eee;border-radius:8px;display:block;">
@@ -173,7 +183,7 @@
   <!-- ═══════════ 五 ═══════════ -->
   <h2 style="font-size:17px;font-weight:bold;color:#0F6BAB;border-left:4px solid #0F6BAB;padding-left:11px;margin:34px 0 16px;line-height:1.5;">五、与压缩路线的区别：删得不均匀，保留出处，原件可恢复</h2>
 
-  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">在上下文管理上有三个常见的方面：prompt压缩（LLMLingua、RECOMP、Selective Context等）作用于已经选进prompt的文本，把长度缩短。工具输出过滤（RTK报告省60–90%，Headroom省60–95%）在命令和工具输出上做过滤，与本文的尝试最接近，但通常没有与工作树同步的代码记忆。仓库记忆与定位（RepoGraph、KGCompass等）为所有进入上下文窗口的信息提供检索。ContextSniper把三件事合成一个访问层，在比通常压缩更靠前的环节上发挥作用。</p>
+  <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">在上下文管理上有三个常见的方面：prompt压缩（LLMLingua、RECOMP、Selective Context等）作用于已经选进prompt的文本，把长度缩短。工具输出过滤（RTK报告省60–90%，Headroom省60–95%）在命令和工具输出上做过滤，与本文的尝试最接近，但通常没有与工作树同步的代码记忆。仓库记忆与定位（RepoGraph、KGCompass等）提供检索，但不控制哪些内容进入窗口。ContextSniper把三件事合成一个访问层，在比通常压缩更靠前的环节上发挥作用。</p>
 
   <table style="border-collapse:collapse;width:100%;font-size:13px;color:#3a3a3a;text-align:center;">
     <tr style="background:#F0F5F8;">
@@ -203,13 +213,13 @@
   <div style="border:2px dashed #8FA9BE;background:#F4F7FA;border-radius:10px;padding:16px 18px;margin:0 0 30px;">
     <p style="font-size:13px;color:#4A6B85;font-weight:bold;letter-spacing:1px;margin:0 0 14px;">▍上下文控制关口前移，在实际工作流的应用</p>
 
-    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">这篇论文的论证链条：翻找关键信息占了token开销的主要部分。把过滤位置前移到输出产生之时，配合窗口外记忆与保守放行，在两个主流编码Agenbt上实现了bug修复任务节省四到五成token而修复率基本不变。根据对具体任务的分析发现，这一方法在检索有效性较高时收益较大，检索失败率高时反而增加开销。论文尝试的方法目前并没有在各类主流编码Agent中有同类的设计，如果要在实际的工作流中应用，有以下值得参考的做法：</p>
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">这篇论文的论证链条：翻找关键信息占了token开销的主要部分。把过滤位置前移到输出产生之时，配合窗口外记忆与保守放行，在两个主流编码Agent上实现了bug修复任务节省四到五成token而修复率基本不变。根据对具体任务的分析发现，这一方法在检索有效性较高时收益较大，检索失败率高时反而增加开销。论文尝试的方法尚未成为主流编码智能体的内置功能，如果要在实际的工作流中应用，有以下值得参考的做法：</p>
 
-    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 8px;">1. 在上下文进入窗口之前设置活率环节，所有信息以摘要方式提供并且保留出处链接：所有提供的上下文证据附带路径、行号和产生信息的命令，被删的原件留底可恢复，是提升上下文质量的有效方法。简单的均匀摘要方法会造成信息丢失和模糊，效果往往难以保证。</p>
+    <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 8px;">1. 在上下文进入窗口之前设置过滤环节，所有信息以摘要方式提供并且保留出处链接：所有提供的上下文证据附带路径、行号和产生信息的命令，被删的原件留底可恢复，是提升上下文质量的有效方法。简单的均匀摘要方法会造成信息丢失和模糊，效果往往难以保证。</p>
 
     <p style="font-size:15px;color:#3a3a3a;line-height:1.9;letter-spacing:0.3px;text-align:justify;margin:0 0 18px;">2. 在当前模型普遍上下文窗口较宽裕的情况下，上下文筛选方面首选保守优先策略：删错证据的代价大于多花token。在截断的地方留标记和恢复途径，保留模型按需渐进加载的入口，是明智的做法。</p>
 
-    <p style="font-size:13.5px;color:#8FA9BE;line-height:1.8;margin:0 0 6px;">以上两项方法既可以参考论文的做法使用MCP或者Hook来实现，实际上在文档和代码注释规范中做好索引锚点，主动为仓库建立索引文件，也可以在一定程度上为编码Agent更好的自主管理上下文提供便利。论文的研究提供了一个很有价值的启示：上下文信息的质量在于“精准而具体的提供有帮助的信息”，精准和具体两个要素缺一不可。因此，早期只看窗口占用大小，占用比例高了就compact的使用方法实际并不科学。有些编码工具也会建议用户每个任务，或者每个阶段通过新开会话的方式来清理上下文。这也是因为简单依靠只摘要压缩，丢失的信息过多，被压缩后的信息已经没有多少实际的应用价值了。我们仍然秉持AI应用中“Cotext is all you need”的观点。在讨论了上下文窗口的特点，如何做信息检索和进入大模型窗口前的筛选后，下一篇我们将讨论如何对任务过程中的长上下文进行高效的处理。</p>
+    <p style="font-size:13.5px;color:#8FA9BE;line-height:1.8;margin:0 0 6px;">以上两项方法既可以参考论文的做法使用MCP或者Hook来实现，实际上在文档和代码注释规范中做好索引锚点，主动为仓库建立索引文件，也可以在一定程度上为编码Agent更好的自主管理上下文提供便利。论文的研究提供了一个很有价值的启示：上下文信息的质量在于“精准而具体的提供有帮助的信息”，精准和具体两个要素缺一不可。因此，早期只看窗口占用大小，占用比例高了就compact的使用方法实际并不科学。有些编码工具也会建议用户每个任务，或者每个阶段通过新开会话的方式来清理上下文。这也是因为简单依靠只摘要压缩，丢失的信息过多，被压缩后的信息已经没有多少实际的应用价值了。我们仍然秉持AI应用中“Context is all you need”的观点。在讨论了上下文窗口的特点，如何做信息检索和进入大模型窗口前的筛选后，下一篇我们将讨论如何对任务过程中的长上下文进行高效的处理。</p>
   </div>
 
   <!-- ═══ 参考信息 ═══ -->
